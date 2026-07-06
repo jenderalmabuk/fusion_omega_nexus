@@ -1,5 +1,4 @@
 venv/
-data/*.parquet
-data/*.json
+data/
 __pycache__/
 *.pyc
