@@ -23,7 +23,7 @@ from core.oi_collector import OICollector, EXCHANGES, fetch_symbols
 class ScannerConfig:
     """Scan configuration per timeframe."""
     bins: Dict[str, int]      # {tf: candle_count}
-    rate_burst: int = 10      # max concurrent requests per batch
+    rate_burst: int = 5      # max concurrent requests per batch
     batch_delay: float = 0.1  # seconds between batches
 
 
@@ -47,7 +47,7 @@ class UniverseScanner:
     Designed for ~431 pairs. Expected speed: ~6-8 minutes.
     """
     TOP_KLINES = {           # bins needed per timeframe
-        "30m": 200,          # M30: 200 bars for EMA calc + imbalance detection
+        "30m": 260,          # M30: 260 bars for EMA calc + imbalance detection
         "5m": 300,           # 5m: for fill detection (60 bars), EMA, trend
         "1m": 100,           # 1m: fill detection wick sensitivity
         "1h": 100,           # H1: for trend confirmation
@@ -135,7 +135,7 @@ class UniverseScanner:
             tasks = []
             for symbol in batch:
                 params = {"category": "linear", "symbol": symbol, "interval": bybit_interval, "limit": limit}
-                url = "https://api.bybit.com/v5/market/klines"
+                url = "https://api.bybit.com/v5/market/kline"
                 tasks.append(self._fetch_kline_single_bybit(url, params, symbol))
             
             batch_results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -261,7 +261,7 @@ class UniverseScanner:
     def save_cache(self, scan_result: Dict, prefix: str = "latest"):
         """Save scan results to disk cache."""
         ts = int(scan_result["ts"])
-        cache_path = self.cache_dir / f"{prefix}_scan_{ts}.json"
+        cache_path = self.cache_dir / f"latest_scan_{ts}.json"
         
         # Save summary as JSON (DataFrames saved separately as parquet)
         summary = {

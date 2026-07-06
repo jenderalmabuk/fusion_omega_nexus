@@ -81,15 +81,22 @@ class NexusFeed:
         self._last_scan_ts = scan_ts
         self._oi_cache = summary.get("oi", {})
         
-        # Load per-timeframe parquet files
+        # Load per-timeframe parquet files (latest per symbol)
         tfs = summary.get("timeframes_present", [])
         for tf in tfs:
             tf_dir = self.cache_dir / tf
             if not tf_dir.exists():
                 continue
             
-            for parquet_file in tf_dir.glob(f"*_{int(summary['ts'])}.parquet"):
+            # Group by symbol, take latest file per symbol
+            symbol_files = {}
+            for parquet_file in tf_dir.glob("*.parquet"):
                 symbol = parquet_file.name.split("_")[0]
+                mtime = parquet_file.stat().st_mtime
+                if symbol not in symbol_files or mtime > symbol_files[symbol][1]:
+                    symbol_files[symbol] = (parquet_file, mtime)
+            
+            for symbol, (parquet_file, _) in symbol_files.items():
                 try:
                     df = pd.read_parquet(parquet_file)
                     if symbol not in self._kline_cache:
@@ -141,13 +148,20 @@ class NexusFeed:
                 else:
                     return pd.DataFrame()  # critical column missing
         
-        # Rename open_time to match engine expectation (index)
-        if "open_time" in df.columns:
-            df["open_time"] = pd.to_datetime(df["open_time"])
-        elif df.index.name == "open_time":
+        # Ensure open_time column exists and is timezone-naive
+        if df.index.name == "open_time":
             df = df.reset_index()
         
-        return df[["open_time"] + expected_cols]
+        if "open_time" in df.columns:
+            df["open_time"] = pd.to_datetime(df["open_time"])
+            # Strip timezone to avoid comparison errors
+            if df["open_time"].dt.tz is not None:
+                df["open_time"] = df["open_time"].dt.tz_localize(None)
+        
+        # CRITICAL: Reset index to integer positional (0, 1, 2, ...) for faithful_imbalance
+        result = df[["open_time"] + expected_cols].reset_index(drop=True)
+        
+        return result
     
     def get_oi(self, symbol: str) -> float:
         """

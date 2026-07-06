@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # nexus_scan_loop.sh — Continuous universal scanner loop
-# Fetches all Binance pairs (OHLCV + OI) at configurable interval
+# Fetches all Bybit pairs (OHLCV + OI) at configurable interval
+# Binance used as collaborative fallback when available
 # Pushes results to data/ cache for bot adapters to consume
 
 set -euo pipefail
