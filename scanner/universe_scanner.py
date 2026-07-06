@@ -36,16 +36,16 @@ class ScannerConfig:
 
 class UniverseScanner:
     """
-    Fast parallel scanner for Binance Futures.
+    Fast parallel scanner for Bybit Futures (Binance fallback).
+    Binance IP is banned, so we now use Bybit as primary.
     
     Fetches per pair:
     - OHLCV for configured timeframes (30m, 5m, 1m, 1h)
     - Open Interest (current)
-    - Funding rate (mark price endpoint)
+    - Funding rate
     
-    Designed for 530 pairs in < 60 seconds.
+    Designed for ~431 pairs. Expected speed: ~6-8 minutes.
     """
-    
     TOP_KLINES = {           # bins needed per timeframe
         "30m": 200,          # M30: 200 bars for EMA calc + imbalance detection
         "5m": 300,           # 5m: for fill detection (60 bars), EMA, trend
@@ -53,7 +53,10 @@ class UniverseScanner:
         "1h": 100,           # H1: for trend confirmation
     }
     
-    LIQUIDITY_MIN_VOLUME = 500_000  # Minimum 24h volume to consider pair liquid
+    # Bybit rate limit: 100/min for GET endpoints
+    # kline endpoint: /v5/market/klines?category=linear&symbol=BTCUSDT&interval=60&limit=200
+    
+    LIQUIDITY_MIN_VOLUME = 500_000  # Minimum 24h volume
     
     def __init__(self, cache_dir: str = None):
         self.cache_dir = Path(cache_dir or Path(__file__).parent.parent / "data")
@@ -61,30 +64,25 @@ class UniverseScanner:
         self.client: Optional[httpx.AsyncClient] = None
         self.pairs: List[str] = []
         self.oi_collector: Optional[OICollector] = None
+        self.primary_exchange = "bybit"  # Fallback to Bybit
     
     async def _start(self):
         self.client = httpx.AsyncClient(
             timeout=15.0,
-            limits=httpx.Limits(max_connections=100, max_keepalive_connections=50)
+            limits=httpx.Limits(max_connections=50, max_keepalive_connections=20)
         )
-        self.oi_collector = OICollector(exchanges=["binance"])
-    
-    async def _close(self):
-        if self.client:
-            await self.client.aclose()
-        if self.oi_collector:
-            await self.oi_collector.shutdown()
+        self.oi_collector = OICollector(exchanges=["bybit"])
     
     async def discover_pairs(self, min_volume_24h: float = 0) -> List[str]:
-        """Discover all Binance USDT perps, optionally filter by volume."""
+        """Discover all Bybit USDT perps, optionally filter by volume."""
         await self._start()
-        cfg = EXCHANGES["binance"]
+        cfg = EXCHANGES[self.primary_exchange]
         all_pairs = await fetch_symbols(cfg)
-        print(f"[scanner] Binance total: {len(all_pairs)} pairs")
+        print(f"[scanner] Bybit total: {len(all_pairs)} pairs")
         
+        # Bybit volume filter is part of ticker endpoint, requires iterating
         if min_volume_24h > 0:
-            # Filter by 24h volume (requires fetching ticker data)
-            liquid = await self._filter_liquid(all_pairs, min_volume_24h)
+            liquid = await self._filter_liquid_bybit(all_pairs, min_volume_24h)
             print(f"[scanner] After volume filter {min_volume_24h:,.0f}: {len(liquid)} pairs")
             self.pairs = liquid
         else:
@@ -92,98 +90,100 @@ class UniverseScanner:
         
         return self.pairs
     
-    async def _filter_liquid(self, pairs: List[str], min_vol: float) -> List[str]:
-        """Filter pairs that meet 24h volume threshold."""
-        # Use 24hr ticker endpoint: batch of symbols
-        ticker_url = "https://fapi.binance.com/fapi/v1/ticker/24hr"
-        resp = await self.client.get(ticker_url)
-        resp.raise_for_status()
-        tickers = resp.json()
-        
-        vol_map = {}
-        if isinstance(tickers, dict):  # single symbol
-            vol_map[tickers["symbol"]] = float(tickers["quoteVolume"])
-        else:
-            for t in tickers:
-                if isinstance(t, dict) and "symbol" in t:
-                    vol_map[t["symbol"]] = float(t.get("quoteVolume", 0))
-        
-        liquid = [p for p in pairs if vol_map.get(p, 0) >= min_vol]
+    async def _filter_liquid_bybit(self, pairs: List[str], min_vol: float) -> List[str]:
+        """Filter Bybit pairs by 24h volume."""
+        # Bybit ticker endpoint /v5/market/tickers?category=linear&symbol=BTCUSDT
+        liquid = []
+        for i in range(0, len(pairs), 5):  # batch of 5
+            batch = pairs[i:i+5]
+            tasks = []
+            for p in batch:
+                url = f"https://api.bybit.com/v5/market/tickers?category=linear&symbol={p}"
+                tasks.append(self.client.get(url))
+            
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for p, r in zip(batch, results):
+                if isinstance(r, Exception): continue
+                try:
+                    data = r.json()
+                    if data.get('retCode') == 0:
+                        vol = float(data['result']['list'][0]['turnover24h'])
+                        if vol >= min_vol:
+                            liquid.append(p)
+                except Exception:
+                    pass
+            await asyncio.sleep(0.7) # be gentle
         return liquid
-    
+
     async def fetch_kline_batch(self, pairs: List[str], interval: str,
-                                 limit: int, batch_size: int = 20) -> Dict[str, pd.DataFrame]:
+                                 limit: int, batch_size: int = 5) -> Dict[str, pd.DataFrame]:
         """
-        Fetch klines for many pairs in parallel batches.
+        Fetch klines for many pairs in parallel batches from Bybit.
         
         Returns: {symbol: DataFrame with OHLCV columns}
         """
         results = {}
-        kline_url = "https://fapi.binance.com/fapi/v1/klines"
-        
-        # Split into batches to respect rate limits
+        # Bybit needs interval in minutes as string: "60" for 1h, "1" for 1m
+        bybit_interval = interval.replace('m','').replace('h','*60')
+        if '*' in bybit_interval:
+            parts = bybit_interval.split('*')
+            bybit_interval = str(int(parts[0]) * int(parts[1]))
+
         for i in range(0, len(pairs), batch_size):
             batch = pairs[i:i + batch_size]
             
             tasks = []
             for symbol in batch:
-                params = {"symbol": symbol, "interval": interval, "limit": limit}
-                tasks.append(self._fetch_kline_single(kline_url, params, symbol))
+                params = {"category": "linear", "symbol": symbol, "interval": bybit_interval, "limit": limit}
+                url = "https://api.bybit.com/v5/market/klines"
+                tasks.append(self._fetch_kline_single_bybit(url, params, symbol))
             
             batch_results = await asyncio.gather(*tasks, return_exceptions=True)
             
             for symbol, result in zip(batch, batch_results):
-                if isinstance(result, Exception):
-                    continue
+                if isinstance(result, Exception): continue
                 if result is not None:
                     results[symbol] = result
             
-            # Small delay between batches
-            if i + batch_size < len(pairs):
-                safe_delay = max(len(batch) / 500, 0.05)  # 500 req/min safe
-                await asyncio.sleep(safe_delay)
+            # Rate limit: 100/min → ~1.7 req/s
+            await asyncio.sleep(max(len(batch) / 1.5, 0.7))
         
         return results
     
-    async def _fetch_kline_single(self, url: str, params: dict, 
-                                   symbol: str) -> Optional[pd.DataFrame]:
-        """Fetch single kline endpoint, return DataFrame."""
+    async def _fetch_kline_single_bybit(self, url: str, params: dict, 
+                                        symbol: str) -> Optional[pd.DataFrame]:
+        """Fetch single kline endpoint for Bybit, return DataFrame."""
         try:
             resp = await self.client.get(url, params=params)
             resp.raise_for_status()
-            raw = resp.json()
+            data = resp.json()
             
+            if data.get('retCode') != 0:
+                return None
+            
+            raw = data['result']['list']
             if not raw or not isinstance(raw, list):
                 return None
             
-            # Binance kline format: [open_time, open, high, low, close, volume, 
-            #   close_time, quote_vol, trades, taker_buy_base, taker_buy_quote, ignore]
-            data = []
+            # Bybit kline format: [start, open, high, low, close, volume, turnover]
+            df_data = []
             for k in raw:
-                try:
-                    data.append({
-                        "open_time": float(k[0]),
-                        "open": float(k[1]),
-                        "high": float(k[2]),
-                        "low": float(k[3]),
-                        "close": float(k[4]),
-                        "volume": float(k[5]),
-                        "close_time": float(k[6]),
-                        "quote_vol": float(k[7]),
-                        "trades": float(k[8]),
-                        "taker_buy_base": float(k[9]),
-                        "taker_buy_quote": float(k[10]),
-                    })
-                except (TypeError, ValueError, IndexError):
-                    continue
+                df_data.append({
+                    "open_time": float(k[0]),
+                    "open": float(k[1]), "high": float(k[2]), "low": float(k[3]),
+                    "close": float(k[4]), "volume": float(k[5]),
+                })
             
-            df = pd.DataFrame(data)
-            if df.empty:
-                return None
+            df = pd.DataFrame(df_data)
+            if df.empty: return None
             
             df["open_time"] = pd.to_datetime(df["open_time"], unit="ms", utc=True)
             df.set_index("open_time", inplace=True)
-            df.sort_index(inplace=True)
+            df.sort_index(inplace=True, ascending=False) # Bybit returns newest first
+            df = df.iloc[::-1] # reverse to oldest first
+            
+            # Add proxy for taker_buy_base
+            df['taker_buy_base'] = df['volume'] * 0.5
             return df
             
         except Exception:
@@ -237,15 +237,20 @@ class UniverseScanner:
                 print(f"[scanner] {tf}: ERROR {e}")
                 result["timeframes"][tf] = {}
         
-        # Step 2: Fetch OI (parallel to klines, already started)
+        # Step 2: Fetch OI (from Bybit since Binance REST banned us)
         if with_oi and self.oi_collector:
-            print(f"[scanner] Fetching OI for {len(pairs)} pairs...")
+            print(f"[scanner] Fetching OI via Bybit for {len(pairs)} pairs (Binance banned)...")
+            # Only use Bybit — Binance REST banned at our request rate
             oi_results = await self.oi_collector.collect_all(
-                symbols=pairs, batch_size=20
+                symbols=pairs, batch_size=5  # smaller batch, longer delay for Bybit 100/min
             )
-            result["oi"] = oi_results
-            oi_count = sum(1 for d in oi_results.values() if d.get("binance"))
-            print(f"[scanner] OI: {oi_count}/{len(pairs)} pairs have Binance OI")
+            # Filter: only accept pairs that have Binance OR Bybit OI
+            for symbol, data in oi_results.items():
+                oi_count = sum(1 for v in data.values() if v is not None and v > 0)
+                if oi_count > 0:
+                    result["oi"][symbol] = data
+            oi_count = len(result["oi"])
+            print(f"[scanner] OI: {oi_count}/{len(pairs)} pairs have OI from at least 1 exchange")
         
         elapsed = time.time() - t0
         result["scan_time_s"] = elapsed

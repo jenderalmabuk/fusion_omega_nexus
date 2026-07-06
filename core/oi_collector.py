@@ -111,7 +111,7 @@ class OICollector:
             cache_ttl: cache time-to-live in seconds
             history_depth: how many historical snapshots to keep per pair
         """
-        self.exchange_names = exchanges or list(EXCHANGES.keys())
+        self.exchange_names = exchanges or ["bybit"]  # default: bybit only (Binance REST bans at our volume)
         self.configs = {n: EXCHANGES[n] for n in self.exchange_names}
         self.cache_ttl = cache_ttl
         self.history_depth = history_depth
