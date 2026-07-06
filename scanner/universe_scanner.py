@@ -71,23 +71,39 @@ class UniverseScanner:
             timeout=15.0,
             limits=httpx.Limits(max_connections=50, max_keepalive_connections=20)
         )
-        self.oi_collector = OICollector(exchanges=["bybit"])
+        # Collaborative: Binance OI (richer data) + Bybit OI fallback
+        self.oi_collector = OICollector(exchanges=["binance", "bybit"])
     
     async def discover_pairs(self, min_volume_24h: float = 0) -> List[str]:
-        """Discover all Bybit USDT perps, optionally filter by volume."""
+        """Discover pairs: Bybit ∩ Binance intersection, sort by |price change|."""
         await self._start()
-        cfg = EXCHANGES[self.primary_exchange]
-        all_pairs = await fetch_symbols(cfg)
-        print(f"[scanner] Bybit total: {len(all_pairs)} pairs")
         
-        # Bybit volume filter is part of ticker endpoint, requires iterating
-        if min_volume_24h > 0:
-            liquid = await self._filter_liquid_bybit(all_pairs, min_volume_24h)
-            print(f"[scanner] After volume filter {min_volume_24h:,.0f}: {len(liquid)} pairs")
-            self.pairs = liquid
-        else:
-            self.pairs = all_pairs
+        # Fetch both exchange symbol lists
+        bybit_pairs = set(await fetch_symbols(EXCHANGES["bybit"]))
+        binance_pairs = set(await fetch_symbols(EXCHANGES["binance"]))
         
+        # Intersection: only pairs on BOTH exchanges
+        intersection = sorted(bybit_pairs & binance_pairs)
+        print(f"[scanner] Bybit: {len(bybit_pairs)} | Binance: {len(binance_pairs)} | Both: {len(intersection)}")
+        
+        # Sort by |24h price change| descending using Bybit tickers
+        r = await self.client.get("https://api.bybit.com/v5/market/tickers?category=linear")
+        tickers = r.json().get("result", {}).get("list", [])
+        pct_map = {}
+        vol_map = {}
+        for t in tickers:
+            sym = t["symbol"]
+            if sym in intersection:
+                pct_map[sym] = abs(float(t.get("price24hPcnt", 0)))
+                vol_map[sym] = float(t.get("turnover24h", 0))
+        
+        # Filter by volume, sort by |price change|
+        qualified = [s for s in intersection if vol_map.get(s, 0) >= min_volume_24h]
+        qualified.sort(key=lambda s: pct_map.get(s, 0), reverse=True)
+        
+        print(f"[scanner] After volume filter ${min_volume_24h:,.0f}: {len(qualified)} pairs")
+        print(f"[scanner] Top 5: {qualified[:5]}")
+        self.pairs = qualified
         return self.pairs
     
     async def _filter_liquid_bybit(self, pairs: List[str], min_vol: float) -> List[str]:
@@ -239,7 +255,7 @@ class UniverseScanner:
         
         # Step 2: Fetch OI (from Bybit since Binance REST banned us)
         if with_oi and self.oi_collector:
-            print(f"[scanner] Fetching OI via Bybit for {len(pairs)} pairs (Binance banned)...")
+            print(f"[scanner] Fetching OI: Binance + Bybit collaborative for {len(pairs)} pairs...")
             # Only use Bybit — Binance REST banned at our request rate
             oi_results = await self.oi_collector.collect_all(
                 symbols=pairs, batch_size=5  # smaller batch, longer delay for Bybit 100/min
