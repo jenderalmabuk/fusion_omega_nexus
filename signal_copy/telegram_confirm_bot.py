@@ -48,8 +48,8 @@ class TelegramConfirmBot:
     ):
         self.bot_token = (bot_token or "").strip()
         self.chat_id = int(chat_id) if chat_id else 0
-        self.confirmations = confirmations
-        self.on_decision = on_decision
+        self.confirmations: Optional[ConfirmationManager] = confirmations
+        self.on_decision: Optional[DecisionCallback] = on_decision
         self.on_test = on_test
         self.status_provider = status_provider
         self.bot: Optional["Bot"] = None

@@ -97,6 +97,14 @@ class SignalCopyOrchestrator:
         self.ch_perf = get_tracker()
         self.sizer = ConvictionSizer()
         self._reporter_task = None
+        
+        # Post-init wiring for confirm bot (needs internal objects)
+        if confirm_bot is not None:
+            # Inject missing deps into TelegramConfirmBot
+            if hasattr(confirm_bot, "confirmations") and confirm_bot.confirmations is None:
+                confirm_bot.confirmations = self.confirmations
+            if hasattr(confirm_bot, "on_decision") and confirm_bot.on_decision is None:
+                confirm_bot.on_decision = self._execute_token
 
     async def _leaderboard_loop(self):
         while True:
