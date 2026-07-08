@@ -4,3 +4,7 @@ asyncpg==0.30.0
 httpx==0.28.1
 python-dotenv==1.0.1
 numpy==2.2.1
+pandas==2.2.2
+pyarrow==24.0.0
+requests==2.32.3
+aiogram==3.28.2
