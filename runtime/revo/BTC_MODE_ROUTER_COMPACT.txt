@@ -1,0 +1,3 @@
+cycle=20260708T112821Z
+btc_regime=risk_off
+btc_price=62070.0

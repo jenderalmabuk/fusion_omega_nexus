@@ -1,0 +1,48 @@
+# Bot config — per-engine overrides
+# These map to engine CLI args
+
+# M30 Imbalance — Medium (adversarial)
+m30_imbalance:
+  tier: M30
+  direction: both
+  tag: _medium
+  ema_dist: 0
+  min_turn: 500000
+  stoch_max: 50
+  equity: 1000
+  risk_pct: 0.01
+  max_positions: 6
+  leverage: 5
+  daily_loss_pct: 0.05
+  max_dd_pct: 0.20
+  interval_sec: 300
+  warm_batch: 40
+  cold_batch: 266
+  soft_pending_cap: 20
+  adversarial: true
+  cvd: false
+  btc_regime: false
+  symbols_file: universe.txt
+
+# H1 Imbalance — Medium (adversarial)
+h1_imbalance:
+  tier: H1
+  direction: both
+  tag: _h1_adversarial
+  ema_dist: 0
+  min_turn: 500000
+  stoch_max: 50
+  equity: 1000
+  risk_pct: 0.01
+  max_positions: 6
+  leverage: 5
+  daily_loss_pct: 0.05
+  max_dd_pct: 0.20
+  interval_sec: 600
+  warm_batch: 40
+  cold_batch: 266
+  soft_pending_cap: 20
+  adversarial: true
+  cvd: false
+  btc_regime: false
+  symbols_file: universe.txt

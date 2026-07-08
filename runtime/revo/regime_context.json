@@ -1,0 +1,2144 @@
+{
+  "schema_version": "nexus.revo.regime.v1",
+  "timestamp": "2026-07-08T11:28:22.711223+00:00",
+  "btc": {
+    "ts": "2026-07-08T11:28:21.824802+00:00",
+    "symbol": "BTCUSDT",
+    "btc_price": 62070.0,
+    "btc_ema50": 62200.888181629394,
+    "btc_ema200": 62736.660349650054,
+    "btc_ret_1h_pct": 0.014663016488647429,
+    "btc_regime": "risk_off",
+    "mode": "RISK_OFF"
+  },
+  "pairs": {
+    "0G/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "1000BONK/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "1000FLOKI/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "1000LUNC/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "1000PEPE/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "1000SHIB/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "2Z/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "4/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "AAVE/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ACT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ADA/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "AERGO/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "AERO/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "AGLD/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "AGT/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "AIGENSYN/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "AIXBT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "AKE/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "crowded_long",
+      "risk_modifier": 0.5
+    },
+    "AKT/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ALGO/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ALICE/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ALLO/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ALT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "AMAT/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "APE/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "APT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ARB/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ARC/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ARKM/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ARPA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ARX/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ASTER/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ASTS/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ATH/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ATOM/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "A/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "AVAX/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "AVNT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "AXS/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "BARD/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "BASED/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BAS/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "BBX/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "BCH/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "BEAT/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BEL/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BERA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BE/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "BICO/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "BILL/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BIO/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BIRB/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BLESS/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BLUAI/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BMNR/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "BNB/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BOME/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BREV/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BSB/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BSV/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BTC/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BTW/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "B/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "BZ/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "CAKE/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "CAP/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "CATI/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "CC/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "CELO/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "CHILLGUY/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "CHIP/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "CHZ/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "CLO/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "crowded_long",
+      "risk_modifier": 0.5
+    },
+    "COMP/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "CROSS/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "CRV/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "DASH/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "DEEP/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "DEXE/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "DOGE/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "DOT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "DYDX/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "DYM/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "EDEN/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "EDGE/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "EGLD/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "EIGEN/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ENA/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ENJ/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ENSO/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ENS/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "EPIC/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ESPORTS/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
+      "funding_state": "crowded_long",
+      "risk_modifier": 0.5
+    },
+    "ETC/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ETHFI/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ETH/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "EVAA/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "FARTCOIN/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "FET/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "FF/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "FIL/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "FLNC/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "FLUID/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "FOLKS/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "FORM/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "GALA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "GIGGLE/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "GLW/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "GMT/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "GOAT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "GPS/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "GRAM/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "GRASS/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "GRT/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "GUA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "GWEI/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "HAEDAL/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "HBAR/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "HEI/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "HEMI/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "HMSTR/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "HOLO/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "HOME/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "H/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "HYPER/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "HYPE/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ICP/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ID/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "IMX/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "INJ/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "IN/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "crowded_long",
+      "risk_modifier": 0.5
+    },
+    "IOTA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "IO/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "IRYS/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "JASMY/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "JCT/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "JTO/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "JUP/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "KAITO/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "KAS/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "KERNEL/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "KITE/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "KLAC/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "KSM/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "LAB/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "LA/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "LAYER/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "LDO/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "LINEA/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "LINK/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "LITE/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "LIT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "LTC/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "LUMIA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MAGMA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MANA/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MANTA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MASK/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MEGA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MERL/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MET/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ME/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "MINA/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MIRA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "MMT/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MON/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MOODENG/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MORPHO/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MOVE/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "MOVR/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "M/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "crowded_long",
+      "risk_modifier": 0.5
+    },
+    "MVLL/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "MYX/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "NAORIS/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "NEAR/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "NIGHT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "NOM/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "NOT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "OGN/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "OG/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ONDO/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ONG/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "OPEN/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "OPG/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "OPN/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "OP/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ORCA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ORDI/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "O/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "PARTI/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "PAXG/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "PENDLE/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "PENGU/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "PHAROS/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "PIEVERSE/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "PIPPIN/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "PLUME/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "PNUT/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "POL/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "POPCAT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "PORTAL/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "POWER/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "POWR/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "PRL/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "PUMP/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "PYTH/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "QNTX/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "RAVE/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "RAYSOL/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "RENDER/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "RESOLV/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "RIF/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "crowded_long",
+      "risk_modifier": 0.5
+    },
+    "RIVER/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ROBO/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "RPL/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "SAGA/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "SAHARA/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "SAND/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "SCRT/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "SEI/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "SIREN/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "crowded_long",
+      "risk_modifier": 0.5
+    },
+    "SKYAI/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "SKY/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "SLP/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "SLX/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "SNX/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "SOL/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "SPX/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "STAR/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "STG/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "STRK/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "S/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "SYN/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "TAC/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "TAIKO/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "TAO/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "THE/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "TIA/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "TNSR/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "TRB/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "TRUMP/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "TRX/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "UAI/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "UB/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "UNI/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "USELESS/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "US/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "VANRY/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "VELVET/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "VIRTUAL/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "VVV/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "WIF/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "WLD/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "WLFI/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "XAUT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "XLM/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "XMR/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "crowded_long",
+      "risk_modifier": 0.5
+    },
+    "XPL/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "XPT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ZBT/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ZEC/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ZEN/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ZKC/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ZKP/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    },
+    "ZK/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.5
+    },
+    "ZRO/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.5
+    }
+  }
+}

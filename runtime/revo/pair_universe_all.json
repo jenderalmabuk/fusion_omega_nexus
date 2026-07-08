@@ -1,0 +1,1600 @@
+{
+  "pairs": [
+    {
+      "pair": "EVAA/USDT:USDT",
+      "symbol": "EVAAUSDT",
+      "quote_volume": 872331029.4651202,
+      "price_change_pct": 110.18003273322421
+    },
+    {
+      "pair": "TAC/USDT:USDT",
+      "symbol": "TACUSDT",
+      "quote_volume": 215281861.41594616,
+      "price_change_pct": -93.38049818697776
+    },
+    {
+      "pair": "LAB/USDT:USDT",
+      "symbol": "LABUSDT",
+      "quote_volume": 1707834839.1161015,
+      "price_change_pct": -76.47937836222354
+    },
+    {
+      "pair": "EDGE/USDT:USDT",
+      "symbol": "EDGEUSDT",
+      "quote_volume": 215930566.41759998,
+      "price_change_pct": 55.58939993908012
+    },
+    {
+      "pair": "HMSTR/USDT:USDT",
+      "symbol": "HMSTRUSDT",
+      "quote_volume": 43971686.037857585,
+      "price_change_pct": -36.09582389122693
+    },
+    {
+      "pair": "CLO/USDT:USDT",
+      "symbol": "CLOUSDT",
+      "quote_volume": 64356784.01665996,
+      "price_change_pct": 35.170886454779435
+    },
+    {
+      "pair": "GRASS/USDT:USDT",
+      "symbol": "GRASSUSDT",
+      "quote_volume": 27906301.09595001,
+      "price_change_pct": -31.285337353938935
+    },
+    {
+      "pair": "SCRT/USDT:USDT",
+      "symbol": "SCRTUSDT",
+      "quote_volume": 8891707.51233,
+      "price_change_pct": -29.209112798666425
+    },
+    {
+      "pair": "SKYAI/USDT:USDT",
+      "symbol": "SKYAIUSDT",
+      "quote_volume": 31848066.128620006,
+      "price_change_pct": -26.438933083762272
+    },
+    {
+      "pair": "ESPORTS/USDT:USDT",
+      "symbol": "ESPORTSUSDT",
+      "quote_volume": 18758002.146999996,
+      "price_change_pct": -25.978312116925984
+    },
+    {
+      "pair": "JTO/USDT:USDT",
+      "symbol": "JTOUSDT",
+      "quote_volume": 43546823.5516,
+      "price_change_pct": -22.161265628986992
+    },
+    {
+      "pair": "ARX/USDT:USDT",
+      "symbol": "ARXUSDT",
+      "quote_volume": 40948898.49249999,
+      "price_change_pct": -19.67871485943775
+    },
+    {
+      "pair": "MYX/USDT:USDT",
+      "symbol": "MYXUSDT",
+      "quote_volume": 12446274.735379998,
+      "price_change_pct": -19.17808219178082
+    },
+    {
+      "pair": "UB/USDT:USDT",
+      "symbol": "UBUSDT",
+      "quote_volume": 9880906.52167,
+      "price_change_pct": -18.606321839080454
+    },
+    {
+      "pair": "SIREN/USDT:USDT",
+      "symbol": "SIRENUSDT",
+      "quote_volume": 17704622.394379996,
+      "price_change_pct": -18.54934601664685
+    },
+    {
+      "pair": "UAI/USDT:USDT",
+      "symbol": "UAIUSDT",
+      "quote_volume": 18065453.533500005,
+      "price_change_pct": 18.258164852255042
+    },
+    {
+      "pair": "BSB/USDT:USDT",
+      "symbol": "BSBUSDT",
+      "quote_volume": 15470978.523580007,
+      "price_change_pct": -16.644263923791712
+    },
+    {
+      "pair": "OPG/USDT:USDT",
+      "symbol": "OPGUSDT",
+      "quote_volume": 27553769.942199983,
+      "price_change_pct": -15.988779803646569
+    },
+    {
+      "pair": "GUA/USDT:USDT",
+      "symbol": "GUAUSDT",
+      "quote_volume": 8369801.57812,
+      "price_change_pct": -15.51155115511551
+    },
+    {
+      "pair": "BILL/USDT:USDT",
+      "symbol": "BILLUSDT",
+      "quote_volume": 6956724.892589998,
+      "price_change_pct": -15.083025830258311
+    },
+    {
+      "pair": "CATI/USDT:USDT",
+      "symbol": "CATIUSDT",
+      "quote_volume": 5787829.266250004,
+      "price_change_pct": -14.846259752179902
+    },
+    {
+      "pair": "GWEI/USDT:USDT",
+      "symbol": "GWEIUSDT",
+      "quote_volume": 22248350.69299202,
+      "price_change_pct": -14.84375
+    },
+    {
+      "pair": "STAR/USDT:USDT",
+      "symbol": "STARUSDT",
+      "quote_volume": 2223785.6678799987,
+      "price_change_pct": -14.798824728668226
+    },
+    {
+      "pair": "OPN/USDT:USDT",
+      "symbol": "OPNUSDT",
+      "quote_volume": 6140864.479300005,
+      "price_change_pct": -14.75360576923076
+    },
+    {
+      "pair": "BEAT/USDT:USDT",
+      "symbol": "BEATUSDT",
+      "quote_volume": 18984170.817800015,
+      "price_change_pct": -14.2912924638813
+    },
+    {
+      "pair": "CAP/USDT:USDT",
+      "symbol": "CAPUSDT",
+      "quote_volume": 14200433.372600008,
+      "price_change_pct": -13.546160483175152
+    },
+    {
+      "pair": "BIRB/USDT:USDT",
+      "symbol": "BIRBUSDT",
+      "quote_volume": 6639348.623239999,
+      "price_change_pct": -13.28805551454304
+    },
+    {
+      "pair": "POWER/USDT:USDT",
+      "symbol": "POWERUSDT",
+      "quote_volume": 8865317.865410002,
+      "price_change_pct": 13.000938212035917
+    },
+    {
+      "pair": "ZKP/USDT:USDT",
+      "symbol": "ZKPUSDT",
+      "quote_volume": 7689024.988029994,
+      "price_change_pct": -12.633058847158074
+    },
+    {
+      "pair": "XPL/USDT:USDT",
+      "symbol": "XPLUSDT",
+      "quote_volume": 40926865.661620006,
+      "price_change_pct": -12.333930085743905
+    },
+    {
+      "pair": "MANTA/USDT:USDT",
+      "symbol": "MANTAUSDT",
+      "quote_volume": 7070628.218736003,
+      "price_change_pct": -12.305740564541711
+    },
+    {
+      "pair": "LIT/USDT:USDT",
+      "symbol": "LITUSDT",
+      "quote_volume": 77882442.53454007,
+      "price_change_pct": -12.192222136994712
+    },
+    {
+      "pair": "MVLL/USDT:USDT",
+      "symbol": "MVLLUSDT",
+      "quote_volume": 11700458.540700002,
+      "price_change_pct": -12.0
+    },
+    {
+      "pair": "AERO/USDT:USDT",
+      "symbol": "AEROUSDT",
+      "quote_volume": 18760166.907650013,
+      "price_change_pct": -11.923796564041488
+    },
+    {
+      "pair": "THE/USDT:USDT",
+      "symbol": "THEUSDT",
+      "quote_volume": 3481895.211452002,
+      "price_change_pct": -11.74103237095363
+    },
+    {
+      "pair": "MAGMA/USDT:USDT",
+      "symbol": "MAGMAUSDT",
+      "quote_volume": 26959731.943999995,
+      "price_change_pct": -11.723017865052421
+    },
+    {
+      "pair": "SYN/USDT:USDT",
+      "symbol": "SYNUSDT",
+      "quote_volume": 51837957.946019985,
+      "price_change_pct": 11.471251409244655
+    },
+    {
+      "pair": "USELESS/USDT:USDT",
+      "symbol": "USELESSUSDT",
+      "quote_volume": 9985612.627359996,
+      "price_change_pct": -11.158752277843288
+    },
+    {
+      "pair": "VELVET/USDT:USDT",
+      "symbol": "VELVETUSDT",
+      "quote_volume": 43046110.01158002,
+      "price_change_pct": -10.832260832260832
+    },
+    {
+      "pair": "FLNC/USDT:USDT",
+      "symbol": "FLNCUSDT",
+      "quote_volume": 7300539.521299997,
+      "price_change_pct": -10.80459770114942
+    },
+    {
+      "pair": "BLESS/USDT:USDT",
+      "symbol": "BLESSUSDT",
+      "quote_volume": 3363756.5955559993,
+      "price_change_pct": -10.584123814278579
+    },
+    {
+      "pair": "BLUAI/USDT:USDT",
+      "symbol": "BLUAIUSDT",
+      "quote_volume": 3963276.1385950004,
+      "price_change_pct": 10.518580726432925
+    },
+    {
+      "pair": "MMT/USDT:USDT",
+      "symbol": "MMTUSDT",
+      "quote_volume": 6734211.5116,
+      "price_change_pct": 10.432931156848824
+    },
+    {
+      "pair": "MET/USDT:USDT",
+      "symbol": "METUSDT",
+      "quote_volume": 3844915.066700002,
+      "price_change_pct": -10.231425091352019
+    },
+    {
+      "pair": "BICO/USDT:USDT",
+      "symbol": "BICOUSDT",
+      "quote_volume": 5475416.3265700005,
+      "price_change_pct": -10.214703968770333
+    },
+    {
+      "pair": "GOAT/USDT:USDT",
+      "symbol": "GOATUSDT",
+      "quote_volume": 1303778.5095400005,
+      "price_change_pct": -9.912926992632286
+    },
+    {
+      "pair": "MOVE/USDT:USDT",
+      "symbol": "MOVEUSDT",
+      "quote_volume": 4160229.6714899996,
+      "price_change_pct": -9.80392156862745
+    },
+    {
+      "pair": "APE/USDT:USDT",
+      "symbol": "APEUSDT",
+      "quote_volume": 15057158.340799995,
+      "price_change_pct": 9.700948212983217
+    },
+    {
+      "pair": "BE/USDT:USDT",
+      "symbol": "BEUSDT",
+      "quote_volume": 11984860.132299993,
+      "price_change_pct": -9.680152510061424
+    },
+    {
+      "pair": "ENJ/USDT:USDT",
+      "symbol": "ENJUSDT",
+      "quote_volume": 7009973.410889999,
+      "price_change_pct": -9.663865546218487
+    },
+    {
+      "pair": "EDEN/USDT:USDT",
+      "symbol": "EDENUSDT",
+      "quote_volume": 3381345.284679997,
+      "price_change_pct": -9.636118598382737
+    },
+    {
+      "pair": "RAVE/USDT:USDT",
+      "symbol": "RAVEUSDT",
+      "quote_volume": 18658819.522299983,
+      "price_change_pct": -9.597625329815306
+    },
+    {
+      "pair": "ASTS/USDT:USDT",
+      "symbol": "ASTSUSDT",
+      "quote_volume": 6594927.8107999945,
+      "price_change_pct": -9.58470498860472
+    },
+    {
+      "pair": "NAORIS/USDT:USDT",
+      "symbol": "NAORISUSDT",
+      "quote_volume": 1602986.3283999998,
+      "price_change_pct": -9.480874316939891
+    },
+    {
+      "pair": "ZK/USDT:USDT",
+      "symbol": "ZKUSDT",
+      "quote_volume": 6777589.609769998,
+      "price_change_pct": -9.44881889763779
+    },
+    {
+      "pair": "ETHFI/USDT:USDT",
+      "symbol": "ETHFIUSDT",
+      "quote_volume": 21769778.53212,
+      "price_change_pct": -9.30501039021011
+    },
+    {
+      "pair": "AKE/USDT:USDT",
+      "symbol": "AKEUSDT",
+      "quote_volume": 13804669.411665114,
+      "price_change_pct": -9.176470588235286
+    },
+    {
+      "pair": "JUP/USDT:USDT",
+      "symbol": "JUPUSDT",
+      "quote_volume": 20221974.375500012,
+      "price_change_pct": -9.171224232225484
+    },
+    {
+      "pair": "FARTCOIN/USDT:USDT",
+      "symbol": "FARTCOINUSDT",
+      "quote_volume": 35647154.32611999,
+      "price_change_pct": -9.158415841584144
+    },
+    {
+      "pair": "PIPPIN/USDT:USDT",
+      "symbol": "PIPPINUSDT",
+      "quote_volume": 9796857.537019994,
+      "price_change_pct": -9.155701754385959
+    },
+    {
+      "pair": "M/USDT:USDT",
+      "symbol": "MUSDT",
+      "quote_volume": 24434912.15939999,
+      "price_change_pct": -9.09944343861062
+    },
+    {
+      "pair": "PUMP/USDT:USDT",
+      "symbol": "PUMPUSDT",
+      "quote_volume": 54516548.93601197,
+      "price_change_pct": -9.040928527794744
+    },
+    {
+      "pair": "AGT/USDT:USDT",
+      "symbol": "AGTUSDT",
+      "quote_volume": 2973507.604655002,
+      "price_change_pct": -8.979591836734702
+    },
+    {
+      "pair": "BIO/USDT:USDT",
+      "symbol": "BIOUSDT",
+      "quote_volume": 8107165.8679,
+      "price_change_pct": -8.716944172380025
+    },
+    {
+      "pair": "LDO/USDT:USDT",
+      "symbol": "LDOUSDT",
+      "quote_volume": 68474937.86839998,
+      "price_change_pct": 8.51063829787233
+    },
+    {
+      "pair": "PYTH/USDT:USDT",
+      "symbol": "PYTHUSDT",
+      "quote_volume": 14080858.270800008,
+      "price_change_pct": -8.486439195100603
+    },
+    {
+      "pair": "BERA/USDT:USDT",
+      "symbol": "BERAUSDT",
+      "quote_volume": 8035046.092030002,
+      "price_change_pct": -8.477011494252885
+    },
+    {
+      "pair": "ROBO/USDT:USDT",
+      "symbol": "ROBOUSDT",
+      "quote_volume": 8295866.3315699985,
+      "price_change_pct": -8.2779009608278
+    },
+    {
+      "pair": "STG/USDT:USDT",
+      "symbol": "STGUSDT",
+      "quote_volume": 9204492.77160001,
+      "price_change_pct": -8.266818700114031
+    },
+    {
+      "pair": "BSV/USDT:USDT",
+      "symbol": "BSVUSDT",
+      "quote_volume": 1650586.0589999992,
+      "price_change_pct": -8.227848101265822
+    },
+    {
+      "pair": "CHIP/USDT:USDT",
+      "symbol": "CHIPUSDT",
+      "quote_volume": 39473814.92603,
+      "price_change_pct": -8.196721311475407
+    },
+    {
+      "pair": "VANRY/USDT:USDT",
+      "symbol": "VANRYUSDT",
+      "quote_volume": 133765961.56623398,
+      "price_change_pct": -8.191653786707887
+    },
+    {
+      "pair": "0G/USDT:USDT",
+      "symbol": "0GUSDT",
+      "quote_volume": 5563828.028599999,
+      "price_change_pct": -8.19112627986348
+    },
+    {
+      "pair": "DEEP/USDT:USDT",
+      "symbol": "DEEPUSDT",
+      "quote_volume": 1361451.2531599998,
+      "price_change_pct": -8.119658119658125
+    },
+    {
+      "pair": "MIRA/USDT:USDT",
+      "symbol": "MIRAUSDT",
+      "quote_volume": 6071497.647389998,
+      "price_change_pct": -8.074265975820383
+    },
+    {
+      "pair": "RAYSOL/USDT:USDT",
+      "symbol": "RAYSOLUSDT",
+      "quote_volume": 1796667.4106900003,
+      "price_change_pct": -8.006021623101134
+    },
+    {
+      "pair": "BZ/USDT:USDT",
+      "symbol": "BZUSDT",
+      "quote_volume": 261121200.83730015,
+      "price_change_pct": 7.946563834182618
+    },
+    {
+      "pair": "1000BONK/USDT:USDT",
+      "symbol": "1000BONKUSDT",
+      "quote_volume": 27783864.975360017,
+      "price_change_pct": -7.904022582921655
+    },
+    {
+      "pair": "LUMIA/USDT:USDT",
+      "symbol": "LUMIAUSDT",
+      "quote_volume": 3864279.402757003,
+      "price_change_pct": -7.8833067902128295
+    },
+    {
+      "pair": "ATH/USDT:USDT",
+      "symbol": "ATHUSDT",
+      "quote_volume": 2575369.870601001,
+      "price_change_pct": -7.782445279681626
+    },
+    {
+      "pair": "PLUME/USDT:USDT",
+      "symbol": "PLUMEUSDT",
+      "quote_volume": 2219976.6582599976,
+      "price_change_pct": -7.721280602636527
+    },
+    {
+      "pair": "NOM/USDT:USDT",
+      "symbol": "NOMUSDT",
+      "quote_volume": 4207841.973674999,
+      "price_change_pct": -7.564026206075036
+    },
+    {
+      "pair": "GMT/USDT:USDT",
+      "symbol": "GMTUSDT",
+      "quote_volume": 3099945.4891100023,
+      "price_change_pct": -7.365792759051182
+    },
+    {
+      "pair": "PORTAL/USDT:USDT",
+      "symbol": "PORTALUSDT",
+      "quote_volume": 3100676.273472001,
+      "price_change_pct": -7.281553398058249
+    },
+    {
+      "pair": "BMNR/USDT:USDT",
+      "symbol": "BMNRUSDT",
+      "quote_volume": 5739557.289699997,
+      "price_change_pct": -7.26688102893891
+    },
+    {
+      "pair": "GALA/USDT:USDT",
+      "symbol": "GALAUSDT",
+      "quote_volume": 12524008.186273,
+      "price_change_pct": -7.162162162162177
+    },
+    {
+      "pair": "NEAR/USDT:USDT",
+      "symbol": "NEARUSDT",
+      "quote_volume": 157308430.03600007,
+      "price_change_pct": -7.157057654075539
+    },
+    {
+      "pair": "ALLO/USDT:USDT",
+      "symbol": "ALLOUSDT",
+      "quote_volume": 41923216.26253996,
+      "price_change_pct": -7.151280720788722
+    },
+    {
+      "pair": "CHZ/USDT:USDT",
+      "symbol": "CHZUSDT",
+      "quote_volume": 14307521.689050002,
+      "price_change_pct": -7.106883044208168
+    },
+    {
+      "pair": "IRYS/USDT:USDT",
+      "symbol": "IRYSUSDT",
+      "quote_volume": 1270615.0248099994,
+      "price_change_pct": -7.0115724982981575
+    },
+    {
+      "pair": "RPL/USDT:USDT",
+      "symbol": "RPLUSDT",
+      "quote_volume": 4102688.922300001,
+      "price_change_pct": -6.94294940796556
+    },
+    {
+      "pair": "WIF/USDT:USDT",
+      "symbol": "WIFUSDT",
+      "quote_volume": 18448942.584119994,
+      "price_change_pct": -6.917113893858085
+    },
+    {
+      "pair": "NOT/USDT:USDT",
+      "symbol": "NOTUSDT",
+      "quote_volume": 3332087.5423756004,
+      "price_change_pct": -6.8560235063663155
+    },
+    {
+      "pair": "OP/USDT:USDT",
+      "symbol": "OPUSDT",
+      "quote_volume": 26479902.958910007,
+      "price_change_pct": -6.78127984718242
+    },
+    {
+      "pair": "SEI/USDT:USDT",
+      "symbol": "SEIUSDT",
+      "quote_volume": 11574653.969160005,
+      "price_change_pct": -6.764351665997603
+    },
+    {
+      "pair": "QNTX/USDT:USDT",
+      "symbol": "QNTXUSDT",
+      "quote_volume": 3202324.7816000003,
+      "price_change_pct": -6.757086999022488
+    },
+    {
+      "pair": "H/USDT:USDT",
+      "symbol": "HUSDT",
+      "quote_volume": 9419545.680759998,
+      "price_change_pct": -6.701964609168165
+    },
+    {
+      "pair": "KITE/USDT:USDT",
+      "symbol": "KITEUSDT",
+      "quote_volume": 10138908.893290007,
+      "price_change_pct": -6.667780748663099
+    },
+    {
+      "pair": "AKT/USDT:USDT",
+      "symbol": "AKTUSDT",
+      "quote_volume": 1831230.0562099996,
+      "price_change_pct": -6.628056628056633
+    },
+    {
+      "pair": "PENGU/USDT:USDT",
+      "symbol": "PENGUUSDT",
+      "quote_volume": 27757143.20682398,
+      "price_change_pct": -6.569343065693434
+    },
+    {
+      "pair": "TNSR/USDT:USDT",
+      "symbol": "TNSRUSDT",
+      "quote_volume": 4721243.919483997,
+      "price_change_pct": -6.286043829296428
+    },
+    {
+      "pair": "ARPA/USDT:USDT",
+      "symbol": "ARPAUSDT",
+      "quote_volume": 4569637.293360001,
+      "price_change_pct": -6.222222222222218
+    },
+    {
+      "pair": "ADA/USDT:USDT",
+      "symbol": "ADAUSDT",
+      "quote_volume": 163840235.71550018,
+      "price_change_pct": -6.207674943566599
+    },
+    {
+      "pair": "DYM/USDT:USDT",
+      "symbol": "DYMUSDT",
+      "quote_volume": 1370545.010209001,
+      "price_change_pct": -6.2073246430788265
+    },
+    {
+      "pair": "SAGA/USDT:USDT",
+      "symbol": "SAGAUSDT",
+      "quote_volume": 2359404.490320998,
+      "price_change_pct": -6.142322097378283
+    },
+    {
+      "pair": "AIXBT/USDT:USDT",
+      "symbol": "AIXBTUSDT",
+      "quote_volume": 1452241.9069299994,
+      "price_change_pct": -6.110823407560851
+    },
+    {
+      "pair": "CC/USDT:USDT",
+      "symbol": "CCUSDT",
+      "quote_volume": 5325013.2090700045,
+      "price_change_pct": -5.962686567164177
+    },
+    {
+      "pair": "TRB/USDT:USDT",
+      "symbol": "TRBUSDT",
+      "quote_volume": 8052178.694099997,
+      "price_change_pct": -5.9432288586635185
+    },
+    {
+      "pair": "MOODENG/USDT:USDT",
+      "symbol": "MOODENGUSDT",
+      "quote_volume": 2689947.460020001,
+      "price_change_pct": -5.855421686746986
+    },
+    {
+      "pair": "GIGGLE/USDT:USDT",
+      "symbol": "GIGGLEUSDT",
+      "quote_volume": 8826893.8792,
+      "price_change_pct": -5.834262356001485
+    },
+    {
+      "pair": "BASED/USDT:USDT",
+      "symbol": "BASEDUSDT",
+      "quote_volume": 15595629.091910003,
+      "price_change_pct": -5.8149977548271226
+    },
+    {
+      "pair": "AAVE/USDT:USDT",
+      "symbol": "AAVEUSDT",
+      "quote_volume": 92653907.812,
+      "price_change_pct": -5.774617539323423
+    },
+    {
+      "pair": "SAHARA/USDT:USDT",
+      "symbol": "SAHARAUSDT",
+      "quote_volume": 8629603.575129999,
+      "price_change_pct": -5.736137667304009
+    },
+    {
+      "pair": "NIGHT/USDT:USDT",
+      "symbol": "NIGHTUSDT",
+      "quote_volume": 2762965.6857800004,
+      "price_change_pct": -5.733808674985152
+    },
+    {
+      "pair": "POPCAT/USDT:USDT",
+      "symbol": "POPCATUSDT",
+      "quote_volume": 1999495.1970000004,
+      "price_change_pct": -5.703809329802412
+    },
+    {
+      "pair": "FET/USDT:USDT",
+      "symbol": "FETUSDT",
+      "quote_volume": 37937301.6669,
+      "price_change_pct": -5.69203115638105
+    },
+    {
+      "pair": "CROSS/USDT:USDT",
+      "symbol": "CROSSUSDT",
+      "quote_volume": 630590.0530700005,
+      "price_change_pct": -5.6899696048632205
+    },
+    {
+      "pair": "HEI/USDT:USDT",
+      "symbol": "HEIUSDT",
+      "quote_volume": 15997385.647124998,
+      "price_change_pct": -5.670967271667038
+    },
+    {
+      "pair": "KSM/USDT:USDT",
+      "symbol": "KSMUSDT",
+      "quote_volume": 1752736.0291999995,
+      "price_change_pct": -5.655907610305
+    },
+    {
+      "pair": "RIVER/USDT:USDT",
+      "symbol": "RIVERUSDT",
+      "quote_volume": 9684333.967500001,
+      "price_change_pct": -5.616797900262471
+    },
+    {
+      "pair": "ACT/USDT:USDT",
+      "symbol": "ACTUSDT",
+      "quote_volume": 4153628.509439999,
+      "price_change_pct": -5.5555555555555465
+    },
+    {
+      "pair": "STRK/USDT:USDT",
+      "symbol": "STRKUSDT",
+      "quote_volume": 5293319.926762002,
+      "price_change_pct": -5.552010210593483
+    },
+    {
+      "pair": "GRAM/USDT:USDT",
+      "symbol": "GRAMUSDT",
+      "quote_volume": 18664267.465999987,
+      "price_change_pct": -5.47945205479452
+    },
+    {
+      "pair": "XLM/USDT:USDT",
+      "symbol": "XLMUSDT",
+      "quote_volume": 62447683.32714001,
+      "price_change_pct": -5.401769545195845
+    },
+    {
+      "pair": "HYPER/USDT:USDT",
+      "symbol": "HYPERUSDT",
+      "quote_volume": 2894963.4430200006,
+      "price_change_pct": -5.393444890056697
+    },
+    {
+      "pair": "KLAC/USDT:USDT",
+      "symbol": "KLACUSDT",
+      "quote_volume": 3028513.4958000006,
+      "price_change_pct": -5.382397982163778
+    },
+    {
+      "pair": "CELO/USDT:USDT",
+      "symbol": "CELOUSDT",
+      "quote_volume": 3120998.87928,
+      "price_change_pct": -5.362505362505365
+    },
+    {
+      "pair": "AVNT/USDT:USDT",
+      "symbol": "AVNTUSDT",
+      "quote_volume": 5295795.4568,
+      "price_change_pct": -5.360824742268033
+    },
+    {
+      "pair": "WLFI/USDT:USDT",
+      "symbol": "WLFIUSDT",
+      "quote_volume": 24915992.340479985,
+      "price_change_pct": -5.330700888450146
+    },
+    {
+      "pair": "AVAX/USDT:USDT",
+      "symbol": "AVAXUSDT",
+      "quote_volume": 79714919.216,
+      "price_change_pct": -5.301240401653873
+    },
+    {
+      "pair": "KAITO/USDT:USDT",
+      "symbol": "KAITOUSDT",
+      "quote_volume": 35319702.85421999,
+      "price_change_pct": 5.286059629331175
+    },
+    {
+      "pair": "BBX/USDT:USDT",
+      "symbol": "BBXUSDT",
+      "quote_volume": 4648627.2014,
+      "price_change_pct": -5.220522052205223
+    },
+    {
+      "pair": "TAIKO/USDT:USDT",
+      "symbol": "TAIKOUSDT",
+      "quote_volume": 9686712.620099999,
+      "price_change_pct": -5.2143684820394
+    },
+    {
+      "pair": "MINA/USDT:USDT",
+      "symbol": "MINAUSDT",
+      "quote_volume": 2159501.3031700007,
+      "price_change_pct": -5.1664284255666715
+    },
+    {
+      "pair": "GLW/USDT:USDT",
+      "symbol": "GLWUSDT",
+      "quote_volume": 37662212.6342,
+      "price_change_pct": -5.128753071909387
+    },
+    {
+      "pair": "BEL/USDT:USDT",
+      "symbol": "BELUSDT",
+      "quote_volume": 13233269.064039996,
+      "price_change_pct": -5.02456261311729
+    },
+    {
+      "pair": "EPIC/USDT:USDT",
+      "symbol": "EPICUSDT",
+      "quote_volume": 43218271.620749995,
+      "price_change_pct": -5.001437194596137
+    },
+    {
+      "pair": "PHAROS/USDT:USDT",
+      "symbol": "PHAROSUSDT",
+      "quote_volume": 3184337.4747,
+      "price_change_pct": -4.955281605027806
+    },
+    {
+      "pair": "OPEN/USDT:USDT",
+      "symbol": "OPENUSDT",
+      "quote_volume": 3179324.5422999985,
+      "price_change_pct": -4.951768488745989
+    },
+    {
+      "pair": "HYPE/USDT:USDT",
+      "symbol": "HYPEUSDT",
+      "quote_volume": 559489334.1522603,
+      "price_change_pct": -4.856926655643045
+    },
+    {
+      "pair": "US/USDT:USDT",
+      "symbol": "USUSDT",
+      "quote_volume": 9812869.610449998,
+      "price_change_pct": -4.83421785507856
+    },
+    {
+      "pair": "AERGO/USDT:USDT",
+      "symbol": "AERGOUSDT",
+      "quote_volume": 1619928.9063299983,
+      "price_change_pct": -4.830508474576267
+    },
+    {
+      "pair": "SKY/USDT:USDT",
+      "symbol": "SKYUSDT",
+      "quote_volume": 4920362.977920002,
+      "price_change_pct": -4.778156996587024
+    },
+    {
+      "pair": "TRUMP/USDT:USDT",
+      "symbol": "TRUMPUSDT",
+      "quote_volume": 48178348.18197997,
+      "price_change_pct": -4.764776839565743
+    },
+    {
+      "pair": "LINEA/USDT:USDT",
+      "symbol": "LINEAUSDT",
+      "quote_volume": 1459495.891865,
+      "price_change_pct": -4.748376623376616
+    },
+    {
+      "pair": "BOME/USDT:USDT",
+      "symbol": "BOMEUSDT",
+      "quote_volume": 2183558.235052498,
+      "price_change_pct": -4.726075711262634
+    },
+    {
+      "pair": "ID/USDT:USDT",
+      "symbol": "IDUSDT",
+      "quote_volume": 17896656.617210016,
+      "price_change_pct": -4.653594771241821
+    },
+    {
+      "pair": "SOL/USDT:USDT",
+      "symbol": "SOLUSDT",
+      "quote_volume": 1614941712.8440998,
+      "price_change_pct": -4.598837928050436
+    },
+    {
+      "pair": "1000PEPE/USDT:USDT",
+      "symbol": "1000PEPEUSDT",
+      "quote_volume": 140599057.41527614,
+      "price_change_pct": -4.582110074696189
+    },
+    {
+      "pair": "ZRO/USDT:USDT",
+      "symbol": "ZROUSDT",
+      "quote_volume": 10927741.974459995,
+      "price_change_pct": -4.569596151919031
+    },
+    {
+      "pair": "IN/USDT:USDT",
+      "symbol": "INUSDT",
+      "quote_volume": 8580260.068229998,
+      "price_change_pct": -4.566498316498313
+    },
+    {
+      "pair": "CAKE/USDT:USDT",
+      "symbol": "CAKEUSDT",
+      "quote_volume": 6915112.561500003,
+      "price_change_pct": -4.549313711617375
+    },
+    {
+      "pair": "CHILLGUY/USDT:USDT",
+      "symbol": "CHILLGUYUSDT",
+      "quote_volume": 1233608.3168390002,
+      "price_change_pct": -4.516806722689082
+    },
+    {
+      "pair": "ZKC/USDT:USDT",
+      "symbol": "ZKCUSDT",
+      "quote_volume": 1927717.1511500003,
+      "price_change_pct": -4.515984797674943
+    },
+    {
+      "pair": "RENDER/USDT:USDT",
+      "symbol": "RENDERUSDT",
+      "quote_volume": 11661483.534199992,
+      "price_change_pct": -4.5000000000000036
+    },
+    {
+      "pair": "WLD/USDT:USDT",
+      "symbol": "WLDUSDT",
+      "quote_volume": 149064271.90240002,
+      "price_change_pct": -4.4489900281258095
+    },
+    {
+      "pair": "VIRTUAL/USDT:USDT",
+      "symbol": "VIRTUALUSDT",
+      "quote_volume": 15134617.944870012,
+      "price_change_pct": -4.367053620784955
+    },
+    {
+      "pair": "ARKM/USDT:USDT",
+      "symbol": "ARKMUSDT",
+      "quote_volume": 2102976.615,
+      "price_change_pct": -4.359197907584999
+    },
+    {
+      "pair": "MASK/USDT:USDT",
+      "symbol": "MASKUSDT",
+      "quote_volume": 1245673.7103999993,
+      "price_change_pct": -4.345761101876033
+    },
+    {
+      "pair": "EGLD/USDT:USDT",
+      "symbol": "EGLDUSDT",
+      "quote_volume": 2237362.2798,
+      "price_change_pct": -4.34009249377445
+    },
+    {
+      "pair": "JASMY/USDT:USDT",
+      "symbol": "JASMYUSDT",
+      "quote_volume": 3335416.370164999,
+      "price_change_pct": -4.335387323943662
+    },
+    {
+      "pair": "MORPHO/USDT:USDT",
+      "symbol": "MORPHOUSDT",
+      "quote_volume": 10752502.563819995,
+      "price_change_pct": 4.32677911967263
+    },
+    {
+      "pair": "S/USDT:USDT",
+      "symbol": "SUSDT",
+      "quote_volume": 3805228.0856500003,
+      "price_change_pct": -4.317921283912874
+    },
+    {
+      "pair": "XPT/USDT:USDT",
+      "symbol": "XPTUSDT",
+      "quote_volume": 10793816.743670002,
+      "price_change_pct": -4.30706497005443
+    },
+    {
+      "pair": "4/USDT:USDT",
+      "symbol": "4USDT",
+      "quote_volume": 6258360.737896005,
+      "price_change_pct": -4.295377677564815
+    },
+    {
+      "pair": "AMAT/USDT:USDT",
+      "symbol": "AMATUSDT",
+      "quote_volume": 8712077.922699997,
+      "price_change_pct": -4.269458189678266
+    },
+    {
+      "pair": "SNX/USDT:USDT",
+      "symbol": "SNXUSDT",
+      "quote_volume": 2598591.4165700017,
+      "price_change_pct": -4.18521816562778
+    },
+    {
+      "pair": "TAO/USDT:USDT",
+      "symbol": "TAOUSDT",
+      "quote_volume": 87475867.52247001,
+      "price_change_pct": -4.167056840528138
+    },
+    {
+      "pair": "FORM/USDT:USDT",
+      "symbol": "FORMUSDT",
+      "quote_volume": 1239717.7231099992,
+      "price_change_pct": -4.162724692526021
+    },
+    {
+      "pair": "MON/USDT:USDT",
+      "symbol": "MONUSDT",
+      "quote_volume": 21559375.995689984,
+      "price_change_pct": -4.158255954784007
+    },
+    {
+      "pair": "SAND/USDT:USDT",
+      "symbol": "SANDUSDT",
+      "quote_volume": 6066795.14234,
+      "price_change_pct": -4.13389796329906
+    },
+    {
+      "pair": "PNUT/USDT:USDT",
+      "symbol": "PNUTUSDT",
+      "quote_volume": 2736912.1512400014,
+      "price_change_pct": -4.071991001124875
+    },
+    {
+      "pair": "HAEDAL/USDT:USDT",
+      "symbol": "HAEDALUSDT",
+      "quote_volume": 979500.9995900001,
+      "price_change_pct": -4.065998821449613
+    },
+    {
+      "pair": "FOLKS/USDT:USDT",
+      "symbol": "FOLKSUSDT",
+      "quote_volume": 2450391.946799998,
+      "price_change_pct": -4.05752439650745
+    },
+    {
+      "pair": "ONDO/USDT:USDT",
+      "symbol": "ONDOUSDT",
+      "quote_volume": 38336383.719320014,
+      "price_change_pct": -3.9672925499697143
+    },
+    {
+      "pair": "APT/USDT:USDT",
+      "symbol": "APTUSDT",
+      "quote_volume": 37069721.18668001,
+      "price_change_pct": -3.937500000000005
+    },
+    {
+      "pair": "DOGE/USDT:USDT",
+      "symbol": "DOGEUSDT",
+      "quote_volume": 276268723.89273,
+      "price_change_pct": -3.9291940458629493
+    },
+    {
+      "pair": "LITE/USDT:USDT",
+      "symbol": "LITEUSDT",
+      "quote_volume": 29062277.29399997,
+      "price_change_pct": -3.89437447760983
+    },
+    {
+      "pair": "ORCA/USDT:USDT",
+      "symbol": "ORCAUSDT",
+      "quote_volume": 5027114.685799999,
+      "price_change_pct": -3.8919777601270744
+    },
+    {
+      "pair": "ENS/USDT:USDT",
+      "symbol": "ENSUSDT",
+      "quote_volume": 6314063.353199999,
+      "price_change_pct": -3.891143470995473
+    },
+    {
+      "pair": "ALICE/USDT:USDT",
+      "symbol": "ALICEUSDT",
+      "quote_volume": 4530848.299719998,
+      "price_change_pct": -3.875379939209722
+    },
+    {
+      "pair": "BREV/USDT:USDT",
+      "symbol": "BREVUSDT",
+      "quote_volume": 3789591.9336199984,
+      "price_change_pct": -3.8733805262454957
+    },
+    {
+      "pair": "FIL/USDT:USDT",
+      "symbol": "FILUSDT",
+      "quote_volume": 47341169.33422001,
+      "price_change_pct": -3.871794871794876
+    },
+    {
+      "pair": "MERL/USDT:USDT",
+      "symbol": "MERLUSDT",
+      "quote_volume": 1250329.9554499995,
+      "price_change_pct": -3.8501026694045204
+    },
+    {
+      "pair": "LINK/USDT:USDT",
+      "symbol": "LINKUSDT",
+      "quote_volume": 75344533.74271004,
+      "price_change_pct": -3.83787207093097
+    },
+    {
+      "pair": "DASH/USDT:USDT",
+      "symbol": "DASHUSDT",
+      "quote_volume": 25320812.702880014,
+      "price_change_pct": -3.7913340935005646
+    },
+    {
+      "pair": "KERNEL/USDT:USDT",
+      "symbol": "KERNELUSDT",
+      "quote_volume": 692527.0188500003,
+      "price_change_pct": -3.727474697605526
+    },
+    {
+      "pair": "DOT/USDT:USDT",
+      "symbol": "DOTUSDT",
+      "quote_volume": 46370061.620299995,
+      "price_change_pct": -3.7122969837587005
+    },
+    {
+      "pair": "GRT/USDT:USDT",
+      "symbol": "GRTUSDT",
+      "quote_volume": 2999054.7147300006,
+      "price_change_pct": -3.707802988378528
+    },
+    {
+      "pair": "ME/USDT:USDT",
+      "symbol": "MEUSDT",
+      "quote_volume": 3174092.7654830003,
+      "price_change_pct": -3.6990398237053412
+    },
+    {
+      "pair": "ENA/USDT:USDT",
+      "symbol": "ENAUSDT",
+      "quote_volume": 77975005.48124996,
+      "price_change_pct": -3.698360655737709
+    },
+    {
+      "pair": "1000LUNC/USDT:USDT",
+      "symbol": "1000LUNCUSDT",
+      "quote_volume": 10553760.436189992,
+      "price_change_pct": -3.6923076923076836
+    },
+    {
+      "pair": "VVV/USDT:USDT",
+      "symbol": "VVVUSDT",
+      "quote_volume": 20376044.171859987,
+      "price_change_pct": -3.6484245439469265
+    },
+    {
+      "pair": "UNI/USDT:USDT",
+      "symbol": "UNIUSDT",
+      "quote_volume": 99057371.90499997,
+      "price_change_pct": 3.5555555555555562
+    },
+    {
+      "pair": "POWR/USDT:USDT",
+      "symbol": "POWRUSDT",
+      "quote_volume": 1492296.6397699998,
+      "price_change_pct": -3.544985416199231
+    },
+    {
+      "pair": "RESOLV/USDT:USDT",
+      "symbol": "RESOLVUSDT",
+      "quote_volume": 7374379.582209996,
+      "price_change_pct": -3.493821900298255
+    },
+    {
+      "pair": "1000SHIB/USDT:USDT",
+      "symbol": "1000SHIBUSDT",
+      "quote_volume": 33362416.749516003,
+      "price_change_pct": -3.491042719338544
+    },
+    {
+      "pair": "A/USDT:USDT",
+      "symbol": "AUSDT",
+      "quote_volume": 2609251.50194,
+      "price_change_pct": 3.487905920085521
+    },
+    {
+      "pair": "CRV/USDT:USDT",
+      "symbol": "CRVUSDT",
+      "quote_volume": 12107479.44932,
+      "price_change_pct": -3.4844868735083523
+    },
+    {
+      "pair": "B/USDT:USDT",
+      "symbol": "BUSDT",
+      "quote_volume": 3328964.604800002,
+      "price_change_pct": -3.458925262507717
+    },
+    {
+      "pair": "BAS/USDT:USDT",
+      "symbol": "BASUSDT",
+      "quote_volume": 11003044.883281007,
+      "price_change_pct": 3.4526953549790296
+    },
+    {
+      "pair": "LA/USDT:USDT",
+      "symbol": "LAUSDT",
+      "quote_volume": 3380580.229187001,
+      "price_change_pct": -3.4269475091942447
+    },
+    {
+      "pair": "GPS/USDT:USDT",
+      "symbol": "GPSUSDT",
+      "quote_volume": 4419274.674163001,
+      "price_change_pct": 3.33297951385203
+    },
+    {
+      "pair": "RIF/USDT:USDT",
+      "symbol": "RIFUSDT",
+      "quote_volume": 29516927.32233002,
+      "price_change_pct": -3.3207169892165878
+    },
+    {
+      "pair": "ARB/USDT:USDT",
+      "symbol": "ARBUSDT",
+      "quote_volume": 23587259.525360003,
+      "price_change_pct": -3.2734683479811566
+    },
+    {
+      "pair": "IMX/USDT:USDT",
+      "symbol": "IMXUSDT",
+      "quote_volume": 2673807.6359,
+      "price_change_pct": -3.2490974729241895
+    },
+    {
+      "pair": "1000FLOKI/USDT:USDT",
+      "symbol": "1000FLOKIUSDT",
+      "quote_volume": 4526262.283059999,
+      "price_change_pct": -3.214596003475234
+    },
+    {
+      "pair": "ATOM/USDT:USDT",
+      "symbol": "ATOMUSDT",
+      "quote_volume": 10059670.090479996,
+      "price_change_pct": -3.2015065913371
+    },
+    {
+      "pair": "ICP/USDT:USDT",
+      "symbol": "ICPUSDT",
+      "quote_volume": 20087831.521999992,
+      "price_change_pct": -3.1795790416480174
+    },
+    {
+      "pair": "INJ/USDT:USDT",
+      "symbol": "INJUSDT",
+      "quote_volume": 28224739.69320001,
+      "price_change_pct": -3.1605562579013924
+    },
+    {
+      "pair": "ALGO/USDT:USDT",
+      "symbol": "ALGOUSDT",
+      "quote_volume": 10622675.931070002,
+      "price_change_pct": -3.103448275862064
+    },
+    {
+      "pair": "ENSO/USDT:USDT",
+      "symbol": "ENSOUSDT",
+      "quote_volume": 7798838.496220004,
+      "price_change_pct": 2.98574643660916
+    },
+    {
+      "pair": "LAYER/USDT:USDT",
+      "symbol": "LAYERUSDT",
+      "quote_volume": 2755037.6015370013,
+      "price_change_pct": -2.9832755763145924
+    },
+    {
+      "pair": "ALT/USDT:USDT",
+      "symbol": "ALTUSDT",
+      "quote_volume": 1750979.488694999,
+      "price_change_pct": -2.7724358974358876
+    },
+    {
+      "pair": "BTW/USDT:USDT",
+      "symbol": "BTWUSDT",
+      "quote_volume": 10023919.038999006,
+      "price_change_pct": -2.7209814407046173
+    },
+    {
+      "pair": "SPX/USDT:USDT",
+      "symbol": "SPXUSDT",
+      "quote_volume": 7128765.855200003,
+      "price_change_pct": -2.7125717266562432
+    },
+    {
+      "pair": "ONG/USDT:USDT",
+      "symbol": "ONGUSDT",
+      "quote_volume": 1592667.2316899996,
+      "price_change_pct": -2.698713894159821
+    },
+    {
+      "pair": "ASTER/USDT:USDT",
+      "symbol": "ASTERUSDT",
+      "quote_volume": 28879270.43939999,
+      "price_change_pct": -2.67505900865459
+    },
+    {
+      "pair": "BNB/USDT:USDT",
+      "symbol": "BNBUSDT",
+      "quote_volume": 232137442.8932001,
+      "price_change_pct": -2.6290317004874164
+    },
+    {
+      "pair": "ORDI/USDT:USDT",
+      "symbol": "ORDIUSDT",
+      "quote_volume": 17588803.231799994,
+      "price_change_pct": -2.505694760820043
+    },
+    {
+      "pair": "OGN/USDT:USDT",
+      "symbol": "OGNUSDT",
+      "quote_volume": 1692186.8292900003,
+      "price_change_pct": -2.500000000000002
+    },
+    {
+      "pair": "KAS/USDT:USDT",
+      "symbol": "KASUSDT",
+      "quote_volume": 1991155.1241100002,
+      "price_change_pct": -2.476255088195378
+    },
+    {
+      "pair": "BARD/USDT:USDT",
+      "symbol": "BARDUSDT",
+      "quote_volume": 2413678.6217999994,
+      "price_change_pct": -2.4672320740169673
+    },
+    {
+      "pair": "OG/USDT:USDT",
+      "symbol": "OGUSDT",
+      "quote_volume": 1548744.6675000002,
+      "price_change_pct": -2.4621212121212155
+    },
+    {
+      "pair": "ZEN/USDT:USDT",
+      "symbol": "ZENUSDT",
+      "quote_volume": 10154413.151499996,
+      "price_change_pct": -2.4442846872753443
+    },
+    {
+      "pair": "AGLD/USDT:USDT",
+      "symbol": "AGLDUSDT",
+      "quote_volume": 44876375.00189998,
+      "price_change_pct": 2.385685884691835
+    },
+    {
+      "pair": "BCH/USDT:USDT",
+      "symbol": "BCHUSDT",
+      "quote_volume": 62057307.261650056,
+      "price_change_pct": -2.225581590660952
+    },
+    {
+      "pair": "MANA/USDT:USDT",
+      "symbol": "MANAUSDT",
+      "quote_volume": 5222537.240449997,
+      "price_change_pct": -2.2206303724928267
+    },
+    {
+      "pair": "PRL/USDT:USDT",
+      "symbol": "PRLUSDT",
+      "quote_volume": 3664345.688600001,
+      "price_change_pct": -2.200220022002186
+    },
+    {
+      "pair": "PAXG/USDT:USDT",
+      "symbol": "PAXGUSDT",
+      "quote_volume": 70857371.01878,
+      "price_change_pct": -2.162712126558164
+    },
+    {
+      "pair": "ETH/USDT:USDT",
+      "symbol": "ETHUSDT",
+      "quote_volume": 7223527779.606751,
+      "price_change_pct": -2.152899824253074
+    },
+    {
+      "pair": "XAUT/USDT:USDT",
+      "symbol": "XAUTUSDT",
+      "quote_volume": 33585820.61013999,
+      "price_change_pct": -2.1294088629449925
+    },
+    {
+      "pair": "SLP/USDT:USDT",
+      "symbol": "SLPUSDT",
+      "quote_volume": 1225377.4227346005,
+      "price_change_pct": -2.0494158207239987
+    },
+    {
+      "pair": "O/USDT:USDT",
+      "symbol": "OUSDT",
+      "quote_volume": 51842159.88219999,
+      "price_change_pct": -2.042266027348616
+    },
+    {
+      "pair": "ZEC/USDT:USDT",
+      "symbol": "ZECUSDT",
+      "quote_volume": 822403090.9837904,
+      "price_change_pct": 2.028571428571424
+    },
+    {
+      "pair": "DEXE/USDT:USDT",
+      "symbol": "DEXEUSDT",
+      "quote_volume": 34649789.543279976,
+      "price_change_pct": 2.0275162925416312
+    },
+    {
+      "pair": "COMP/USDT:USDT",
+      "symbol": "COMPUSDT",
+      "quote_volume": 4313041.8796999995,
+      "price_change_pct": -2.010338885697882
+    },
+    {
+      "pair": "2Z/USDT:USDT",
+      "symbol": "2ZUSDT",
+      "quote_volume": 2191140.35082,
+      "price_change_pct": -1.9510854630392815
+    },
+    {
+      "pair": "HBAR/USDT:USDT",
+      "symbol": "HBARUSDT",
+      "quote_volume": 21108283.395469982,
+      "price_change_pct": -1.9314817425631015
+    },
+    {
+      "pair": "AXS/USDT:USDT",
+      "symbol": "AXSUSDT",
+      "quote_volume": 9962475.815000001,
+      "price_change_pct": -1.8981018981018893
+    },
+    {
+      "pair": "IO/USDT:USDT",
+      "symbol": "IOUSDT",
+      "quote_volume": 4386060.284079999,
+      "price_change_pct": -1.8591549295774668
+    },
+    {
+      "pair": "HOLO/USDT:USDT",
+      "symbol": "HOLOUSDT",
+      "quote_volume": 2085235.0618199992,
+      "price_change_pct": -1.77824267782426
+    },
+    {
+      "pair": "HEMI/USDT:USDT",
+      "symbol": "HEMIUSDT",
+      "quote_volume": 1550282.9339830002,
+      "price_change_pct": -1.778063410454167
+    },
+    {
+      "pair": "BTC/USDT:USDT",
+      "symbol": "BTCUSDT",
+      "quote_volume": 10330830539.782299,
+      "price_change_pct": -1.652747210959371
+    },
+    {
+      "pair": "ZBT/USDT:USDT",
+      "symbol": "ZBTUSDT",
+      "quote_volume": 3965344.54865,
+      "price_change_pct": -1.5881883479648806
+    },
+    {
+      "pair": "JCT/USDT:USDT",
+      "symbol": "JCTUSDT",
+      "quote_volume": 2065511.6575009986,
+      "price_change_pct": 1.5496809480401108
+    },
+    {
+      "pair": "TIA/USDT:USDT",
+      "symbol": "TIAUSDT",
+      "quote_volume": 28142402.94989999,
+      "price_change_pct": 1.4022331861854198
+    },
+    {
+      "pair": "LTC/USDT:USDT",
+      "symbol": "LTCUSDT",
+      "quote_volume": 50560016.31790001,
+      "price_change_pct": -1.3402998636983243
+    },
+    {
+      "pair": "POL/USDT:USDT",
+      "symbol": "POLUSDT",
+      "quote_volume": 9630535.598650001,
+      "price_change_pct": 1.2609503583753456
+    },
+    {
+      "pair": "EIGEN/USDT:USDT",
+      "symbol": "EIGENUSDT",
+      "quote_volume": 18366546.467949998,
+      "price_change_pct": 1.2483281319661144
+    },
+    {
+      "pair": "ETC/USDT:USDT",
+      "symbol": "ETCUSDT",
+      "quote_volume": 15916406.275630005,
+      "price_change_pct": -1.0723477266228243
+    },
+    {
+      "pair": "SLX/USDT:USDT",
+      "symbol": "SLXUSDT",
+      "quote_volume": 57145917.39044999,
+      "price_change_pct": 1.068726522406216
+    },
+    {
+      "pair": "TRX/USDT:USDT",
+      "symbol": "TRXUSDT",
+      "quote_volume": 38820557.542009994,
+      "price_change_pct": -0.9864439603001651
+    },
+    {
+      "pair": "ARC/USDT:USDT",
+      "symbol": "ARCUSDT",
+      "quote_volume": 1879809.6622699997,
+      "price_change_pct": -0.972590627763048
+    },
+    {
+      "pair": "MEGA/USDT:USDT",
+      "symbol": "MEGAUSDT",
+      "quote_volume": 9718464.417520003,
+      "price_change_pct": -0.8837115886724312
+    },
+    {
+      "pair": "PARTI/USDT:USDT",
+      "symbol": "PARTIUSDT",
+      "quote_volume": 1826720.526279999,
+      "price_change_pct": 0.8622547962922944
+    },
+    {
+      "pair": "IOTA/USDT:USDT",
+      "symbol": "IOTAUSDT",
+      "quote_volume": 2842591.6263780007,
+      "price_change_pct": -0.817661488143917
+    },
+    {
+      "pair": "XMR/USDT:USDT",
+      "symbol": "XMRUSDT",
+      "quote_volume": 26162906.61231,
+      "price_change_pct": -0.7164946875287015
+    },
+    {
+      "pair": "AIGENSYN/USDT:USDT",
+      "symbol": "AIGENSYNUSDT",
+      "quote_volume": 12035099.689770004,
+      "price_change_pct": -0.67822155237377
+    },
+    {
+      "pair": "DYDX/USDT:USDT",
+      "symbol": "DYDXUSDT",
+      "quote_volume": 11325861.647529999,
+      "price_change_pct": -0.6249999999999978
+    },
+    {
+      "pair": "HOME/USDT:USDT",
+      "symbol": "HOMEUSDT",
+      "quote_volume": 7386196.906025002,
+      "price_change_pct": 0.3863490019317295
+    },
+    {
+      "pair": "FF/USDT:USDT",
+      "symbol": "FFUSDT",
+      "quote_volume": 6384679.649420001,
+      "price_change_pct": -0.30462007107802114
+    },
+    {
+      "pair": "FLUID/USDT:USDT",
+      "symbol": "FLUIDUSDT",
+      "quote_volume": 3392315.5653,
+      "price_change_pct": -0.2870813397129135
+    },
+    {
+      "pair": "MOVR/USDT:USDT",
+      "symbol": "MOVRUSDT",
+      "quote_volume": 4163740.7372000003,
+      "price_change_pct": 0.28288543140029265
+    },
+    {
+      "pair": "PIEVERSE/USDT:USDT",
+      "symbol": "PIEVERSEUSDT",
+      "quote_volume": 3512421.2989999996,
+      "price_change_pct": -0.16342296835536452
+    },
+    {
+      "pair": "PENDLE/USDT:USDT",
+      "symbol": "PENDLEUSDT",
+      "quote_volume": 19737986.080299992,
+      "price_change_pct": -0.1628775025449558
+    }
+  ]
+}

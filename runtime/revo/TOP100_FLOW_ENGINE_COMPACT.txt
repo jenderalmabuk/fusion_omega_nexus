@@ -1,0 +1,4 @@
+cycle=20260708T112821Z
+flow_total=266
+flow_tradeable=102
+entry_ready=0

@@ -1,0 +1,3371 @@
+{
+  "schema_version": "nexus.revo.candidate.v1",
+  "timestamp": "2026-07-08T11:28:22.711223+00:00",
+  "profile": "nexus_blueprint_v1",
+  "pairs": {
+    "0G/USDT:USDT": {
+      "pair": "0G/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "1000BONK/USDT:USDT": {
+      "pair": "1000BONK/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "1000FLOKI/USDT:USDT": {
+      "pair": "1000FLOKI/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 3,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": []
+    },
+    "1000LUNC/USDT:USDT": {
+      "pair": "1000LUNC/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "1000PEPE/USDT:USDT": {
+      "pair": "1000PEPE/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "1000SHIB/USDT:USDT": {
+      "pair": "1000SHIB/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "2Z/USDT:USDT": {
+      "pair": "2Z/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "4/USDT:USDT": {
+      "pair": "4/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "AAVE/USDT:USDT": {
+      "pair": "AAVE/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "ACT/USDT:USDT": {
+      "pair": "ACT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "ADA/USDT:USDT": {
+      "pair": "ADA/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 6,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": []
+    },
+    "AERGO/USDT:USDT": {
+      "pair": "AERGO/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "AERO/USDT:USDT": {
+      "pair": "AERO/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "AGLD/USDT:USDT": {
+      "pair": "AGLD/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "AGT/USDT:USDT": {
+      "pair": "AGT/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "AIGENSYN/USDT:USDT": {
+      "pair": "AIGENSYN/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "AIXBT/USDT:USDT": {
+      "pair": "AIXBT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "AKE/USDT:USDT": {
+      "pair": "AKE/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -3,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE",
+        "FUNDING_CROWDED_LONG"
+      ]
+    },
+    "AKT/USDT:USDT": {
+      "pair": "AKT/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ALGO/USDT:USDT": {
+      "pair": "ALGO/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "ALICE/USDT:USDT": {
+      "pair": "ALICE/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ALLO/USDT:USDT": {
+      "pair": "ALLO/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ALT/USDT:USDT": {
+      "pair": "ALT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "AMAT/USDT:USDT": {
+      "pair": "AMAT/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "APE/USDT:USDT": {
+      "pair": "APE/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "APT/USDT:USDT": {
+      "pair": "APT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "ARB/USDT:USDT": {
+      "pair": "ARB/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ARC/USDT:USDT": {
+      "pair": "ARC/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ARKM/USDT:USDT": {
+      "pair": "ARKM/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ARPA/USDT:USDT": {
+      "pair": "ARPA/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ARX/USDT:USDT": {
+      "pair": "ARX/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ASTER/USDT:USDT": {
+      "pair": "ASTER/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ASTS/USDT:USDT": {
+      "pair": "ASTS/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ATH/USDT:USDT": {
+      "pair": "ATH/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ATOM/USDT:USDT": {
+      "pair": "ATOM/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 6,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": []
+    },
+    "A/USDT:USDT": {
+      "pair": "A/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "AVAX/USDT:USDT": {
+      "pair": "AVAX/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "AVNT/USDT:USDT": {
+      "pair": "AVNT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "AXS/USDT:USDT": {
+      "pair": "AXS/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 6,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": []
+    },
+    "BARD/USDT:USDT": {
+      "pair": "BARD/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BASED/USDT:USDT": {
+      "pair": "BASED/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "BAS/USDT:USDT": {
+      "pair": "BAS/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BBX/USDT:USDT": {
+      "pair": "BBX/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "BCH/USDT:USDT": {
+      "pair": "BCH/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BEAT/USDT:USDT": {
+      "pair": "BEAT/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BEL/USDT:USDT": {
+      "pair": "BEL/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "BERA/USDT:USDT": {
+      "pair": "BERA/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BE/USDT:USDT": {
+      "pair": "BE/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "BICO/USDT:USDT": {
+      "pair": "BICO/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "BILL/USDT:USDT": {
+      "pair": "BILL/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BIO/USDT:USDT": {
+      "pair": "BIO/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BIRB/USDT:USDT": {
+      "pair": "BIRB/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 3,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": []
+    },
+    "BLESS/USDT:USDT": {
+      "pair": "BLESS/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BLUAI/USDT:USDT": {
+      "pair": "BLUAI/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 0,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BMNR/USDT:USDT": {
+      "pair": "BMNR/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BNB/USDT:USDT": {
+      "pair": "BNB/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "BOME/USDT:USDT": {
+      "pair": "BOME/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BREV/USDT:USDT": {
+      "pair": "BREV/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BSB/USDT:USDT": {
+      "pair": "BSB/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BSV/USDT:USDT": {
+      "pair": "BSV/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "BTC/USDT:USDT": {
+      "pair": "BTC/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "BTW/USDT:USDT": {
+      "pair": "BTW/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 0,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "B/USDT:USDT": {
+      "pair": "B/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "BZ/USDT:USDT": {
+      "pair": "BZ/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "CAKE/USDT:USDT": {
+      "pair": "CAKE/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "CAP/USDT:USDT": {
+      "pair": "CAP/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 0,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "CATI/USDT:USDT": {
+      "pair": "CATI/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "CC/USDT:USDT": {
+      "pair": "CC/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "CELO/USDT:USDT": {
+      "pair": "CELO/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "CHILLGUY/USDT:USDT": {
+      "pair": "CHILLGUY/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "CHIP/USDT:USDT": {
+      "pair": "CHIP/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "CHZ/USDT:USDT": {
+      "pair": "CHZ/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "CLO/USDT:USDT": {
+      "pair": "CLO/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 0,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": [
+        "FUNDING_CROWDED_LONG"
+      ]
+    },
+    "COMP/USDT:USDT": {
+      "pair": "COMP/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "CROSS/USDT:USDT": {
+      "pair": "CROSS/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "CRV/USDT:USDT": {
+      "pair": "CRV/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "DASH/USDT:USDT": {
+      "pair": "DASH/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 3,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": []
+    },
+    "DEEP/USDT:USDT": {
+      "pair": "DEEP/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "DEXE/USDT:USDT": {
+      "pair": "DEXE/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "DOGE/USDT:USDT": {
+      "pair": "DOGE/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "DOT/USDT:USDT": {
+      "pair": "DOT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "DYDX/USDT:USDT": {
+      "pair": "DYDX/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "DYM/USDT:USDT": {
+      "pair": "DYM/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "EDEN/USDT:USDT": {
+      "pair": "EDEN/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "EDGE/USDT:USDT": {
+      "pair": "EDGE/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "EGLD/USDT:USDT": {
+      "pair": "EGLD/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "EIGEN/USDT:USDT": {
+      "pair": "EIGEN/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ENA/USDT:USDT": {
+      "pair": "ENA/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "ENJ/USDT:USDT": {
+      "pair": "ENJ/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ENSO/USDT:USDT": {
+      "pair": "ENSO/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ENS/USDT:USDT": {
+      "pair": "ENS/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "EPIC/USDT:USDT": {
+      "pair": "EPIC/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "ESPORTS/USDT:USDT": {
+      "pair": "ESPORTS/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": [
+        "FUNDING_CROWDED_LONG"
+      ]
+    },
+    "ETC/USDT:USDT": {
+      "pair": "ETC/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ETHFI/USDT:USDT": {
+      "pair": "ETHFI/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ETH/USDT:USDT": {
+      "pair": "ETH/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "EVAA/USDT:USDT": {
+      "pair": "EVAA/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 3,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": []
+    },
+    "FARTCOIN/USDT:USDT": {
+      "pair": "FARTCOIN/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "FET/USDT:USDT": {
+      "pair": "FET/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "FF/USDT:USDT": {
+      "pair": "FF/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "FIL/USDT:USDT": {
+      "pair": "FIL/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "FLNC/USDT:USDT": {
+      "pair": "FLNC/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "FLUID/USDT:USDT": {
+      "pair": "FLUID/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "FOLKS/USDT:USDT": {
+      "pair": "FOLKS/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "FORM/USDT:USDT": {
+      "pair": "FORM/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "GALA/USDT:USDT": {
+      "pair": "GALA/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "GIGGLE/USDT:USDT": {
+      "pair": "GIGGLE/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "GLW/USDT:USDT": {
+      "pair": "GLW/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "GMT/USDT:USDT": {
+      "pair": "GMT/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "GOAT/USDT:USDT": {
+      "pair": "GOAT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 3,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": []
+    },
+    "GPS/USDT:USDT": {
+      "pair": "GPS/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 3,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": []
+    },
+    "GRAM/USDT:USDT": {
+      "pair": "GRAM/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 0,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "GRASS/USDT:USDT": {
+      "pair": "GRASS/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "GRT/USDT:USDT": {
+      "pair": "GRT/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "GUA/USDT:USDT": {
+      "pair": "GUA/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "GWEI/USDT:USDT": {
+      "pair": "GWEI/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "HAEDAL/USDT:USDT": {
+      "pair": "HAEDAL/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 0,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "HBAR/USDT:USDT": {
+      "pair": "HBAR/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN",
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "HEI/USDT:USDT": {
+      "pair": "HEI/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "HEMI/USDT:USDT": {
+      "pair": "HEMI/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "HMSTR/USDT:USDT": {
+      "pair": "HMSTR/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "HOLO/USDT:USDT": {
+      "pair": "HOLO/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "HOME/USDT:USDT": {
+      "pair": "HOME/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "H/USDT:USDT": {
+      "pair": "H/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "HYPER/USDT:USDT": {
+      "pair": "HYPER/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "HYPE/USDT:USDT": {
+      "pair": "HYPE/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "ICP/USDT:USDT": {
+      "pair": "ICP/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ID/USDT:USDT": {
+      "pair": "ID/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "IMX/USDT:USDT": {
+      "pair": "IMX/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "INJ/USDT:USDT": {
+      "pair": "INJ/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "IN/USDT:USDT": {
+      "pair": "IN/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -3,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE",
+        "FUNDING_CROWDED_LONG"
+      ]
+    },
+    "IOTA/USDT:USDT": {
+      "pair": "IOTA/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "IO/USDT:USDT": {
+      "pair": "IO/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "IRYS/USDT:USDT": {
+      "pair": "IRYS/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "JASMY/USDT:USDT": {
+      "pair": "JASMY/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "JCT/USDT:USDT": {
+      "pair": "JCT/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "JTO/USDT:USDT": {
+      "pair": "JTO/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "JUP/USDT:USDT": {
+      "pair": "JUP/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "KAITO/USDT:USDT": {
+      "pair": "KAITO/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "KAS/USDT:USDT": {
+      "pair": "KAS/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "KERNEL/USDT:USDT": {
+      "pair": "KERNEL/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "KITE/USDT:USDT": {
+      "pair": "KITE/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "KLAC/USDT:USDT": {
+      "pair": "KLAC/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "KSM/USDT:USDT": {
+      "pair": "KSM/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "LAB/USDT:USDT": {
+      "pair": "LAB/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "LA/USDT:USDT": {
+      "pair": "LA/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "LAYER/USDT:USDT": {
+      "pair": "LAYER/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "LDO/USDT:USDT": {
+      "pair": "LDO/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "LINEA/USDT:USDT": {
+      "pair": "LINEA/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "LINK/USDT:USDT": {
+      "pair": "LINK/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "LITE/USDT:USDT": {
+      "pair": "LITE/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "LIT/USDT:USDT": {
+      "pair": "LIT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "LTC/USDT:USDT": {
+      "pair": "LTC/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "LUMIA/USDT:USDT": {
+      "pair": "LUMIA/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "MAGMA/USDT:USDT": {
+      "pair": "MAGMA/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "MANA/USDT:USDT": {
+      "pair": "MANA/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "MANTA/USDT:USDT": {
+      "pair": "MANTA/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "MASK/USDT:USDT": {
+      "pair": "MASK/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "MEGA/USDT:USDT": {
+      "pair": "MEGA/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "MERL/USDT:USDT": {
+      "pair": "MERL/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "MET/USDT:USDT": {
+      "pair": "MET/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ME/USDT:USDT": {
+      "pair": "ME/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "MINA/USDT:USDT": {
+      "pair": "MINA/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "MIRA/USDT:USDT": {
+      "pair": "MIRA/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "MMT/USDT:USDT": {
+      "pair": "MMT/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "MON/USDT:USDT": {
+      "pair": "MON/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "MOODENG/USDT:USDT": {
+      "pair": "MOODENG/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "MORPHO/USDT:USDT": {
+      "pair": "MORPHO/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "MOVE/USDT:USDT": {
+      "pair": "MOVE/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "MOVR/USDT:USDT": {
+      "pair": "MOVR/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "M/USDT:USDT": {
+      "pair": "M/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -3,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE",
+        "FUNDING_CROWDED_LONG"
+      ]
+    },
+    "MVLL/USDT:USDT": {
+      "pair": "MVLL/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "MYX/USDT:USDT": {
+      "pair": "MYX/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "NAORIS/USDT:USDT": {
+      "pair": "NAORIS/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "NEAR/USDT:USDT": {
+      "pair": "NEAR/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "NIGHT/USDT:USDT": {
+      "pair": "NIGHT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "NOM/USDT:USDT": {
+      "pair": "NOM/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "NOT/USDT:USDT": {
+      "pair": "NOT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "OGN/USDT:USDT": {
+      "pair": "OGN/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "OG/USDT:USDT": {
+      "pair": "OG/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ONDO/USDT:USDT": {
+      "pair": "ONDO/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ONG/USDT:USDT": {
+      "pair": "ONG/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "OPEN/USDT:USDT": {
+      "pair": "OPEN/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "OPG/USDT:USDT": {
+      "pair": "OPG/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "OPN/USDT:USDT": {
+      "pair": "OPN/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "OP/USDT:USDT": {
+      "pair": "OP/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "ORCA/USDT:USDT": {
+      "pair": "ORCA/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ORDI/USDT:USDT": {
+      "pair": "ORDI/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "O/USDT:USDT": {
+      "pair": "O/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "PARTI/USDT:USDT": {
+      "pair": "PARTI/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "PAXG/USDT:USDT": {
+      "pair": "PAXG/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "PENDLE/USDT:USDT": {
+      "pair": "PENDLE/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "PENGU/USDT:USDT": {
+      "pair": "PENGU/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "PHAROS/USDT:USDT": {
+      "pair": "PHAROS/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "PIEVERSE/USDT:USDT": {
+      "pair": "PIEVERSE/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "PIPPIN/USDT:USDT": {
+      "pair": "PIPPIN/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "PLUME/USDT:USDT": {
+      "pair": "PLUME/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "PNUT/USDT:USDT": {
+      "pair": "PNUT/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "POL/USDT:USDT": {
+      "pair": "POL/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "POPCAT/USDT:USDT": {
+      "pair": "POPCAT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "PORTAL/USDT:USDT": {
+      "pair": "PORTAL/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "POWER/USDT:USDT": {
+      "pair": "POWER/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "POWR/USDT:USDT": {
+      "pair": "POWR/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "PRL/USDT:USDT": {
+      "pair": "PRL/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "PUMP/USDT:USDT": {
+      "pair": "PUMP/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "PYTH/USDT:USDT": {
+      "pair": "PYTH/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "QNTX/USDT:USDT": {
+      "pair": "QNTX/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "RAVE/USDT:USDT": {
+      "pair": "RAVE/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "RAYSOL/USDT:USDT": {
+      "pair": "RAYSOL/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "RENDER/USDT:USDT": {
+      "pair": "RENDER/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "RESOLV/USDT:USDT": {
+      "pair": "RESOLV/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "RIF/USDT:USDT": {
+      "pair": "RIF/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 0,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": [
+        "FUNDING_CROWDED_LONG"
+      ]
+    },
+    "RIVER/USDT:USDT": {
+      "pair": "RIVER/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ROBO/USDT:USDT": {
+      "pair": "ROBO/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "RPL/USDT:USDT": {
+      "pair": "RPL/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "SAGA/USDT:USDT": {
+      "pair": "SAGA/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "SAHARA/USDT:USDT": {
+      "pair": "SAHARA/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "SAND/USDT:USDT": {
+      "pair": "SAND/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "SCRT/USDT:USDT": {
+      "pair": "SCRT/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "SEI/USDT:USDT": {
+      "pair": "SEI/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "SIREN/USDT:USDT": {
+      "pair": "SIREN/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -3,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE",
+        "FUNDING_CROWDED_LONG"
+      ]
+    },
+    "SKYAI/USDT:USDT": {
+      "pair": "SKYAI/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "SKY/USDT:USDT": {
+      "pair": "SKY/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "SLP/USDT:USDT": {
+      "pair": "SLP/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "SLX/USDT:USDT": {
+      "pair": "SLX/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "SNX/USDT:USDT": {
+      "pair": "SNX/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "SOL/USDT:USDT": {
+      "pair": "SOL/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "SPX/USDT:USDT": {
+      "pair": "SPX/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "STAR/USDT:USDT": {
+      "pair": "STAR/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "STG/USDT:USDT": {
+      "pair": "STG/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "STRK/USDT:USDT": {
+      "pair": "STRK/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "S/USDT:USDT": {
+      "pair": "S/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "SYN/USDT:USDT": {
+      "pair": "SYN/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "TAC/USDT:USDT": {
+      "pair": "TAC/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "TAIKO/USDT:USDT": {
+      "pair": "TAIKO/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "TAO/USDT:USDT": {
+      "pair": "TAO/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "THE/USDT:USDT": {
+      "pair": "THE/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "TIA/USDT:USDT": {
+      "pair": "TIA/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "TNSR/USDT:USDT": {
+      "pair": "TNSR/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "TRB/USDT:USDT": {
+      "pair": "TRB/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "TRUMP/USDT:USDT": {
+      "pair": "TRUMP/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "TRX/USDT:USDT": {
+      "pair": "TRX/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "UAI/USDT:USDT": {
+      "pair": "UAI/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 0,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "VOLUME_CONFIRM"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "UB/USDT:USDT": {
+      "pair": "UB/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "UNI/USDT:USDT": {
+      "pair": "UNI/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "USELESS/USDT:USDT": {
+      "pair": "USELESS/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "US/USDT:USDT": {
+      "pair": "US/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "VANRY/USDT:USDT": {
+      "pair": "VANRY/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "VELVET/USDT:USDT": {
+      "pair": "VELVET/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "VIRTUAL/USDT:USDT": {
+      "pair": "VIRTUAL/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "VVV/USDT:USDT": {
+      "pair": "VVV/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "WIF/USDT:USDT": {
+      "pair": "WIF/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "WLD/USDT:USDT": {
+      "pair": "WLD/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "WLFI/USDT:USDT": {
+      "pair": "WLFI/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "XAUT/USDT:USDT": {
+      "pair": "XAUT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "XLM/USDT:USDT": {
+      "pair": "XLM/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "XMR/USDT:USDT": {
+      "pair": "XMR/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -3,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE",
+        "FUNDING_CROWDED_LONG"
+      ]
+    },
+    "XPL/USDT:USDT": {
+      "pair": "XPL/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "XPT/USDT:USDT": {
+      "pair": "XPT/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "ZBT/USDT:USDT": {
+      "pair": "ZBT/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ZEC/USDT:USDT": {
+      "pair": "ZEC/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "ZEN/USDT:USDT": {
+      "pair": "ZEN/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": 1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ZKC/USDT:USDT": {
+      "pair": "ZKC/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 2,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_BOTH_ALLOWED"
+      ],
+      "blockers": []
+    },
+    "ZKP/USDT:USDT": {
+      "pair": "ZKP/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    },
+    "ZK/USDT:USDT": {
+      "pair": "ZK/USDT:USDT",
+      "permission": "WATCH",
+      "direction": "LONG",
+      "score": 5,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [
+        "FLOW_LONG_ONLY",
+        "FUNDING_CONTRARIAN"
+      ],
+      "blockers": []
+    },
+    "ZRO/USDT:USDT": {
+      "pair": "ZRO/USDT:USDT",
+      "permission": "NO_TRADE",
+      "direction": "LONG",
+      "score": -1,
+      "dynamic_min_score": 10,
+      "stake_modifier": 0.5,
+      "reasons": [],
+      "blockers": [
+        "FLOW_HOSTILE"
+      ]
+    }
+  },
+  "summary": {
+    "scanner_in": 266,
+    "flow_rows": 266,
+    "flow_long": 35,
+    "hybrid_eligible": 99,
+    "entry_ready": 0,
+    "watch": 99,
+    "no_trade": 167,
+    "blocked_by_flow_hostile": 164,
+    "blocked_by_funding_crowded_long": 8
+  }
+}

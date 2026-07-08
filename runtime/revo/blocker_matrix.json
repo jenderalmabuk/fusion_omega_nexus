@@ -1,0 +1,20 @@
+{
+  "schema_version": "nexus.revo.blocker.v1",
+  "timestamp": "2026-07-08T11:28:22.711223+00:00",
+  "cycle": "20260708T112821Z",
+  "summary": {
+    "scanner_in": 266,
+    "flow_rows": 266,
+    "flow_long": 35,
+    "hybrid_eligible": 99,
+    "entry_ready": 0,
+    "watch": 99,
+    "no_trade": 167,
+    "blocked_by_flow_hostile": 164,
+    "blocked_by_funding_crowded_long": 8
+  },
+  "blockers": {
+    "FLOW_HOSTILE": 164,
+    "FUNDING_CROWDED_LONG": 8
+  }
+}

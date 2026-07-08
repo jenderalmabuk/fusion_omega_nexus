@@ -1,0 +1,12 @@
+cycle=20260708T112821Z
+btc_regime=risk_off
+scanner_in=266
+flow_rows=266
+flow_long=35
+hybrid_eligible=99
+entry_ready=0
+watch=99
+no_trade=167
+blockers:
+- FLOW_HOSTILE: 164
+- FUNDING_CROWDED_LONG: 8
