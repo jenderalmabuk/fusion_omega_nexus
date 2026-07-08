@@ -14,16 +14,19 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 
-from config import (
+from signal_copy.execution_config import (
     HARD_MAX_HOLD_MINUTES,
     MAX_HOLD_TRENDING, MAX_HOLD_RANGING, MAX_HOLD_HIGH_VOL, MAX_HOLD_MINUTES,
     PROFIT_LOCK_MIN_MINUTES, PROFIT_LOCK_TRIGGER_PCT, PROFIT_LOCK_BUFFER_PCT,
     TRAIL_SL_PCT, TRAIL_SL_ATR_MULTIPLIER,
     is_coin_allowed,
     ORDER_CONFIRMATION_TIMEOUT,
+    SCRATCH_EXIT_ENABLED, SCRATCH_EXIT_RANGING_MINUTES, SCRATCH_EXIT_TRENDING_MINUTES, SCRATCH_EXIT_MAX_ABS_PNL_PCT,
+    DAMAGE_REDUCER_ENABLED, DAMAGE_REDUCER_MIN_HOLD_MINUTES, DAMAGE_REDUCER_MAX_LOSS_PCT,
+    CLOSE_POSITIONS_ON_SHUTDOWN,
 )
-from data.price_validator import update_bybit_price
-from telegram_notifier import send_trade_open
+# from data.price_validator import update_bybit_price  # unused in nexus
+# from telegram_notifier import send_trade_open  # unused in nexus
 from utils.logger import logger
 from .trade_journal import TradeJournalWriter
 
@@ -467,7 +470,7 @@ class BinanceTestnetTrader:
             sl_price = actual_entry * 1.02
 
         # ─── GEOMETRY GATE: SL Distance & RR Validation ───────────────────
-        from config import (
+        from signal_copy.execution_config import (
             MAX_SL_DISTANCE_PCT, MIN_SL_DISTANCE_PCT, MIN_RR_RATIO,
             ENTRY_CONFIRMATION_ENABLED, RANGING_TP1_MULTIPLIER, TRENDING_TP1_MULTIPLIER
         )
@@ -1105,7 +1108,10 @@ class BinanceTestnetTrader:
             # ─── Scratch Exit (no progress after X minutes) ────────────────
             # Prevents zombie trades that bleed slowly. Close near breakeven.
             if reason is None and not pos.get("partial_tp1_done"):
-                from config import SCRATCH_EXIT_ENABLED, SCRATCH_EXIT_RANGING_MINUTES, SCRATCH_EXIT_TRENDING_MINUTES, SCRATCH_EXIT_MAX_ABS_PNL_PCT
+                from signal_copy.execution_config import (
+                    SCRATCH_EXIT_ENABLED, SCRATCH_EXIT_RANGING_MINUTES,
+                    SCRATCH_EXIT_TRENDING_MINUTES, SCRATCH_EXIT_MAX_ABS_PNL_PCT
+                )
                 if SCRATCH_EXIT_ENABLED:
                     regime = pos.get("regime", "RANGING")
                     scratch_min = SCRATCH_EXIT_RANGING_MINUTES if regime == "RANGING" else SCRATCH_EXIT_TRENDING_MINUTES
@@ -1115,7 +1121,10 @@ class BinanceTestnetTrader:
 
             # ─── Damage Reducer (cut losses early if bleeding badly) ───────
             if reason is None:
-                from config import DAMAGE_REDUCER_ENABLED, DAMAGE_REDUCER_MIN_HOLD_MINUTES, DAMAGE_REDUCER_MAX_LOSS_PCT
+                from signal_copy.execution_config import (
+                    DAMAGE_REDUCER_ENABLED, DAMAGE_REDUCER_MIN_HOLD_MINUTES,
+                    DAMAGE_REDUCER_MAX_LOSS_PCT
+                )
                 if DAMAGE_REDUCER_ENABLED:
                     if hold_min >= DAMAGE_REDUCER_MIN_HOLD_MINUTES and (unrealized * 100) <= DAMAGE_REDUCER_MAX_LOSS_PCT:
                         reason = "DAMAGE_REDUCER"
@@ -1556,7 +1565,7 @@ class BinanceTestnetTrader:
         await self._update_balance()
 
     async def force_close_all_positions(self, reason: str = "FATAL", **kwargs):
-        from config import CLOSE_POSITIONS_ON_SHUTDOWN
+        from signal_copy.execution_config import CLOSE_POSITIONS_ON_SHUTDOWN
         if not CLOSE_POSITIONS_ON_SHUTDOWN and reason == "MANUAL_SHUTDOWN_FLAG":
             logger.info(f"[BINANCE_TESTNET] Keeping {len(self.positions)} positions open (CLOSE_POSITIONS_ON_SHUTDOWN=False)")
             logger.info(f"[BINANCE_TESTNET] Exchange SL/TP remain active as protection during restart")

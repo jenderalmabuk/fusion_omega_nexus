@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, Optional
 
-from config import (
+# Use nexus standalone config
+from signal_copy.execution_config import (
     COOLDOWN_GLOBAL_MIN,
     COOLDOWN_SYMBOL_MIN,
     MAX_CORRELATED_CLUSTER_POS,
