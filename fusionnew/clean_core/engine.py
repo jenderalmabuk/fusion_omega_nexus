@@ -316,17 +316,67 @@ class Engine:
         if not self.risk.can_open(n_open):
             self._stats["blocked"] += 1
             return
-        # Adversarial check — bull vs bear debate via LLM (TradingAgents pattern)
+        # Adversarial check — 12-agent pipeline with model pool round-robin (v2)
         if self.use_adversarial:
-            from clean_core.adversarial import bull_bear_check
-            print(f"🤖 [ADV] Checking {symbol} {s.get('direction','?')}...")
-            ok, reason = bull_bear_check(symbol, s)
-            print(f"🤖 [ADV] {symbol}: {'BULL_WINS' if ok else 'BEAR_WINS'} — {reason}")
-            if not ok:
-                self._stats["blocked"] += 1
-                self._stats["blocked_adversarial"] = self._stats.get("blocked_adversarial", 0) + 1
-                self._flog("BEAR_WINS", dict(symbol=symbol, reason=reason))
-                return
+            v2_enabled = os.getenv("ADVERSARIAL_VERSION", "v1") == "v2"
+            if v2_enabled:
+                from clean_core.adversarial_v2 import adversarial_check_v2
+                ltf_row = ltf.iloc[-1] if ltf is not None and len(ltf) > 0 else {}
+                context = {
+                    "current_price": float(ltf_row.get("close", s.get("entry", 0))),
+                    "volume": float(ltf_row.get("volume", 0)),
+                    "turnover": float(ltf_row.get("turnover", 0)),
+                    "qvol": float(ltf_row.get("quote_volume", float(ltf_row.get("volume", 0)) * float(ltf_row.get("close", s.get("entry", 0))))),
+                    "spread": 0.02,
+                    "depth": "normal",
+                    "vol_spike": "none",
+                    "news_flag": "none",
+                    "rsi": 50,
+                    "ema_dist": 0.0,
+                    "atr": 3.0,
+                    "chop": 0.5,
+                    "er": 0.3,
+                    "cvd_z": 0.0,
+                    "oi_delta": 0.0,
+                    "funding": 0.0,
+                    "flow_verdict": "neutral",
+                    "btc_regime": "neutral",
+                    "btc_dom": 55,
+                    "dxy": 100,
+                    "vix": 15,
+                    "ls_ratio": 1.0,
+                    "fng": 50,
+                    "bid": float(ltf_row.get("close", s.get("entry", 0))) * 0.999,
+                    "ask": float(ltf_row.get("close", s.get("entry", 0))) * 1.001,
+                    "time_to_close": 300,
+                    "equity": self.risk.equity_ref,
+                    "risk_pct": self.risk.risk_pct * 100,
+                    "cur_pos": n_open,
+                    "max_positions": self.risk.max_positions,
+                    "daily_pnl": 0.0,
+                    "max_dd": self.risk.max_dd / self.risk.equity_ref * 100 if self.risk.equity_ref else 20.0,
+                }
+                s["tier"] = self.tier
+                s["direction"] = "LONG" if s.get("side") == "BULL" else "SHORT"
+                print(f"🤖 [ADVv2] Checking {symbol} ({s.get('direction','?')}) with 12-agent pipeline...")
+                ok, reason, journal = adversarial_check_v2(symbol, s, context)
+                print(f"🤖 [ADVv2] {symbol}: {'APPROVED' if ok else 'REJECTED'} — {reason}")
+                if not ok:
+                    self._stats["blocked"] += 1
+                    self._stats["blocked_adversarial"] = self._stats.get("blocked_adversarial", 0) + 1
+                    self._flog("ADVv2_REJECT", dict(symbol=symbol, reason=reason, scores=journal.get("agents", {})))
+                    return
+                self._flog("ADVv2_APPROVED", dict(symbol=symbol, reason=reason, journal=journal.get("summary", "")))
+            else:
+                from clean_core.adversarial import bull_bear_check
+                print(f"🤖 [ADV] Checking {symbol} {s.get('direction','?')}...")
+                ok, reason = bull_bear_check(symbol, s)
+                print(f"🤖 [ADV] {symbol}: {'BULL_WINS' if ok else 'BEAR_WINS'} — {reason}")
+                if not ok:
+                    self._stats["blocked"] += 1
+                    self._stats["blocked_adversarial"] = self._stats.get("blocked_adversarial", 0) + 1
+                    self._flog("BEAR_WINS", dict(symbol=symbol, reason=reason))
+                    return
         self._open_pending(symbol, s)
 
     def _busy_on_exchange(self, symbol: str) -> bool:
