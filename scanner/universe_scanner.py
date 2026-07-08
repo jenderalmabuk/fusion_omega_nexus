@@ -161,8 +161,8 @@ class UniverseScanner:
                 if result is not None:
                     results[symbol] = result
             
-            # Rate limit: 100/min → ~1.7 req/s
-            await asyncio.sleep(max(len(batch) / 1.5, 0.7))
+            # Rate limit: Bybit public klines ~20 req/s → 20 req/s safe
+            await asyncio.sleep(max(len(batch) / 20, 0.1))
         
         return results
     

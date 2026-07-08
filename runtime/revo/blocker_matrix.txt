@@ -1,12 +1,13 @@
-cycle=20260708T112821Z
-btc_regime=risk_off
-scanner_in=266
+cycle=20260708T183950Z
+btc_regime=neutral
+scanner_in=265
 flow_rows=266
 flow_long=35
-hybrid_eligible=99
+hybrid_eligible=116
 entry_ready=0
-watch=99
-no_trade=167
+watch=116
+no_trade=150
 blockers:
-- FLOW_HOSTILE: 164
+- FLOW_HOSTILE: 147
 - FUNDING_CROWDED_LONG: 8
+- LOW_VOLUME: 1

@@ -45,7 +45,7 @@ EXCHANGES = {
         name="bybit",
         oi_url="https://api.bybit.com/v5/market/open-interest?category=linear&symbol={symbol}&intervalTime=1h",
         symbols_url="https://api.bybit.com/v5/market/instruments-info?category=linear",
-        rate_per_min=100,
+        rate_per_min=1200,  # public endpoints: 20 req/s
         rate_burst_per_sec=1.7,
     ),
     "okx": ExchangeConfig(

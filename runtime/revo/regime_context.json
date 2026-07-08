@@ -1,15 +1,15 @@
 {
   "schema_version": "nexus.revo.regime.v1",
-  "timestamp": "2026-07-08T11:28:22.711223+00:00",
+  "timestamp": "2026-07-08T18:39:51.622359+00:00",
   "btc": {
-    "ts": "2026-07-08T11:28:21.824802+00:00",
+    "ts": "2026-07-08T18:39:50.643089+00:00",
     "symbol": "BTCUSDT",
-    "btc_price": 62070.0,
-    "btc_ema50": 62200.888181629394,
-    "btc_ema200": 62736.660349650054,
-    "btc_ret_1h_pct": 0.014663016488647429,
-    "btc_regime": "risk_off",
-    "mode": "RISK_OFF"
+    "btc_price": 62182.8,
+    "btc_ema50": 62044.100920849916,
+    "btc_ema200": 62308.74210898684,
+    "btc_ret_1h_pct": -0.1398749636662311,
+    "btc_regime": "neutral",
+    "mode": "NEUTRAL"
   },
   "pairs": {
     "0G/USDT:USDT": {
@@ -18,15 +18,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "1000BONK/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "1000FLOKI/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -34,7 +34,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "1000LUNC/USDT:USDT": {
       "pair_regime": "hostile",
@@ -42,15 +42,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "1000PEPE/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "1000SHIB/USDT:USDT": {
       "pair_regime": "hostile",
@@ -58,7 +58,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "2Z/USDT:USDT": {
       "pair_regime": "hostile",
@@ -66,23 +66,23 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "4/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
-    },
-    "AAVE/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
+    },
+    "AAVE/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.75
     },
     "ACT/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -90,15 +90,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ADA/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "hot",
+      "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "AERGO/USDT:USDT": {
       "pair_regime": "hostile",
@@ -106,7 +106,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "AERO/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -114,15 +114,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "AGLD/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "AGT/USDT:USDT": {
       "pair_regime": "hostile",
@@ -130,7 +130,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "AIGENSYN/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -138,15 +138,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "AIXBT/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "AKE/USDT:USDT": {
       "pair_regime": "hostile",
@@ -154,7 +154,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "crowded_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "AKT/USDT:USDT": {
       "pair_regime": "hostile",
@@ -162,7 +162,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ALGO/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -170,7 +170,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ALICE/USDT:USDT": {
       "pair_regime": "hostile",
@@ -178,23 +178,23 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ALLO/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
+    },
+    "ALT/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "ALT/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "quiet",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "AMAT/USDT:USDT": {
       "pair_regime": "hostile",
@@ -202,15 +202,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "APE/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "hot",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "APT/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -218,7 +218,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ARB/USDT:USDT": {
       "pair_regime": "hostile",
@@ -226,7 +226,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ARC/USDT:USDT": {
       "pair_regime": "hostile",
@@ -234,15 +234,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ARKM/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ARPA/USDT:USDT": {
       "pair_regime": "hostile",
@@ -250,15 +250,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ARX/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ASTER/USDT:USDT": {
       "pair_regime": "hostile",
@@ -266,15 +266,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ASTS/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "hot",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ATH/USDT:USDT": {
       "pair_regime": "hostile",
@@ -282,15 +282,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ATOM/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "hot",
+      "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "A/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -298,7 +298,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "AVAX/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -306,15 +306,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "AVNT/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "AXS/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -322,7 +322,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BARD/USDT:USDT": {
       "pair_regime": "hostile",
@@ -330,15 +330,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BASED/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "hot",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BAS/USDT:USDT": {
       "pair_regime": "hostile",
@@ -346,31 +346,31 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BBX/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.75
+    },
+    "BCH/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
-    },
-    "BCH/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BEAT/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BEL/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -378,39 +378,39 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BERA/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BE/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
-    },
-    "BICO/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
-    },
-    "BILL/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.75
+    },
+    "BICO/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.75
+    },
+    "BILL/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BIO/USDT:USDT": {
       "pair_regime": "hostile",
@@ -418,31 +418,31 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BIRB/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BLESS/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "BLUAI/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "hot",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
+    },
+    "BLUAI/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
     },
     "BMNR/USDT:USDT": {
       "pair_regime": "hostile",
@@ -450,15 +450,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BNB/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BOME/USDT:USDT": {
       "pair_regime": "hostile",
@@ -466,15 +466,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BREV/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BSB/USDT:USDT": {
       "pair_regime": "hostile",
@@ -482,15 +482,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BSV/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BTC/USDT:USDT": {
       "pair_regime": "hostile",
@@ -498,47 +498,47 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BTW/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "hot",
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "B/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "BZ/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "CAKE/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "CAP/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "hot",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
+    },
+    "CAP/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
     },
     "CATI/USDT:USDT": {
       "pair_regime": "hostile",
@@ -546,7 +546,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "CC/USDT:USDT": {
       "pair_regime": "hostile",
@@ -554,7 +554,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "CELO/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -562,23 +562,23 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "CHILLGUY/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
+    },
+    "CHIP/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "CHIP/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "CHZ/USDT:USDT": {
       "pair_regime": "hostile",
@@ -586,15 +586,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "CLO/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "crowded_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "COMP/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -602,15 +602,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "CROSS/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "hot",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "CRV/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -618,15 +618,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "DASH/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "DEEP/USDT:USDT": {
       "pair_regime": "hostile",
@@ -634,7 +634,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "DEXE/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -642,7 +642,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "DOGE/USDT:USDT": {
       "pair_regime": "hostile",
@@ -650,15 +650,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "DOT/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "DYDX/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -666,7 +666,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "DYM/USDT:USDT": {
       "pair_regime": "hostile",
@@ -674,95 +674,95 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "EDEN/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "EDGE/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "EGLD/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "EIGEN/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "ENA/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
+    },
+    "ENA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
     },
     "ENJ/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ENSO/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ENS/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "EPIC/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "hot",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ESPORTS/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "hot",
-      "funding_state": "crowded_long",
-      "risk_modifier": 0.5
-    },
-    "ETC/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
+      "funding_state": "crowded_long",
+      "risk_modifier": 0.75
+    },
+    "ETC/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ETHFI/USDT:USDT": {
       "pair_regime": "hostile",
@@ -770,23 +770,23 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ETH/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "EVAA/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "FARTCOIN/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -794,15 +794,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "FET/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "FF/USDT:USDT": {
       "pair_regime": "hostile",
@@ -810,7 +810,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "FIL/USDT:USDT": {
       "pair_regime": "hostile",
@@ -818,15 +818,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "FLNC/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "hot",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "FLUID/USDT:USDT": {
       "pair_regime": "hostile",
@@ -834,7 +834,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "FOLKS/USDT:USDT": {
       "pair_regime": "hostile",
@@ -842,31 +842,31 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "FORM/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "GALA/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "hot",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "GIGGLE/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "GLW/USDT:USDT": {
       "pair_regime": "hostile",
@@ -874,7 +874,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "GMT/USDT:USDT": {
       "pair_regime": "hostile",
@@ -882,63 +882,63 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "GOAT/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "hot",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "GPS/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "hot",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "GRAM/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
+    },
+    "GRAM/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
     },
     "GRASS/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "GRT/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "GUA/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "hot",
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "GWEI/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "HAEDAL/USDT:USDT": {
       "pair_regime": "hostile",
@@ -946,103 +946,103 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "HBAR/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
-    },
-    "HEI/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
-    },
-    "HEMI/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.75
+    },
+    "HEI/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.75
+    },
+    "HEMI/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "HMSTR/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "HOLO/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "HOME/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "H/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "HYPER/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "HYPE/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ICP/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ID/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.75
+    },
+    "IMX/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
-      "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
-    },
-    "IMX/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "INJ/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1050,7 +1050,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "IN/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1058,7 +1058,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "crowded_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "IOTA/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1066,15 +1066,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "IO/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "IRYS/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -1082,55 +1082,55 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "JASMY/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "JCT/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "JTO/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
+    },
+    "JTO/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
     },
     "JUP/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "KAITO/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "KAS/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
+    },
+    "KAS/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
     },
     "KERNEL/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1138,15 +1138,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "KITE/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "KLAC/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1154,7 +1154,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "KSM/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -1162,23 +1162,23 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "LAB/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "quiet",
-      "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
-    },
-    "LA/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
+    },
+    "LA/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.75
     },
     "LAYER/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -1186,7 +1186,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "LDO/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1194,31 +1194,31 @@
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "LINEA/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
-    },
-    "LINK/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "LITE/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
+    },
+    "LINK/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
+    },
+    "LITE/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.75
     },
     "LIT/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -1226,15 +1226,15 @@
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "LTC/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "LUMIA/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1242,7 +1242,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MAGMA/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1250,39 +1250,39 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MANA/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MANTA/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MASK/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "MEGA/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
+    },
+    "MEGA/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
     },
     "MERL/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -1290,23 +1290,23 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MET/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ME/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MINA/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -1314,143 +1314,143 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MIRA/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MMT/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MON/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MOODENG/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MORPHO/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MOVE/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MOVR/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "M/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "crowded_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MVLL/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "MYX/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "NAORIS/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
-    "NEAR/USDT:USDT": {
+    "NAORIS/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
+    },
+    "NEAR/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "NIGHT/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "NOM/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "NOT/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
+    },
+    "NOT/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
     },
     "OGN/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "OG/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ONDO/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1458,7 +1458,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ONG/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1466,47 +1466,47 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "OPEN/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "OPG/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "OPN/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "OP/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ORCA/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ORDI/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -1514,15 +1514,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "O/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "PARTI/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1530,71 +1530,71 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "PAXG/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "PENDLE/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
-    "PENGU/USDT:USDT": {
+    "PENDLE/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
+    },
+    "PENGU/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "PHAROS/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "PIEVERSE/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "hot",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "PIPPIN/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "PLUME/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "PNUT/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "POL/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1602,7 +1602,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "POPCAT/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -1610,7 +1610,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "PORTAL/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -1618,7 +1618,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "POWER/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1626,15 +1626,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "POWR/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "PRL/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1642,55 +1642,55 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "PUMP/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "PYTH/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "QNTX/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "RAVE/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "RAYSOL/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
-    },
-    "RENDER/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.75
+    },
+    "RENDER/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "RESOLV/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -1698,7 +1698,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "RIF/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -1706,7 +1706,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "crowded_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "RIVER/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1714,7 +1714,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ROBO/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1722,23 +1722,23 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "RPL/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "SAGA/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "SAHARA/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -1746,7 +1746,7 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "SAND/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1754,151 +1754,151 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "SCRT/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "SEI/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "SIREN/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "crowded_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "SKYAI/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "quiet",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
+    },
+    "SKY/USDT:USDT": {
       "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "hot",
+      "funding_state": "contrarian_long",
+      "risk_modifier": 0.75
+    },
+    "SLP/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
-    "SKY/USDT:USDT": {
+    "SLX/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
-    },
-    "SLP/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "SLX/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "SNX/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "SOL/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "SPX/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "STAR/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "STG/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "STRK/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "S/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "SYN/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "TAC/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "TAIKO/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "TAO/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "THE/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1906,15 +1906,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "TIA/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "TNSR/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1922,15 +1922,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "TRB/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "TRUMP/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1938,39 +1938,39 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "TRX/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "UAI/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "normal",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "UB/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
-    "UNI/USDT:USDT": {
-      "pair_regime": "hostile",
+    "UB/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
+    },
+    "UNI/USDT:USDT": {
+      "pair_regime": "flow_uptrend_pullback_watch",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
     },
     "USELESS/USDT:USDT": {
       "pair_regime": "hostile",
@@ -1978,47 +1978,47 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "US/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "VANRY/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "VELVET/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "VIRTUAL/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "VVV/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "WIF/USDT:USDT": {
       "pair_regime": "hostile",
@@ -2026,23 +2026,23 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "WLD/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "WLFI/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "XAUT/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -2050,15 +2050,15 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "XLM/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "XMR/USDT:USDT": {
       "pair_regime": "hostile",
@@ -2066,31 +2066,31 @@
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "crowded_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "XPL/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "XPT/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "normal",
+      "volatility_state": "quiet",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ZBT/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ZEC/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
@@ -2098,47 +2098,47 @@
       "atr_pct": null,
       "volatility_state": "quiet",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ZEN/USDT:USDT": {
-      "pair_regime": "hostile",
+      "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ZKC/USDT:USDT": {
+      "pair_regime": "hostile",
+      "efficiency_ratio_48": null,
+      "atr_pct": null,
+      "volatility_state": "normal",
+      "funding_state": "neutral",
+      "risk_modifier": 0.75
+    },
+    "ZKP/USDT:USDT": {
       "pair_regime": "flow_uptrend_pullback_watch",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
-    },
-    "ZKP/USDT:USDT": {
-      "pair_regime": "hostile",
-      "efficiency_ratio_48": null,
-      "atr_pct": null,
-      "volatility_state": "quiet",
-      "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ZK/USDT:USDT": {
-      "pair_regime": "flow_uptrend_pullback_watch",
+      "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
       "volatility_state": "normal",
       "funding_state": "contrarian_long",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     },
     "ZRO/USDT:USDT": {
       "pair_regime": "hostile",
       "efficiency_ratio_48": null,
       "atr_pct": null,
-      "volatility_state": "quiet",
+      "volatility_state": "normal",
       "funding_state": "neutral",
-      "risk_modifier": 0.5
+      "risk_modifier": 0.75
     }
   }
 }

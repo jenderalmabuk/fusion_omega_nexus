@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-07-08T11:28:22.719020+00:00",
+  "generated_at": "2026-07-08T18:39:51.630448+00:00",
   "contract_status": "OK",
   "remote_pair_count": 200,
   "execution_pair_count": 200,
   "source": "nexus_scanner",
-  "cycle": "20260708T112821Z",
+  "cycle": "20260708T183950Z",
   "nexus_api": "http://fastapi:8000"
 }

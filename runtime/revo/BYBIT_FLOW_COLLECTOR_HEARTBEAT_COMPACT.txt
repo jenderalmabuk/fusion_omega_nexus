@@ -1,4 +1,4 @@
-cycle=20260708T112821Z
+cycle=20260708T183950Z
 status=OK
 flow_total=266
-flow_tradeable=102
+flow_tradeable=119
