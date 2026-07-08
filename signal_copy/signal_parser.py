@@ -365,6 +365,10 @@ def parse_signal(
 
     # --- entry type (limit vs market) ---
     entry_type = "limit" if _LIMIT_RE.search(text) else "market"
+    # Auto-upgrade to limit when entry zone (range) is specified —
+    # a zone implies "wait for price to arrive", which is a limit order.
+    if entry_type == "market" and entry_low is not None and entry_high is not None and entry_high - entry_low > 0:
+        entry_type = "limit"
 
     # --- timeframe ---
     timeframe = None
