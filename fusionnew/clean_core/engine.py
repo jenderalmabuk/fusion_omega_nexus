@@ -16,8 +16,13 @@ import datetime as dt
 import json
 import os
 import time
+import numpy as np
 from pathlib import Path
 from typing import Any, Dict, List
+
+# Load .env for adversarial v2 config
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
 os.environ.setdefault("LOG_DIR", "/tmp/bt_logs")
 
@@ -322,32 +327,103 @@ class Engine:
             if v2_enabled:
                 from clean_core.adversarial_v2 import adversarial_check_v2
                 ltf_row = ltf.iloc[-1] if ltf is not None and len(ltf) > 0 else {}
+                # ── Compute real metrics from LTF (already loaded at scan_symbol entry) ──
+                # CVD
+                if "taker_buy_base" in ltf.columns:
+                    tbb = ltf["taker_buy_base"].to_numpy()
+                    vol = ltf["volume"].to_numpy()
+                    cvd_series = np.cumsum(2 * tbb - vol)
+                    cvd_recent = cvd_series[-1] - cvd_series[max(0, len(cvd_series) - 20)]  # 20-bar delta
+                    cvd_std = np.std(np.diff(cvd_series[-40:])) if len(cvd_series) >= 40 else 1.0
+                    cvd_z = float(cvd_recent) / max(1e-9, cvd_std)
+                else:
+                    cvd_z = 0.0
+                # RSI(14) on close
+                close = ltf["close"].to_numpy()
+                delta = np.diff(close, prepend=close[0])
+                gain = np.where(delta > 0, delta, 0.0)
+                loss = np.where(delta < 0, -delta, 0.0)
+                avg_gain = np.convolve(gain, np.ones(14) / 14, mode="valid")
+                avg_loss = np.convolve(loss, np.ones(14) / 14, mode="valid")
+                rsi = 50.0
+                if len(avg_loss) > 0 and avg_loss[-1] > 0:
+                    rsi = 100.0 - 100.0 / (1.0 + avg_gain[-1] / avg_loss[-1])
+                elif len(avg_gain) > 0 and avg_gain[-1] > 0:
+                    rsi = 100.0
+                # ATR(14) on LTF
+                tr = np.maximum(ltf["high"].to_numpy() - ltf["low"].to_numpy(),
+                                np.maximum(abs(ltf["high"].to_numpy() - np.roll(close, 1)),
+                                           abs(ltf["low"].to_numpy() - np.roll(close, 1))))
+                tr[0] = ltf["high"].iloc[0] - ltf["low"].iloc[0]
+                atr_series = np.convolve(tr, np.ones(14) / 14, mode="valid")
+                atr_val = float(atr_series[-1]) if len(atr_series) > 0 else 3.0
+                # Turnover (20-bar quote vol)
+                if "quote_volume" not in ltf.columns:
+                    ltf["quote_volume"] = ltf["volume"] * ltf["close"]
+                turnover20 = float(ltf["quote_volume"].iloc[-20:].sum()) if len(ltf) >= 20 else 0.0
+                # Volume spike detection
+                vol20_avg = float(ltf["volume"].iloc[-21:-1].mean()) if len(ltf) >= 21 else 0
+                vol_now = float(ltf["volume"].iloc[-1])
+                vol_spike = "spike" if vol20_avg > 0 and vol_now > 2.5 * vol20_avg else "none"
+                # BTC regime
+                btc_regime = "neutral"
+                if self._btc_trend is not None:
+                    latest = self._btc_trend.iloc[-1]
+                    btc_up = bool(latest.get("ema50_above_200", True))
+                    btc_regime = "bull" if btc_up else "bear"
+                # Funding (from Binance)
+                try:
+                    from backtest.data import fetch_funding
+                    fdf = fetch_funding(symbol, 1)
+                    funding = float(fdf["funding_rate"].iloc[-1]) if not fdf.empty else 0.0
+                except Exception:
+                    funding = 0.0
+                # OI delta (forward measured)
+                oi_snap = _oi_snapshot(self, symbol)
+                oi_delta = oi_snap.get("oi_chg6", 0.0) * 100  # percent
+                # EMA distance
+                ema200 = close[-200:].mean() if len(close) >= 200 else close.mean()
+                ema_dist_pct = abs(float(close[-1]) - float(ema200)) / float(close[-1]) * 100.0
+                # Choppiness & Efficiency Ratio
+                high_n, low_n = ltf["high"].to_numpy()[-14:], ltf["low"].to_numpy()[-14:]
+                chop = float((np.log(np.max(high_n) - np.min(low_n)) - np.log(np.sum(np.abs(np.diff(close[-14:]))))) / np.log(14)) if len(close) >= 14 else 0.5
+                direction = np.abs(close[-1] - close[-20]) if len(close) >= 20 else 0.001
+                volatility = np.sum(np.abs(np.diff(close[-20:]))) if len(close) >= 20 else 0.001
+                er = float(direction / max(1e-9, volatility))
+                # Bid/ask spread (estimated from candle)
+                spread = float((ltf["high"].iloc[-1] - ltf["low"].iloc[-1]) / ltf["close"].iloc[-1] * 100) if ltf["close"].iloc[-1] > 0 else 0.02
+                current_price = float(ltf_row.get("close", s.get("entry", 0)))
+                # Flow verdict
+                cvd_long = cvd_z > 0.3
+                cvd_short = cvd_z < -0.3
+                is_long = s.get("side") == "BULL"
+                flow_verdict = "supportive" if (is_long and cvd_long) or (not is_long and cvd_short) else ("hostile" if (is_long and cvd_short) or (not is_long and cvd_long) else "neutral")
                 context = {
-                    "current_price": float(ltf_row.get("close", s.get("entry", 0))),
-                    "volume": float(ltf_row.get("volume", 0)),
-                    "turnover": float(ltf_row.get("turnover", 0)),
-                    "qvol": float(ltf_row.get("quote_volume", float(ltf_row.get("volume", 0)) * float(ltf_row.get("close", s.get("entry", 0))))),
-                    "spread": 0.02,
-                    "depth": "normal",
-                    "vol_spike": "none",
+                    "current_price": current_price,
+                    "volume": float(ltf["volume"].iloc[-1]),
+                    "turnover": float(ltf["volume"].iloc[-1] * current_price),
+                    "qvol": float(ltf_row.get("quote_volume", float(vol_now * current_price))),
+                    "spread": round(spread, 4),
+                    "depth": "shallow" if turnover20 < 50000 else ("deep" if turnover20 > 500000 else "normal"),
+                    "vol_spike": vol_spike,
                     "news_flag": "none",
-                    "rsi": 50,
-                    "ema_dist": 0.0,
-                    "atr": 3.0,
-                    "chop": 0.5,
-                    "er": 0.3,
-                    "cvd_z": 0.0,
-                    "oi_delta": 0.0,
-                    "funding": 0.0,
-                    "flow_verdict": "neutral",
-                    "btc_regime": "neutral",
+                    "rsi": round(rsi, 1),
+                    "ema_dist": round(ema_dist_pct, 2),
+                    "atr": round(atr_val, 4),
+                    "chop": round(chop, 3),
+                    "er": round(er, 3),
+                    "cvd_z": round(cvd_z, 2),
+                    "oi_delta": round(oi_delta, 3),
+                    "funding": round(funding * 100, 4),  # percent
+                    "flow_verdict": flow_verdict,
+                    "btc_regime": btc_regime,
                     "btc_dom": 55,
                     "dxy": 100,
                     "vix": 15,
                     "ls_ratio": 1.0,
                     "fng": 50,
-                    "bid": float(ltf_row.get("close", s.get("entry", 0))) * 0.999,
-                    "ask": float(ltf_row.get("close", s.get("entry", 0))) * 1.001,
+                    "bid": current_price * 0.999,
+                    "ask": current_price * 1.001,
                     "time_to_close": 300,
                     "equity": self.risk.equity_ref,
                     "risk_pct": self.risk.risk_pct * 100,
