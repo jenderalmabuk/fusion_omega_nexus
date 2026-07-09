@@ -89,9 +89,17 @@ class FuturesTestnet:
         return round(round(value / step) * step, 8)
 
     def round_qty(self, symbol: str, qty: float) -> float:
+        # DRY mode: NEVER call testnet exchangeInfo (many altcoins are missing
+        # on testnet; a network error here used to raise and consume the signal
+        # before it was ever placed — see engine seen-key handling). Generic
+        # 6-decimal rounding is sufficient for paper trades and never raises.
+        if self.dry:
+            return round(float(qty), 6)
         return self._round_step(qty, self._f(symbol)["step"])
 
     def round_price(self, symbol: str, price: float) -> float:
+        if self.dry:
+            return round(float(price), 6)
         return self._round_step(price, self._f(symbol)["tick"])
 
     # ---- write ----

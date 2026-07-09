@@ -273,9 +273,17 @@ def _extract_score(response: str) -> int:
     return 5  # neutral default
 
 
-def _extract_yes_no(response: str) -> bool:
-    """Check if response starts with YES."""
-    return str(response).upper().strip().startswith("YES")
+def _extract_yes_no(response: str, default: bool = True) -> bool:
+    """Robust YES/NO parsing (aligned with v1 _parse_judge): normalize then
+    regex \\b(YES|NO)\\b at the start of the response. Ambiguous output
+    fail-opens to `default` instead of biasing toward reject."""
+    import re
+    text = str(response or "").strip().upper()
+    m = re.match(r"^\W*\b(YES|NO)\b", text)
+    if not m:
+        print(f"[WARN] ADV_JUDGE_AMBIGUOUS: {text[:80]!r} — fail-open")
+        return default
+    return m.group(1) == "YES"
 
 
 # ── Main pipeline ────────────────────────────────────────────────

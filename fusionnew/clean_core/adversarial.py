@@ -8,8 +8,12 @@ Usage:
     if not ok:
         skip entry — bear argument wins
 """
-import json, os, time
+import json, os, re, time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Tuple
+
+# Per-call LLM timeout (was 15s; sequential bull+bear+judge could stall a cycle)
+LLM_TIMEOUT_SEC = float(os.getenv("ADV_LLM_TIMEOUT_SEC", "8"))
 
 # LLM config — use same provider as main config or env
 LLM_API_KEY = os.getenv("NINE_ROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("CUSTOM_API_KEY") or ""
@@ -71,7 +75,7 @@ def _call_llm(prompt: str) -> str:
                     "max_tokens": 120,
                     "temperature": 0.3,
                 },
-                timeout=15,
+                timeout=LLM_TIMEOUT_SEC,
             )
             if resp.status_code == 200:
                 text = resp.text.strip()
@@ -137,7 +141,19 @@ def bull_bear_check(symbol: str, s: Dict[str, Any]) -> Tuple[bool, str]:
         rr=2, imb_side=imb_side, t_complete=str(t_complete)[:19],
     )
 
-    bull_arg = _call_llm(BULL_PROMPT.format(**fmt))
+    # Bull & bear run in PARALLEL (matches v2) — halves debate wall time.
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        fut_bull = pool.submit(_call_llm, BULL_PROMPT.format(**fmt))
+        fut_bear = pool.submit(_call_llm, BEAR_PROMPT.format(**fmt))
+        try:
+            bull_arg = fut_bull.result(timeout=LLM_TIMEOUT_SEC + 5)
+        except Exception:
+            bull_arg = "ERR:timeout"
+        try:
+            bear_arg = fut_bear.result(timeout=LLM_TIMEOUT_SEC + 5)
+        except Exception:
+            bear_arg = "ERR:timeout"
+
     if bull_arg.startswith("ERR") or bull_arg.startswith("HTTP"):
         # If primary failed, mark fallback and retry once
         if not _fallback_active and LLM_MODEL_PRIMARY != LLM_MODEL_FALLBACK:
@@ -147,10 +163,24 @@ def bull_bear_check(symbol: str, s: Dict[str, Any]) -> Tuple[bool, str]:
         if bull_arg.startswith("ERR") or bull_arg.startswith("HTTP"):
             return True, f"llm_err:{bull_arg}"
 
-    bear_arg = _call_llm(BEAR_PROMPT.format(**fmt))
     if bear_arg.startswith("ERR") or bear_arg.startswith("HTTP"):
         return True, f"llm_err:{bear_arg}"
 
     judge = _call_llm(JUDGE_PROMPT.format(bull_arg=bull_arg, bear_arg=bear_arg))
-    ok = judge.upper().startswith("YES")
+    ok, verdict = _parse_judge(judge)
+    if verdict == "AMBIGUOUS":
+        # Fail-open on unparsable judge output — never reject on formatting noise.
+        print(f"[WARN] ADV_JUDGE_AMBIGUOUS {symbol}: {judge[:80]!r} — fail-open")
+        return True, f"ADV_JUDGE_AMBIGUOUS (fail-open): {judge[:80]}"
     return ok, judge[:100]
+
+
+def _parse_judge(response: str) -> Tuple[bool, str]:
+    """Robust judge parsing: strip/uppercase and look for a YES/NO word boundary
+    at the START of the response (exact-prefix matching biased toward reject).
+    Returns (ok, verdict) where verdict is YES | NO | AMBIGUOUS."""
+    text = str(response or "").strip().upper()
+    m = re.match(r"^\W*\b(YES|NO)\b", text)
+    if not m:
+        return False, "AMBIGUOUS"
+    return m.group(1) == "YES", m.group(1)

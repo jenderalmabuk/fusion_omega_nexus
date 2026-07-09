@@ -70,18 +70,65 @@ def _flog(self, event: str, t: Dict[str, Any], extra: Dict[str, Any] = None) -> 
         pass
 
 def _oi_snapshot(self, symbol: str) -> Dict[str, Any]:
-    """Capture OI now + recent change (OI can't be backtested -> measured forward)."""
+    """Capture OI now + recent change via the Nexus API (no direct Binance call).
+    Returns {} when Nexus has no OI rows for the symbol — never raises."""
     try:
-        from backtest.data import fetch_oi
-        oi = fetch_oi(symbol, "5m", 30)
-        if oi is None or len(oi) < 6:
-            return {}
-        arr = oi["oi"].to_numpy()
-        now, prev = float(arr[-1]), float(arr[-6])
-        chg = (now - prev) / prev if prev else 0.0
-        return {"oi_now": now, "oi_chg6": round(chg, 5)}
+        nexus_url = os.getenv("NEXUS_API_URL", "http://localhost:8000")
+        for exchange in ("binance", "bybit"):
+            try:
+                r = requests.get(f"{nexus_url}/oi/{exchange}/{symbol}",
+                                 params={"tf": "5m", "limit": 30}, timeout=10)
+                if r.status_code != 200:
+                    continue
+                data = r.json().get("data", [])
+                if len(data) < 6:
+                    continue
+                vals = [float(d.get("oi_value") or 0.0) for d in data]
+                now, prev = vals[-1], vals[-6]
+                chg = (now - prev) / prev if prev else 0.0
+                return {"oi_now": now, "oi_chg6": round(chg, 5)}
+            except Exception:
+                continue
+        return {}
     except Exception:
         return {}
+
+
+TF_SEC = {"1m": 60, "3m": 180, "5m": 300, "15m": 900, "30m": 1800,
+          "1h": 3600, "4h": 14400, "1d": 86400}
+
+
+def pd_to_datetime_safe(v):
+    """Parse a timestamp-ish string to naive UTC datetime; None if unparsable."""
+    try:
+        import pandas as _pd
+        t = _pd.Timestamp(v)
+        if t.tzinfo is not None:
+            t = t.tz_convert("UTC").tz_localize(None)
+        return t.to_pydatetime()
+    except Exception:
+        return None
+
+
+def _drop_forming_bar(df, tf: str):
+    """Drop the LAST bar ONLY if its open_time is inside the currently-running
+    interval (i.e. the candle has not closed yet). Nexus stores CLOSED candles
+    only, so normally nothing is dropped — but this guard stays correct if the
+    data source ever includes a forming candle (old Binance-direct behavior)."""
+    if df is None or len(df) == 0:
+        return df
+    try:
+        import pandas as _pd
+        last_open = _pd.Timestamp(df["open_time"].iloc[-1])
+        now = _pd.Timestamp(dt.datetime.now(dt.timezone.utc)).tz_localize(None)
+        dur = TF_SEC.get(tf, 60)
+        if (now - last_open).total_seconds() < dur:  # still inside running interval
+            out = df.iloc[:-1]
+            out.attrs.update(df.attrs)
+            return out
+    except Exception:
+        pass
+    return df
 
 class RiskGuard:
     """Clean circuit breaker: % risk/trade on FIXED equity_ref (shared account),
@@ -193,6 +240,11 @@ class Engine:
         self.closed: List[Dict[str, Any]] = []
         self._seen: set = set()
         self._cooldowns: dict = {}       # symbol -> {ts, reason} cooldown after close
+        self._data_short: set = set()    # symbols with <260 bars (retry with backoff)
+        self._adv_spent_sec = 0.0        # LLM wall-time spent this cycle (budget)
+        self._last_managed_ts: dict = {} # symbol -> epoch sec of last processed 1m bar
+        self._manage_fallback_warned: dict = {}  # symbol -> epoch of last fallback WARNING
+        self._cand_zero_streak = 0       # consecutive cycles with cand==0 (heartbeat alert)
         # --- Adaptive scan tracking ---
         self._symbol_last_scan = {}  # Last scanned UTC EPOCH
         self._symbol_nearest = {}    # Min candlestick age at last scan
@@ -216,16 +268,52 @@ class Engine:
                 # Restore scan tracking if existing
                 self._symbol_last_scan = d.get("_symbol_last_scan", {})
                 self._symbol_nearest = d.get("_symbol_nearest", {})
+                # Persist cooldowns across restarts, pruning expired entries (4.1)
+                now = time.time()
+                self._cooldowns = {
+                    sym: cd for sym, cd in d.get("cooldowns", {}).items()
+                    if isinstance(cd, dict)
+                    and (now - cd.get("ts", 0)) / 60.0 < self.COOLDOWN_MINUTES
+                }
+                self._last_managed_ts = d.get("last_managed_ts", {})
+                # Transparent permanent-halt handling (4.3)
+                if self.risk.halted_permanent:
+                    if os.getenv("RESET_HALT") == "1":
+                        self.risk.halted_permanent = False
+                        print("[WARN] RESET_HALT=1 — permanent halt cleared, resuming")
+                        tg("♻️ ENGINE HALT RESET via RESET_HALT=1 — resuming")
+                    else:
+                        msg = "🛑 ENGINE HALTED (max drawdown) — manual reset required (set RESET_HALT=1)"
+                        print(f"[WARN] {msg}")
+                        tg(msg)
             except Exception as exc:
                 print(f"[WARN] state {p} load failed: {exc}")
 
+    SEEN_MAX_AGE_DAYS = 7  # prune _seen entries older than this on save (4.2)
+
+    def _prune_seen(self) -> None:
+        """Drop _seen entries whose t_complete is older than SEEN_MAX_AGE_DAYS."""
+        cutoff = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(days=self.SEEN_MAX_AGE_DAYS)
+        keep = set()
+        for entry in self._seen:
+            try:
+                t = pd_to_datetime_safe(entry[2])
+                if t is None or t >= cutoff:
+                    keep.add(entry)
+            except Exception:
+                keep.add(entry)  # unparsable -> keep (safe default)
+        self._seen = keep
+
     def _save(self) -> None:
         try:
+            self._prune_seen()
             self._path().write_text(json.dumps({
                 "trades": self.trades,
                 "closed": self.closed,
                 "seen": [list(x) for x in self._seen],
                 "risk": self.risk.to_dict(),
+                "cooldowns": self._cooldowns,
+                "last_managed_ts": self._last_managed_ts,
                 "_symbol_last_scan": {k: round(v, 2) for k, v in self._symbol_last_scan.items()},
                 "_symbol_nearest": self._symbol_nearest,
             }, default=str, indent=2))
@@ -250,25 +338,60 @@ class Engine:
         """Record cooldown start for a symbol."""
         self._cooldowns[symbol] = {"ts": time.time(), "reason": reason}
 
+    # Max fresh setup age in LTF bars — MUST equal the limit-order expiry used by
+    # the backtest fill search (ce+1 .. ce+1+FIB_EXPIRY). Single source of truth:
+    # backtest.faithful_imbalance.FIB_EXPIRY (was a hardcoded 288 => stale fibs).
+    MAX_SETUP_AGE = FIB_EXPIRY
+    # Skip setups whose fib entry is too far from current price (never fills).
+    ENTRY_MAX_DIST_PCT = float(os.getenv("ENTRY_MAX_DIST_PCT", "1.5"))
+    DATA_SHORT_RETRY_CYCLES = 10  # backoff for symbols with <260 bars
+
     def scan_symbol(self, symbol: str, ltf_recent: int = 1000) -> None:
         """Adaptive: records nearest age, updates scan trackers."""
         # COOLDOWN GUARD: skip if symbol recently closed
         if self._in_cooldown(symbol):
             return
+        # DATA_SHORT backoff: retry short-history symbols every N cycles only
+        if symbol in self._data_short and self._scan_tick % self.DATA_SHORT_RETRY_CYCLES != 0:
+            return
         cfg = TIERS[self.tier]
         zone_df = fetch_recent(symbol, cfg["zone"], 300)
-        ltf = fetch_recent(symbol, cfg["ltf"], ltf_recent).iloc[:-1]
+        ltf = fetch_recent(symbol, cfg["ltf"], ltf_recent)
+        # Track worst data lag this cycle (LTF drives fill latency)
+        try:
+            lag = ltf.attrs.get("lag_sec")
+            if lag is not None:
+                self._stats["data_lag_max"] = max(self._stats.get("data_lag_max") or 0.0, float(lag))
+        except Exception:
+            pass
+        # STALE GUARD: data feed frozen -> skip scan, count it (1.4)
+        if zone_df.attrs.get("stale") or ltf.attrs.get("stale"):
+            self._stats["stale"] += 1
+            return
+        # Nexus stores CLOSED candles only — drop the last bar ONLY if it is a
+        # forming candle (guard), never unconditionally (.iloc[:-1] made the
+        # engine permanently 1 bar late). (1.3)
+        zone_df = _drop_forming_bar(zone_df, cfg["zone"])
+        ltf = _drop_forming_bar(ltf, cfg["ltf"])
         if min(len(zone_df), len(ltf)) < 260:
+            if symbol not in self._data_short:
+                print(f"[WARN] DATA_SHORT {symbol}: zone={len(zone_df)} ltf={len(ltf)} bars (<260) — will retry with backoff")
+            self._data_short.add(symbol)
+            self._stats["data_short"] = len(self._data_short)
             self._symbol_nearest[symbol] = 9999
             return
+        self._data_short.discard(symbol)
+        self._stats["data_short"] = len(self._data_short)
         trend = _trend(zone_df)
-        bull_raw = generate_setups(zone_df, ltf, trend, "BULL", self.rr, sl_swing=self.sl_swing) \
+        # LIVE detector: recent_setups (anchored on NEWEST imbalance — stable on a
+        # rolling window). generate_setups is backtest-only (first-tap anchor whose
+        # identity shifts every cycle => unstable dedup keys). (2.1)
+        bull = recent_setups(zone_df, ltf, trend, "BULL", self.rr,
+                             max_age=self.MAX_SETUP_AGE, sl_swing=self.sl_swing) \
             if self.direction in ("both", "long") else []
-        bear_raw = generate_setups(zone_df, ltf, trend, "BEAR", self.rr, sl_swing=self.sl_swing) \
+        bear = recent_setups(zone_df, ltf, trend, "BEAR", self.rr,
+                             max_age=self.MAX_SETUP_AGE, sl_swing=self.sl_swing) \
             if self.direction in ("both", "short") else []
-        # ponytail: skip max_age — market slow, fresh setups rare
-        bull = bull_raw
-        bear = bear_raw
         if self.use_cvd:
             bull = _filter_flow(symbol, 0, "BULL", bull, ltf, True, False)
             bear = _filter_flow(symbol, 0, "BEAR", bear, ltf, True, False)
@@ -291,7 +414,9 @@ class Engine:
             age = n - 1 - int(s["ce"])
             nearest_age = min(nearest_age, age)
         self._stats["min_age"] = min(self._stats["min_age"], nearest_age)
-        fresh = [s for s in alls if (n - 1 - int(s["ce"])) <= 288]  # WIDE, match backtest max_age
+        # Fresh window == limit-order expiry (FIB_EXPIRY bars). A setup older than
+        # this can never fill within the backtest's fill search window. (2.2)
+        fresh = [s for s in alls if (n - 1 - int(s["ce"])) <= self.MAX_SETUP_AGE]
         self._stats["cand"] += len(fresh)
         # Update scan metadata
         self._symbol_last_scan[symbol] = time.time()
@@ -304,7 +429,9 @@ class Engine:
         if key in self._seen:
             return
         self._stats["fresh"] += 1
-        self._seen.add(key)
+        # NOTE: key is added to _seen only AFTER a final decision (successful
+        # _open_pending or adversarial reject). Technical failures must NOT
+        # consume the signal — it gets retried next cycle. (2.3)
         n_open = sum(1 for t in self.trades if t.get("status") == "OPEN")
         n_pending = sum(1 for t in self.trades if t.get("status") == "PENDING")
         if self._has_symbol(symbol) or self._busy_on_exchange(symbol):
@@ -510,25 +637,87 @@ class Engine:
                 s["tier"] = self.tier
                 s["direction"] = "LONG" if s.get("side") == "BULL" else "SHORT"
                 print(f"🤖 [ADVv2] Checking {symbol} ({s.get('direction','?')}) with 12-agent pipeline...")
-                ok, reason, journal = adversarial_check_v2(symbol, s, context)
+                self._stats["adv_calls"] = self._stats.get("adv_calls", 0) + 1
+                if self._adv_budget_exceeded():
+                    # Fail-open: adversarial layer must not stall the cycle. (3.1)
+                    print(f"[WARN] ADV_BUDGET_EXCEEDED — fail-open for {symbol}")
+                    self._flog("ADV_BUDGET_EXCEEDED", dict(symbol=symbol))
+                    ok, reason, journal = True, "ADV_BUDGET_EXCEEDED (fail-open)", {}
+                else:
+                    _adv_t0 = time.time()
+                    try:
+                        ok, reason, journal = adversarial_check_v2(symbol, s, context)
+                    except Exception as adv_exc:
+                        # LLM technical error: fail-open, do NOT consume the signal
+                        print(f"[WARN] ADV_ERROR {symbol}: {adv_exc} — fail-open")
+                        self._flog("ADV_ERROR", dict(symbol=symbol, error=str(adv_exc)))
+                        ok, reason, journal = True, f"ADV_ERROR (fail-open): {adv_exc}", {}
+                    self._adv_spent_sec += time.time() - _adv_t0
                 print(f"🤖 [ADVv2] {symbol}: {'APPROVED' if ok else 'REJECTED'} — {reason}")
                 if not ok:
                     self._stats["blocked"] += 1
                     self._stats["blocked_adversarial"] = self._stats.get("blocked_adversarial", 0) + 1
                     self._flog("ADVv2_REJECT", dict(symbol=symbol, reason=reason, scores=journal.get("agents", {})))
+                    self._seen.add(key)  # adversarial reject is a FINAL decision
                     return
                 self._flog("ADVv2_APPROVED", dict(symbol=symbol, reason=reason, journal=journal.get("summary", "")))
             else:
                 from clean_core.adversarial import bull_bear_check
                 print(f"🤖 [ADV] Checking {symbol} {s.get('direction','?')}...")
-                ok, reason = bull_bear_check(symbol, s)
+                self._stats["adv_calls"] = self._stats.get("adv_calls", 0) + 1
+                if self._adv_budget_exceeded():
+                    print(f"[WARN] ADV_BUDGET_EXCEEDED — fail-open for {symbol}")
+                    self._flog("ADV_BUDGET_EXCEEDED", dict(symbol=symbol))
+                    ok, reason = True, "ADV_BUDGET_EXCEEDED (fail-open)"
+                else:
+                    _adv_t0 = time.time()
+                    try:
+                        ok, reason = bull_bear_check(symbol, s)
+                    except Exception as adv_exc:
+                        print(f"[WARN] ADV_ERROR {symbol}: {adv_exc} — fail-open")
+                        self._flog("ADV_ERROR", dict(symbol=symbol, error=str(adv_exc)))
+                        ok, reason = True, f"ADV_ERROR (fail-open): {adv_exc}"
+                    self._adv_spent_sec += time.time() - _adv_t0
                 print(f"🤖 [ADV] {symbol}: {'BULL_WINS' if ok else 'BEAR_WINS'} — {reason}")
+                # Log EVERY decision (approve/reject/error) to the forward log (3.3)
+                self._flog("ADV_DECISION", dict(symbol=symbol, approved=ok, reason=reason))
                 if not ok:
                     self._stats["blocked"] += 1
                     self._stats["blocked_adversarial"] = self._stats.get("blocked_adversarial", 0) + 1
-                    self._flog("BEAR_WINS", dict(symbol=symbol, reason=reason))
+                    self._seen.add(key)  # adversarial reject is a FINAL decision
                     return
-        self._open_pending(symbol, s)
+        # ENTRY_TOO_FAR guard: skip stale fib prices that can never fill. (2.2)
+        try:
+            current_close = float(ltf["close"].iloc[-1])
+            dist_pct = abs(current_close - float(s["entry"])) / float(s["entry"]) * 100.0
+        except Exception:
+            dist_pct = 0.0
+        if dist_pct > self.ENTRY_MAX_DIST_PCT:
+            self._stats["blocked"] += 1
+            self._stats["blocked_entry_far"] = self._stats.get("blocked_entry_far", 0) + 1
+            print(f"[SKIP] ENTRY_TOO_FAR {symbol} {s['side']}: entry {s['entry']:.6g} "
+                  f"vs close {current_close:.6g} ({dist_pct:.2f}% > {self.ENTRY_MAX_DIST_PCT}%)")
+            self._flog("ENTRY_TOO_FAR", dict(symbol=symbol, side=s["side"],
+                                             entry=s["entry"], close=current_close,
+                                             dist_pct=round(dist_pct, 3)))
+            self._seen.add(key)  # final: this setup instance will only get further away
+            return
+        # _seen is marked ONLY on success — technical exceptions leave the signal
+        # available for retry next cycle. (2.3)
+        try:
+            self._open_pending(symbol, s)
+            self._seen.add(key)
+        except Exception as exc:
+            self._stats["open_pending_err"] = self._stats.get("open_pending_err", 0) + 1
+            msg = f"⚠️ OPEN_PENDING FAILED {symbol} {s.get('side','?')}: {exc} — signal kept for retry"
+            print(f"[ERROR] {msg}")
+            self._flog("OPEN_PENDING_ERROR", dict(symbol=symbol, side=s.get("side"), error=str(exc)))
+            tg(msg)
+
+    def _adv_budget_exceeded(self) -> bool:
+        """Total LLM wall-time budget per cycle (default 60s, ADV_BUDGET_SEC)."""
+        budget = float(os.getenv("ADV_BUDGET_SEC", "60"))
+        return self._adv_spent_sec >= budget
 
     def _busy_on_exchange(self, symbol: str) -> bool:
         """Live guard: skip if the account already has a position/order on this symbol."""
@@ -575,8 +764,22 @@ class Engine:
             return lo <= t["entry"] if t["side"] == "BUY" else hi >= t["entry"]
         return abs(self.ex.position(symbol)) > 0  # real: position opened
 
-    def _manage_pending(self, t: Dict[str, Any], symbol: str, hi: float, lo: float) -> None:
+    def _expire_pending_if_stale(self, t: Dict[str, Any], symbol: str) -> bool:
+        """Expiry check based on wall-clock age — runs BEFORE any fill check so
+        stale orders are always cancelled even when price data is empty. (1.5c)"""
         age_min = (time.time() - t["opened_at"]) / 60.0
+        if age_min > t["expiry_min"]:
+            try:
+                self.ex.cancel_all(symbol)
+            except Exception as exc:
+                print(f"[WARN] cancel_all failed for expired {symbol}: {exc}")
+            t["status"] = "CANCELLED"
+            print(f"⌛ EXPIRED unfilled {symbol} {t['side']} — cancelled (age {age_min:.1f}m > {t['expiry_min']}m)")
+            self._flog("EXPIRE", t)
+            return True
+        return False
+
+    def _manage_pending(self, t: Dict[str, Any], symbol: str, hi: float, lo: float) -> None:
         if self._filled(t, symbol, hi, lo):
             t["status"] = "OPEN"
             tp_note = "software SL/TP"
@@ -595,10 +798,6 @@ class Engine:
             print(msg)
             tg(msg)
             self._flog("FILL", t)
-        elif age_min > t["expiry_min"]:
-            self.ex.cancel_all(symbol)
-            t["status"] = "CANCELLED"
-            print(f"⌛ EXPIRED unfilled {symbol} {t['side']} — cancelled")
 
     def _manage_open(self, t: Dict[str, Any], symbol: str, hi: float, lo: float, close: float) -> None:
         exit_price = reason = None
@@ -638,26 +837,81 @@ class Engine:
         tg(msg)
         self._flog("CLOSE", t)
 
-    def manage(self, symbol: str) -> None:
-        """Always run on every cycle for all symbols."""
-        cfg = TIERS[self.tier]
-        # Use 1m bars for fill detection (more sensitive to wicks), not 5m
-        ltf = fetch_recent(symbol, "1m", 100).iloc[:-1]  # only closed bars
-        if ltf.empty:
-            return
-        bar = ltf.iloc[-1]
-        hi, lo, close = float(bar["high"]), float(bar["low"]), float(bar["close"])
-        for t in [x for x in self.trades if x["symbol"] == symbol]:
-            if t["status"] == "PENDING":
-                self._manage_pending(t, symbol, hi, lo)
-            elif t["status"] == "OPEN":
-                self._manage_open(t, symbol, hi, lo, close)
+    MANAGE_FALLBACK_WARN_SEC = 3600  # 1m-fallback WARNING max once/symbol/hour
 
-    def cycle(self, symbols: List[str]) -> None:
+    def _manage_df(self, symbol: str):
+        """Price frame for lifecycle management: 1m preferred, LTF-tier fallback
+        when 1m is empty/stale (1.5b). Returns (df, tf) — df may be empty."""
+        df = fetch_recent(symbol, "1m", 100)
+        tf = "1m"
+        if df is None or len(df) == 0 or df.attrs.get("stale"):
+            ltf_tf = TIERS[self.tier]["ltf"]
+            now = time.time()
+            last_warn = self._manage_fallback_warned.get(symbol, 0)
+            if now - last_warn > self.MANAGE_FALLBACK_WARN_SEC:
+                print(f"[WARN] MANAGE FALLBACK {symbol}: 1m data empty/stale — using {ltf_tf}")
+                self._manage_fallback_warned[symbol] = now
+            df = fetch_recent(symbol, ltf_tf, 100)
+            tf = ltf_tf
+            if df is not None and len(df) > 0 and df.attrs.get("stale"):
+                return df.iloc[0:0], tf  # both feeds stale -> treat as no data
+        return df, tf
+
+    def manage(self, symbol: str) -> None:
+        """Always run on every cycle for all symbols.
+
+        Processes ALL new closed bars since the per-symbol watermark
+        last_managed_ts (a 300-600s cycle spans 4-9 one-minute bars — checking
+        only the last bar missed fills/SL/TP in between). (2.4)
+        PENDING expiry (wall-clock) runs FIRST so stale orders are cancelled
+        even when the price feed is empty. (1.5c)
+        """
+        my_trades = [x for x in self.trades if x["symbol"] == symbol]
+        if not my_trades:
+            return
+        # 1) Expiry BEFORE fill: never let empty data leave stale PENDINGs alive.
+        for t in my_trades:
+            if t["status"] == "PENDING":
+                self._expire_pending_if_stale(t, symbol)
+        df, tf = self._manage_df(symbol)
+        if df is None or len(df) == 0:
+            return
+        df = _drop_forming_bar(df, tf)  # only fully closed bars
+        if len(df) == 0:
+            return
+        # 2) Replay all bars newer than the watermark, oldest -> newest.
+        wm = float(self._last_managed_ts.get(symbol, 0.0))
+        new_bars = []
+        for _, bar in df.iterrows():
+            ts = pd_to_datetime_safe(bar["open_time"])
+            if ts is None:
+                continue
+            epoch = ts.replace(tzinfo=dt.timezone.utc).timestamp()
+            if epoch > wm:
+                new_bars.append((epoch, bar))
+        if not new_bars:
+            return
+        for epoch, bar in new_bars:
+            hi, lo, close = float(bar["high"]), float(bar["low"]), float(bar["close"])
+            for t in my_trades:
+                if t["status"] == "PENDING":
+                    self._manage_pending(t, symbol, hi, lo)
+                elif t["status"] == "OPEN":
+                    # Conservative same-bar ordering: SL before TP (matches the
+                    # backtest _manage_exit assumption) — handled in _manage_open.
+                    self._manage_open(t, symbol, hi, lo, close)
+        self._last_managed_ts[symbol] = new_bars[-1][0]
+
+    def cycle(self, symbols: List[str], interval_sec: int = 0) -> None:
         """Adaptive scan: prioritize symbols with setup proximity."""
+        cycle_t0 = time.time()
         self.risk.roll_day()
         self._stats = {"cand": 0, "stale": 0, "fresh": 0, "blocked": 0,
-                       "blocked_max_open": 0, "blocked_pending_cap": 0, "min_age": 9999}
+                       "blocked_max_open": 0, "blocked_pending_cap": 0,
+                       "blocked_adversarial": 0, "blocked_entry_far": 0,
+                       "adv_calls": 0, "open_pending_err": 0,
+                       "data_short": len(self._data_short), "min_age": 9999}
+        self._adv_spent_sec = 0.0  # reset per-cycle LLM budget (3.1)
         self._scan_tick += 1
         if self.use_btc:
             try:
@@ -728,6 +982,61 @@ class Engine:
         # Cleanup; persistance
         self.trades = [t for t in self.trades if t["status"] in ("PENDING", "OPEN")]
         self._save()
+        self._heartbeat(symbols, len(scan_order), time.time() - cycle_t0, interval_sec)
+
+    # ---- heartbeat (5.1) ----
+    CAND_ZERO_ALERT_CYCLES = 50
+
+    def _heartbeat(self, symbols: List[str], scanned: int, cycle_duration_sec: float,
+                   interval_sec: int) -> None:
+        """Write a per-cycle heartbeat JSON + Telegram alerts on silence/stale/slow."""
+        st = self._stats
+        # Max data lag (sec) across LTF fetches this cycle (set in scan_symbol)
+        data_lag_max = st.get("data_lag_max")
+        if data_lag_max is not None:
+            data_lag_max = round(float(data_lag_max), 1)
+        hb = {
+            "ts": dt.datetime.now(dt.timezone.utc).isoformat(),
+            "cycle": self._scan_tick,
+            "universe_size": len(symbols),
+            "scanned": scanned,
+            "cand": st.get("cand", 0),
+            "fresh": st.get("fresh", 0),
+            "blocked": {
+                "total": st.get("blocked", 0),
+                "max_open": st.get("blocked_max_open", 0),
+                "pending_cap": st.get("blocked_pending_cap", 0),
+                "adversarial": st.get("blocked_adversarial", 0),
+                "entry_far": st.get("blocked_entry_far", 0),
+            },
+            "stale": st.get("stale", 0),
+            "data_short": st.get("data_short", 0),
+            "open_pending_err": st.get("open_pending_err", 0),
+            "pending": sum(1 for t in self.trades if t["status"] == "PENDING"),
+            "open": sum(1 for t in self.trades if t["status"] == "OPEN"),
+            "data_lag_max": data_lag_max,
+            "adv_calls": st.get("adv_calls", 0),
+            "cycle_duration_sec": round(cycle_duration_sec, 2),
+        }
+        try:
+            bot_name = os.getenv("BOT_NAME", f"{self.tier}{self.tag}")
+            hb_dir = Path(os.getenv("HEARTBEAT_DIR", "runtime/state"))
+            hb_dir.mkdir(parents=True, exist_ok=True)
+            (hb_dir / f"BOT_{bot_name}_HEARTBEAT_LATEST.json").write_text(
+                json.dumps(hb, indent=2))
+        except Exception as exc:
+            print(f"[WARN] heartbeat write failed: {exc}")
+        # Alerts
+        if st.get("cand", 0) == 0:
+            self._cand_zero_streak += 1
+        else:
+            self._cand_zero_streak = 0
+        if self._cand_zero_streak == self.CAND_ZERO_ALERT_CYCLES:
+            tg(f"⚠️ [{self.tier}{self.tag}] cand==0 for {self.CAND_ZERO_ALERT_CYCLES} "
+               f"consecutive cycles — check data pipeline / filters")
+        if interval_sec and cycle_duration_sec > interval_sec:
+            tg(f"⚠️ [{self.tier}{self.tag}] cycle overrun: {cycle_duration_sec:.0f}s "
+               f"> interval {interval_sec}s")
 
     # ---- reporting ----
     def stats_report(self) -> str:
@@ -742,7 +1051,10 @@ class Engine:
             f"[{self.tier}{self.tag}] open={n_open} pending={n_pend} "
             f"closed={len(self.closed)} wins={wins} net={net:+.4f} "
             f"today={self.risk.realized_today:+.4f} | "
-            f"cand={st['cand']} fresh={st['fresh']} blk={st['blocked']}(O:{st.get('blocked_max_open',0)},P:{st.get('blocked_pending_cap',0)}) "
+            f"cand={st['cand']} fresh={st['fresh']} blk={st['blocked']}"
+            f"(O:{st.get('blocked_max_open',0)},P:{st.get('blocked_pending_cap',0)},"
+            f"ADV:{st.get('blocked_adversarial',0)},FAR:{st.get('blocked_entry_far',0)}) "
+            f"stale={st.get('stale',0)} data_short={st.get('data_short',0)} "
             f"nearest={st['min_age'] if st['min_age'] < 9999 else '-'}bars{flag}"
         )
 

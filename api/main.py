@@ -1,5 +1,6 @@
 """Nexus v2 — FastAPI REST server for market data query."""
 
+import asyncio
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Query, HTTPException
@@ -9,7 +10,14 @@ from typing import Optional
 import numpy as np
 
 # ── config ────────────────────────────────────────────────
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://nexus:nexus_dev@localhost:5432/nexus")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL environment variable is required (no insecure default). "
+        "Example: postgresql://nexus:<password>@timescaledb:5432/nexus"
+    )
+# Comma-separated allowed origins; no wildcard default.
+CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
 _pool: Optional[asyncpg.Pool] = None
 
 # ── lifecycle ─────────────────────────────────────────────
@@ -21,7 +29,9 @@ async def lifespan(app: FastAPI):
     await _pool.close()
 
 app = FastAPI(title="Nexus v2 API", version="0.1.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+if CORS_ORIGINS:
+    app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
+                       allow_methods=["*"], allow_headers=["*"])
 
 # ── helpers ───────────────────────────────────────────────
 async def query(sql: str, *args):
@@ -135,10 +145,15 @@ async def get_all_flow(
         "SELECT symbol FROM universe WHERE exchange=$1 AND active=TRUE ORDER BY symbol LIMIT $2",
         exchange, limit,
     )
-    pairs = {}
-    for r in syms:
-        sym = r["symbol"]
-        pairs[sym] = await _compute_flow(sym, exchange)
+    # Parallel flow computation, bounded to protect the DB pool.
+    sem = asyncio.Semaphore(8)
+
+    async def _bounded(sym: str):
+        async with sem:
+            return sym, await _compute_flow(sym, exchange)
+
+    results = await asyncio.gather(*(_bounded(r["symbol"]) for r in syms))
+    pairs = dict(results)
     entry_ready = sum(1 for p in pairs.values() if p.get("flow_direction") in ("LONG_ONLY", "BOTH_ALLOWED"))
     return {
         "generated_at": __import__("datetime").datetime.utcnow().isoformat() + "Z",

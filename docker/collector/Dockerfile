@@ -1,4 +1,5 @@
-FROM python:3.12-slim
+# Nexus Collector — multi-stage, non-root
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
@@ -7,9 +8,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-COPY collector/ ./collector/
-COPY universe.txt ./
+FROM python:3.12-slim
 
-CMD ["python", "collector/__init__.py"]
+RUN groupadd -r nexus && useradd -r -g nexus -d /app -s /usr/sbin/nologin nexus
+
+WORKDIR /app
+
+COPY --from=builder /install /usr/local
+COPY --chown=nexus:nexus collector/ ./collector/
+COPY --chown=nexus:nexus universe.txt ./
+
+USER nexus
+
+CMD ["python", "-u", "-m", "collector"]
