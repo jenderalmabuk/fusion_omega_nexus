@@ -10,13 +10,20 @@ __pycache__/
 venv/
 env/
 
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+
 # Runtime files
 runtime/
 data/
 *.log
 *.session
 *.session-journal
-test_*.py
 
 # Hermes Agent
 .hermes/

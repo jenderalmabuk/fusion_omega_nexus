@@ -111,16 +111,29 @@ fusion_omega_nexus/
 │   └── main.py             All endpoints
 ├── bots/
 │   ├── nexus_scanner.py    Universal scanner (writes runtime/revo/)
-│   ├── nexus_m30_imbalance.py   M30 imbalance bot
-│   └── nexus_h1_imbalance.py    H1 imbalance bot
-├── collectors/             Exchange data collectors
+│   ├── run_bot.py          M30/H1 imbalance bot runner
+│   ├── nexus_data.py       Nexus API data client
+│   └── whalescanner.py     Whale flow scanner
+├── core/                   Exchange data collectors (klines, OI, CVD, funding)
+├── adapters/               Exchange adapters
+├── execution/              Order execution (Binance testnet trader, journal)
+├── fusionnew/              Engine core (signals, adversarial, risk)
+├── nexus/                  Nexus shared modules
+├── notifications/          Telegram notifications
+├── risk/                   Risk engine
+├── scanner/                Scanner modules
+├── signal_copy/            Telegram/Discord signal-copy pipeline
 ├── docker/
 │   ├── docker-compose.yml  Main compose (all services)
-│   └── bot/                Bot Dockerfile
-├── runtime/
+│   ├── bot/                Bot Dockerfile
+│   ├── collector/          Collector Dockerfile
+│   └── fastapi/            API Dockerfile
+├── runtime/                (gitignored) runtime output & bot state
 │   ├── revo/               Revo adapter output (Freqtrade reads this)
 │   └── state/              Bot state persistence
-└── scripts/                Utility scripts
+├── scripts/                Utility scripts (backfill, report)
+├── tests/                  Unit tests (pytest)
+└── utils/                  Shared utilities
 ```
 
 ## Connecting Revo Adaptive Freqtrade
@@ -151,16 +164,27 @@ REVO_FLOW_CONTEXT_PATH=/external_runtime/revo_flow_context.json
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and fill in:
+Copy `.env.example` to `.env` and fill in (`.env` is gitignored — never commit it):
 
 ```env
+NEXUS_DB_PASSWORD=strong_password_here   # required, no default
 TELEGRAM_BOT_TOKEN=your_token
 TELEGRAM_CHAT_ID=your_chat_id
 BINANCE_API_KEY=your_key
 BINANCE_API_SECRET=your_secret
 BYBIT_API_KEY=your_key
 BYBIT_API_SECRET=your_secret
+CORS_ORIGINS=http://localhost:3000       # comma-separated allowed origins for the API
 ```
+
+## Testing & CI
+
+```bash
+pip install pytest
+pytest tests/ -v
+```
+
+CI (GitHub Actions) runs `ruff` lint, `pip-audit` dependency scanning, and pytest on every push/PR.
 
 ## Validation Protocol
 

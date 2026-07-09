@@ -542,11 +542,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # install deps if missing
-    try:
-        import websockets
-    except ImportError:
-        import subprocess
-        subprocess.check_call(["pip3", "install", "websockets"])
-        import websockets
     main()

@@ -1,7 +1,9 @@
 """Nexus v2 — FastAPI REST server for market data query."""
 
+import asyncio
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import asyncpg
@@ -9,7 +11,9 @@ from typing import Optional
 import numpy as np
 
 # ── config ────────────────────────────────────────────────
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://nexus:nexus_dev@localhost:5432/nexus")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL environment variable is required")
 _pool: Optional[asyncpg.Pool] = None
 
 # ── lifecycle ─────────────────────────────────────────────
@@ -21,7 +25,8 @@ async def lifespan(app: FastAPI):
     await _pool.close()
 
 app = FastAPI(title="Nexus v2 API", version="0.1.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+_cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
+app.add_middleware(CORSMiddleware, allow_origins=_cors_origins, allow_methods=["GET"], allow_headers=["*"])
 
 # ── helpers ───────────────────────────────────────────────
 async def query(sql: str, *args):
@@ -135,13 +140,19 @@ async def get_all_flow(
         "SELECT symbol FROM universe WHERE exchange=$1 AND active=TRUE ORDER BY symbol LIMIT $2",
         exchange, limit,
     )
-    pairs = {}
-    for r in syms:
-        sym = r["symbol"]
-        pairs[sym] = await _compute_flow(sym, exchange)
+    symbols = [r["symbol"] for r in syms]
+    # Bound concurrency to avoid exhausting the connection pool
+    sem = asyncio.Semaphore(8)
+
+    async def _bounded_flow(sym: str) -> dict:
+        async with sem:
+            return await _compute_flow(sym, exchange)
+
+    results = await asyncio.gather(*(_bounded_flow(s) for s in symbols))
+    pairs = dict(zip(symbols, results))
     entry_ready = sum(1 for p in pairs.values() if p.get("flow_direction") in ("LONG_ONLY", "BOTH_ALLOWED"))
     return {
-        "generated_at": __import__("datetime").datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "profile": "nexus_flow_v1",
         "pairs": pairs,
         "summary": {"total": len(pairs), "tradeable": entry_ready},
@@ -181,7 +192,6 @@ async def get_btc_regime(exchange: str = Query("binance")):
         regime = "panic"
     else:
         regime = "neutral"
-    from datetime import datetime, timezone
     return {
         "ts": datetime.now(timezone.utc).isoformat(),
         "symbol": "BTCUSDT",
@@ -204,8 +214,7 @@ async def get_top_universe(
 ):
     """Top universe by 24h volume or absolute price change — matches Revo scanner."""
     tf = _parse_tf(tf)
-    rows = await query(
-        """SELECT symbol,
+    _UNIVERSE_SQL = """SELECT symbol,
                   SUM(quote_vol)  AS qvol_24h,
                   (ARRAY_AGG(close ORDER BY open_time))[1] AS open_first,
                   (ARRAY_AGG(close ORDER BY open_time DESC))[1] AS close_last,
@@ -214,23 +223,10 @@ async def get_top_universe(
            FROM klines
            WHERE exchange=$1 AND timeframe=$2
              AND open_time >= NOW() - INTERVAL '24 hours'
-           GROUP BY symbol""",
-        exchange, tf,
-    )
-    if not rows:
-        rows = await query(
-            """SELECT symbol,
-                      SUM(quote_vol)  AS qvol_24h,
-                      (ARRAY_AGG(close ORDER BY open_time))[1] AS open_first,
-                      (ARRAY_AGG(close ORDER BY open_time DESC))[1] AS close_last,
-                      MAX(high) AS high_24h,
-                      MIN(low)  AS low_24h
-               FROM klines
-               WHERE exchange=$1 AND timeframe='5m'
-                 AND open_time >= NOW() - INTERVAL '24 hours'
-               GROUP BY symbol""",
-            exchange,
-        )
+           GROUP BY symbol"""
+    rows = await query(_UNIVERSE_SQL, exchange, tf)
+    if not rows and tf != "5m":
+        rows = await query(_UNIVERSE_SQL, exchange, "5m")
     out = []
     for r in rows:
         qvol = float(r["qvol_24h"] or 0)
@@ -255,7 +251,6 @@ async def get_top_universe(
 
 async def _compute_flow(symbol: str, exchange: str = "binance") -> dict:
     """Compute flow context for a symbol from klines + OI + funding."""
-    from datetime import datetime, timezone
     tf = "15m"
     rows = await query(
         """SELECT open_time, open, high, low, close, volume,

@@ -1,3 +1,0 @@
-cycle=20260708T183950Z
-btc_regime=neutral
-btc_price=62182.8

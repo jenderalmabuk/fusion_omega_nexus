@@ -12,9 +12,9 @@ services:
     environment:
       POSTGRES_DB: nexus
       POSTGRES_USER: nexus
-      POSTGRES_PASSWORD: ${NEXUS_DB_PASSWORD:-nexus_dev}
+      POSTGRES_PASSWORD: ${NEXUS_DB_PASSWORD:?NEXUS_DB_PASSWORD is required}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - timescale_data:/var/lib/postgresql/data
       - ./timescaledb/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -34,7 +34,7 @@ services:
       dockerfile: docker/fastapi/Dockerfile
     container_name: nexus_fastapi
     environment:
-      DATABASE_URL: postgresql://nexus:${NEXUS_DB_PASSWORD:-nexus_dev}@timescaledb:5432/nexus
+      DATABASE_URL: postgresql://nexus:${NEXUS_DB_PASSWORD:?NEXUS_DB_PASSWORD is required}@timescaledb:5432/nexus
     ports:
       - "8000:8000"
     depends_on:
@@ -51,7 +51,7 @@ services:
       dockerfile: docker/collector/Dockerfile
     container_name: nexus_binance_collector
     environment:
-      DATABASE_URL: postgresql://nexus:${NEXUS_DB_PASSWORD:-nexus_dev}@timescaledb:5432/nexus
+      DATABASE_URL: postgresql://nexus:${NEXUS_DB_PASSWORD:?NEXUS_DB_PASSWORD is required}@timescaledb:5432/nexus
       BINANCE_API_KEY: ${BINANCE_API_KEY}
       BINANCE_SECRET: ${BINANCE_SECRET}
       COLLECTOR_MODE: binance
@@ -69,7 +69,7 @@ services:
       dockerfile: docker/collector/Dockerfile
     container_name: nexus_bybit_collector
     environment:
-      DATABASE_URL: postgresql://nexus:${NEXUS_DB_PASSWORD:-nexus_dev}@timescaledb:5432/nexus
+      DATABASE_URL: postgresql://nexus:${NEXUS_DB_PASSWORD:?NEXUS_DB_PASSWORD is required}@timescaledb:5432/nexus
       BYBIT_API_KEY: ${BYBIT_API_KEY}
       BYBIT_SECRET: ${BYBIT_SECRET}
       COLLECTOR_MODE: bybit
@@ -88,7 +88,7 @@ services:
     container_name: nexus_oi_rollup
     command: python collector/oi_rollup.py
     environment:
-      DATABASE_URL: postgresql://nexus:${NEXUS_DB_PASSWORD:-nexus_dev}@timescaledb:5432/nexus
+      DATABASE_URL: postgresql://nexus:${NEXUS_DB_PASSWORD:?NEXUS_DB_PASSWORD is required}@timescaledb:5432/nexus
     depends_on:
       timescaledb:
         condition: service_healthy
