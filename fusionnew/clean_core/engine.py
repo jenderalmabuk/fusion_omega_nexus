@@ -40,12 +40,67 @@ try:
 except Exception:
     TELEGRAMBOTTOKEN = TELEGRAM_CHAT_ID = None
 
-LTF_MIN = {"15m": 15, "5m": 5, "3m": 3}
+LTF_MIN = {"15m": 15, "5m": 5, "3m": 3, "1m": 1}
+TF_SECONDS = {"1m": 60, "3m": 180, "5m": 300, "15m": 900, "30m": 1800,
+              "1h": 3600, "4h": 14400, "1d": 86400}
 STATE_DIR = Path(os.getenv("STATE_DIR", str(Path(__file__).parent / "state")))
 STATE_FILE_TEMPLATE = "engine_state_{tier}_{direction}.json"
 
+# Max |current_close - entry| / entry before a fresh setup is skipped as stale-priced.
+ENTRY_MAX_DIST_PCT = float(os.getenv("ENTRY_MAX_DIST_PCT", "1.5")) / 100.0
+# Total LLM wall-clock budget per cycle (seconds); beyond it adversarial fails OPEN.
+ADV_BUDGET_SEC = float(os.getenv("ADV_BUDGET_SEC", "60"))
+# Stale guard multiplier: data older than N x timeframe is considered frozen.
+STALE_MULT = float(os.getenv("NEXUS_STALE_MULT", "3"))
+SEEN_MAX_AGE_DAYS = 7
+DATA_SHORT_RETRY_CYCLES = 10
+
 def _utc_day() -> str:
     return dt.datetime.now(dt.timezone.utc).date().isoformat()
+
+
+def _data_lag_sec(df) -> float:
+    """Seconds between now and last open_time. inf when empty."""
+    if df is None or len(df) == 0:
+        return float("inf")
+    lag = df.attrs.get("lag_sec") if hasattr(df, "attrs") else None
+    if lag is not None:
+        return float(lag)
+    try:
+        last_open = df["open_time"].iloc[-1].to_pydatetime()
+        return (dt.datetime.utcnow() - last_open).total_seconds()
+    except Exception:
+        return float("inf")
+
+
+def _is_stale(df, interval: str) -> bool:
+    """True when the feed is frozen (lag > STALE_MULT x timeframe)."""
+    if df is None or len(df) == 0:
+        return True
+    if hasattr(df, "attrs") and "stale" in df.attrs:
+        return bool(df.attrs["stale"])
+    return _data_lag_sec(df) > STALE_MULT * TF_SECONDS.get(interval, 60)
+
+
+def _closed_bars(df, interval: str):
+    """Return only CLOSED bars. Nexus stores closed candles so nothing is dropped;
+    for feeds that include the running candle, drop the last bar only when its
+    open_time falls inside the currently-running interval."""
+    if df is None or len(df) == 0:
+        return df
+    step = TF_SECONDS.get(interval, 60)
+    try:
+        last_open = df["open_time"].iloc[-1].to_pydatetime()
+    except Exception:
+        return df
+    if (dt.datetime.utcnow() - last_open).total_seconds() < step:  # forming bar
+        out = df.iloc[:-1].reset_index(drop=True)
+        try:
+            out.attrs.update(df.attrs)
+        except Exception:
+            pass
+        return out
+    return df
 
 def tg(text: str) -> None:
     if not TELEGRAMBOTTOKEN or not TELEGRAM_CHAT_ID:
@@ -70,18 +125,25 @@ def _flog(self, event: str, t: Dict[str, Any], extra: Dict[str, Any] = None) -> 
         pass
 
 def _oi_snapshot(self, symbol: str) -> Dict[str, Any]:
-    """Capture OI now + recent change (OI can't be backtested -> measured forward)."""
-    try:
-        from backtest.data import fetch_oi
-        oi = fetch_oi(symbol, "5m", 30)
-        if oi is None or len(oi) < 6:
-            return {}
-        arr = oi["oi"].to_numpy()
-        now, prev = float(arr[-1]), float(arr[-6])
-        chg = (now - prev) / prev if prev else 0.0
-        return {"oi_now": now, "oi_chg6": round(chg, 5)}
-    except Exception:
-        return {}
+    """Capture OI now + recent change via the Nexus API (no direct Binance call).
+    Returns {} on empty/missing data without raising."""
+    nexus_url = os.getenv("NEXUS_API_URL", "http://localhost:8000")
+    for exchange in ("bybit", "binance"):
+        try:
+            r = requests.get(f"{nexus_url}/oi/{exchange}/{symbol}",
+                             params={"tf": "5m", "limit": 30}, timeout=10)
+            if r.status_code != 200:
+                continue
+            data = r.json().get("data", [])
+            if len(data) < 6:
+                continue
+            now = float(data[-1].get("oi_value") or 0.0)
+            prev = float(data[-6].get("oi_value") or 0.0)
+            chg = (now - prev) / prev if prev else 0.0
+            return {"oi_now": now, "oi_chg6": round(chg, 5)}
+        except Exception:
+            continue
+    return {}
 
 class RiskGuard:
     """Clean circuit breaker: % risk/trade on FIXED equity_ref (shared account),
@@ -187,8 +249,7 @@ class Engine:
         self.soft_pending_cap = soft_pending_cap
         self.stoch_max = stoch_max
         self._btc_trend = None
-        self._stats = {"cand": 0, "stale": 0, "fresh": 0, "blocked": 0,
-                       "blocked_max_open": 0, "blocked_pending_cap": 0, "min_age": 9999}
+        self._stats = self._blank_stats()
         self.trades: List[Dict[str, Any]] = []
         self.closed: List[Dict[str, Any]] = []
         self._seen: set = set()
@@ -197,11 +258,29 @@ class Engine:
         self._symbol_last_scan = {}  # Last scanned UTC EPOCH
         self._symbol_nearest = {}    # Min candlestick age at last scan
         self._scan_tick = 0          # Monotonic cycle counter (for stride decisions)
+        # --- Data-sync / observability tracking ---
+        self._last_managed = {}      # symbol -> ISO open_time of last processed manage bar
+        self._data_short = {}        # symbol -> last scan_tick when DATA_SHORT was seen
+        self._manage_warned = {}     # symbol -> epoch of last 1m-fallback warning
+        self._adv_time_used = 0.0    # LLM wall-clock used this cycle
+        self._adv_calls = 0          # LLM decision count this cycle
+        self._data_lag_max = 0.0     # max feed lag seen this cycle (sec)
+        self._scanned = 0            # symbols actually scanned this cycle
+        self._zero_cand_streak = 0   # consecutive cycles with cand == 0
+        self.interval_sec = 300      # set by main(); used for heartbeat alerts
         STATE_DIR.mkdir(parents=True, exist_ok=True)
         self._load()
         # Re-attach injected utility methods
         self._flog = _flog.__get__(self)
         self._oi_snapshot = _oi_snapshot.__get__(self)
+
+    @staticmethod
+    def _blank_stats() -> Dict[str, Any]:
+        return {"cand": 0, "stale": 0, "fresh": 0, "blocked": 0,
+                "blocked_max_open": 0, "blocked_pending_cap": 0,
+                "blocked_adversarial": 0, "blocked_entry_far": 0, "blocked_risk": 0,
+                "blocked_busy": 0, "data_short": 0, "adv_budget_exceeded": 0,
+                "open_errors": 0, "min_age": 9999}
 
     def _load(self) -> None:
         p = self._path()
@@ -216,16 +295,55 @@ class Engine:
                 # Restore scan tracking if existing
                 self._symbol_last_scan = d.get("_symbol_last_scan", {})
                 self._symbol_nearest = d.get("_symbol_nearest", {})
+                # Cooldowns persist across restarts (prune expired on load)
+                now = time.time()
+                self._cooldowns = {
+                    sym: cd for sym, cd in d.get("cooldowns", {}).items()
+                    if isinstance(cd, dict)
+                    and (now - float(cd.get("ts", 0))) / 60.0 < self.COOLDOWN_MINUTES
+                }
+                self._last_managed = d.get("last_managed", {})
             except Exception as exc:
                 print(f"[WARN] state {p} load failed: {exc}")
+        # Permanent-halt transparency: alert once, allow env-driven reset.
+        if self.risk.halted_permanent:
+            if os.getenv("RESET_HALT") == "1":
+                self.risk.halted_permanent = False
+                msg = f"[{self.tier}{self.tag}] ENGINE HALT reset via RESET_HALT=1"
+                print(msg)
+                tg(msg)
+            else:
+                msg = (f"[{self.tier}{self.tag}] ENGINE HALTED (max drawdown) — "
+                       f"manual reset required (set RESET_HALT=1 to reset)")
+                print(msg)
+                tg(msg)
+
+    def _prune_seen(self) -> None:
+        """Drop seen keys whose t_complete is older than SEEN_MAX_AGE_DAYS."""
+        cutoff = dt.datetime.utcnow() - dt.timedelta(days=SEEN_MAX_AGE_DAYS)
+        kept = set()
+        for key in self._seen:
+            try:
+                import pandas as _pd
+                ts = _pd.Timestamp(key[2]).to_pydatetime()
+                if ts.tzinfo is not None:
+                    ts = ts.replace(tzinfo=None)
+                if ts >= cutoff:
+                    kept.add(key)
+            except Exception:
+                kept.add(key)  # unparsable -> keep (safe default)
+        self._seen = kept
 
     def _save(self) -> None:
         try:
+            self._prune_seen()
             self._path().write_text(json.dumps({
                 "trades": self.trades,
                 "closed": self.closed,
                 "seen": [list(x) for x in self._seen],
                 "risk": self.risk.to_dict(),
+                "cooldowns": self._cooldowns,
+                "last_managed": self._last_managed,
                 "_symbol_last_scan": {k: round(v, 2) for k, v in self._symbol_last_scan.items()},
                 "_symbol_nearest": self._symbol_nearest,
             }, default=str, indent=2))
@@ -256,19 +374,40 @@ class Engine:
         if self._in_cooldown(symbol):
             return
         cfg = TIERS[self.tier]
+        # DATA_SHORT backoff: retry only every DATA_SHORT_RETRY_CYCLES cycles
+        if symbol in self._data_short:
+            if self._scan_tick - self._data_short[symbol] < DATA_SHORT_RETRY_CYCLES:
+                self._stats["data_short"] += 1
+                return
         zone_df = fetch_recent(symbol, cfg["zone"], 300)
-        ltf = fetch_recent(symbol, cfg["ltf"], ltf_recent).iloc[:-1]
+        ltf_raw = fetch_recent(symbol, cfg["ltf"], ltf_recent)
+        # Closed-candle semantics: Nexus only stores CLOSED candles — drop the
+        # last bar ONLY if it is still forming (guard replaces blanket iloc[:-1]).
+        zone_df = _closed_bars(zone_df, cfg["zone"])
+        ltf = _closed_bars(ltf_raw, cfg["ltf"])
+        # Stale-data guard: skip scan when the feed is frozen
+        lag = _data_lag_sec(ltf)
+        if lag != float("inf"):
+            self._data_lag_max = max(self._data_lag_max, lag)
+        if _is_stale(ltf, cfg["ltf"]) or _is_stale(zone_df, cfg["zone"]):
+            if len(ltf) or len(zone_df):
+                print(f"[WARN] STALE DATA {symbol} {cfg['ltf']} lag={lag:.0f}s — skipping scan")
+            self._stats["stale"] += 1
+            return
         if min(len(zone_df), len(ltf)) < 260:
             self._symbol_nearest[symbol] = 9999
+            self._data_short[symbol] = self._scan_tick
+            self._stats["data_short"] += 1
+            print(f"[WARN] DATA_SHORT {symbol} zone={len(zone_df)} ltf={len(ltf)} — retry in {DATA_SHORT_RETRY_CYCLES} cycles")
             return
+        self._data_short.pop(symbol, None)
         trend = _trend(zone_df)
-        bull_raw = generate_setups(zone_df, ltf, trend, "BULL", self.rr, sl_swing=self.sl_swing) \
+        # LIVE detector: recent_setups (designed for rolling windows) with the SAME
+        # freshness horizon the backtest uses for fills (FIB_EXPIRY bars).
+        bull = recent_setups(zone_df, ltf, trend, "BULL", self.rr, max_age=FIB_EXPIRY, sl_swing=self.sl_swing) \
             if self.direction in ("both", "long") else []
-        bear_raw = generate_setups(zone_df, ltf, trend, "BEAR", self.rr, sl_swing=self.sl_swing) \
+        bear = recent_setups(zone_df, ltf, trend, "BEAR", self.rr, max_age=FIB_EXPIRY, sl_swing=self.sl_swing) \
             if self.direction in ("both", "short") else []
-        # ponytail: skip max_age — market slow, fresh setups rare
-        bull = bull_raw
-        bear = bear_raw
         if self.use_cvd:
             bull = _filter_flow(symbol, 0, "BULL", bull, ltf, True, False)
             bear = _filter_flow(symbol, 0, "BEAR", bear, ltf, True, False)
@@ -291,7 +430,10 @@ class Engine:
             age = n - 1 - int(s["ce"])
             nearest_age = min(nearest_age, age)
         self._stats["min_age"] = min(self._stats["min_age"], nearest_age)
-        fresh = [s for s in alls if (n - 1 - int(s["ce"])) <= 288]  # WIDE, match backtest max_age
+        # Single source of truth: setups are "fresh" only within the same FIB_EXPIRY
+        # window the backtest uses to look for fills (a 288-bar window would post
+        # 24h-stale fib prices that almost never fill).
+        fresh = [s for s in alls if (n - 1 - int(s["ce"])) <= FIB_EXPIRY]
         self._stats["cand"] += len(fresh)
         # Update scan metadata
         self._symbol_last_scan[symbol] = time.time()
@@ -304,11 +446,13 @@ class Engine:
         if key in self._seen:
             return
         self._stats["fresh"] += 1
-        self._seen.add(key)
+        # NOTE: key is added to _seen only AFTER a successful _open_pending (or a
+        # final adversarial rejection). Technical failures leave it retryable.
         n_open = sum(1 for t in self.trades if t.get("status") == "OPEN")
         n_pending = sum(1 for t in self.trades if t.get("status") == "PENDING")
         if self._has_symbol(symbol) or self._busy_on_exchange(symbol):
             self._stats["blocked"] += 1
+            self._stats["blocked_busy"] += 1
             return
         if n_open >= self.risk.max_positions:
             self._stats["blocked"] += 1
@@ -320,6 +464,19 @@ class Engine:
             return
         if not self.risk.can_open(n_open):
             self._stats["blocked"] += 1
+            self._stats["blocked_risk"] += 1
+            return
+        # ENTRY_TOO_FAR guard: never post a limit whose price is already far from market.
+        cur_close = float(ltf["close"].iloc[-1])
+        entry_dist = abs(cur_close - float(s["entry"])) / float(s["entry"]) if s["entry"] else 0.0
+        if entry_dist > ENTRY_MAX_DIST_PCT:
+            self._stats["blocked"] += 1
+            self._stats["blocked_entry_far"] += 1
+            print(f"[SKIP] ENTRY_TOO_FAR {symbol} {s['side']} entry={s['entry']:.6g} "
+                  f"close={cur_close:.6g} dist={entry_dist:.2%} > {ENTRY_MAX_DIST_PCT:.2%}")
+            self._flog("ENTRY_TOO_FAR", dict(symbol=symbol, side=s["side"],
+                                             entry=s["entry"], close=cur_close,
+                                             dist_pct=round(entry_dist * 100, 3)))
             return
         # Adversarial check — 12-agent pipeline with model pool round-robin (v2)
         if self.use_adversarial:
