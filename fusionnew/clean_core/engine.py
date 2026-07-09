@@ -432,6 +432,81 @@ class Engine:
                     "daily_pnl": 0.0,
                     "max_dd": self.risk.max_dd / self.risk.equity_ref * 100 if self.risk.equity_ref else 20.0,
                 }
+                
+                # ── VIP PIPELINE: Silent Accumulation → Whale Scanner → VIP Fast Lane ──
+                from clean_core.silent_accumulation import detect_silent_accumulation
+                from clean_core.vip_fast_lane import compute_vip_score
+                from pathlib import Path as PathLib
+                import json as json_lib
+                
+                # 1. Silent Accumulation
+                accum = detect_silent_accumulation(ltf, prev_state="NO_ACCUMULATION")
+                
+                # 2. Whale Scanner (load latest event from JSONL)
+                whale_event = None
+                whale_file = PathLib(os.getenv("WHALE_RUNTIME_DIR", "/app/runtime/whales")) / f"latest_whale_{symbol.replace('USDT', '')}.json"
+                if whale_file.exists():
+                    try:
+                        with open(whale_file) as wf:
+                            whale_event = json_lib.load(wf)
+                            # Compute age
+                            from datetime import datetime as dt_mod, timezone as tz_mod
+                            event_ts = dt_mod.fromisoformat(whale_event["timestamp"].replace("Z", "+00:00"))
+                            whale_age = (dt_mod.now(tz_mod.utc) - event_ts).total_seconds() / 60.0
+                            whale_event["age_minutes"] = whale_age
+                            # Filter old events (>4h = history only)
+                            if whale_age > 240:
+                                whale_event = None
+                    except Exception:
+                        whale_event = None
+                
+                # 3. Session timing (kill zone 07:00-16:00 UTC)
+                utc_hour = dt.datetime.now(dt.timezone.utc).hour
+                in_killzone = 7 <= utc_hour < 16
+                session_name = "LONDON" if 7 <= utc_hour < 12 else ("NY" if 12 <= utc_hour < 16 else "OFF")
+                session_ctx = {"in_killzone": in_killzone, "session": session_name}
+                
+                # 4. SMC context (order block, imbalance from setup)
+                smc_ctx = {
+                    "ob_detected": bool(s.get("ob_entry")),
+                    "imbalance": bool(s.get("imbalance")),
+                    "breaker": False,  # ponytail: implement breaker detection
+                }
+                
+                # 5. Daily context (placeholder for now)
+                daily_ctx = {"daily_trend": "NEUTRAL", "daily_structure": "INTACT"}
+                
+                # 6. VIP Fast Lane scoring
+                vip = compute_vip_score(
+                    accumulation=accum,
+                    whale_event=whale_event,
+                    session=session_ctx,
+                    smc_context=smc_ctx,
+                    daily_context=daily_ctx,
+                    flow_verdict=flow_verdict,
+                )
+                
+                # 7. Enrich ADVv2 context with VIP data
+                context.update({
+                    # Whale enrichment
+                    "whale_bias": whale_event["bias"] if whale_event else "NEUTRAL",
+                    "whale_event_type": whale_event.get("event_type", "NONE") if whale_event else "NONE",
+                    "whale_value_usd": whale_event.get("value_usd", 0) if whale_event else 0,
+                    "whale_age_minutes": whale_event.get("age_minutes", None) if whale_event else None,
+                    # Silent accumulation enrichment
+                    "accumulation_state": accum["state"],
+                    "accumulation_score": accum["score"],
+                    # VIP enrichment
+                    "vip_status": vip["status"],
+                    "vip_score": vip["vip_score"],
+                    "vip_trigger_ready": vip["trigger_ready"],
+                })
+                
+                # 8. VIP enrichment complete — NON-BLOCKING (priority only, never gate)
+                # VIP Fast Lane prioritizes candidates but NEVER bypasses ADVv2 Judge
+                priority = "HIGH" if vip["trigger_ready"] else ("MEDIUM" if vip["vip_score"] >= 40 else "NORMAL")
+                print(f"✅ [VIP] {symbol} → ADVv2 ({priority}): score={vip['vip_score']}/100 trigger={vip['trigger_ready']} accum={accum['state']} whale={context['whale_bias']}")
+                
                 s["tier"] = self.tier
                 s["direction"] = "LONG" if s.get("side") == "BULL" else "SHORT"
                 print(f"🤖 [ADVv2] Checking {symbol} ({s.get('direction','?')}) with 12-agent pipeline...")

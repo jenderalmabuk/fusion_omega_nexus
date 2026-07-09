@@ -1,5 +1,22 @@
+# Python
 __pycache__/
 *.pyc
-.env
+*.pyo
+*.pyd
+*.so
+
+# Virtualenv
+.venv/
+venv/
+env/
+
+# Runtime files
+runtime/
+data/
 *.log
-timescale_data/
+*.session
+*.session-journal
+test_*.py
+
+# Hermes Agent
+.hermes/

@@ -93,11 +93,28 @@ Choppiness: {chop} | Efficiency Ratio: {er}
 Pattern: orderblock + imbalance on {tier}
 Rate technical confluence 1-10. Reply ONLY with the integer number."""
 
-SMART_MONEY_PROMPT = """Role: Smart Money / Flow Analyst
-Task: Assess smart money alignment for {symbol} {side}.
+SMART_MONEY_PROMPT = """Role: Smart Money Analyst
+Task: Analyze smart money flow for {symbol} {side} on {tier}.
 CVD z-score: {cvd_z} | OI delta: {oi_delta}% | Funding: {funding}%
 Flow verdict: {flow_verdict}
+
+WHALE CONTEXT (on-chain):
+- Bias: {whale_bias}
+- Event: {whale_event_type}
+- Value: ${whale_value_usd:,.0f}
+- Age: {whale_age_minutes} minutes ago
+
+SILENT ACCUMULATION:
+- State: {accumulation_state}
+- Score: {accumulation_score}/10
+
+VIP FAST LANE:
+- Status: {vip_status}
+- Score: {vip_score}/100
+- Trigger Ready: {vip_trigger_ready}
+
 Rate smart money alignment 1-10 (1=hostile/against trade, 10=strongly aligned).
+Consider: whale flow (on-chain confirmation), silent accumulation (compression), CVD/OI/funding confluence.
 Reply ONLY with the integer number."""
 
 LIQUIDITY_PROMPT = """Role: Liquidity Analyst
@@ -146,7 +163,15 @@ BEAR: {bear_arg}
 Background scores — Scanner:{scanner}/10 Tech:{tech}/10 Flow:{flow}/10
 Liq:{liq}/10 Macro:{macro}/10 Sentiment:{sent}/10
 
-Decide: should we take this trade? Reply ONLY with YES or NO.
+Decide: should we take this trade?
+
+GUIDELINES:
+- Individual low scores (1-3) are NOT auto-reject if other factors strong
+- Focus on: technical confluence, smart money alignment, risk/reward
+- Scanner/Liquidity issues acceptable if flow supportive + technical solid
+- Reject only if: multiple critical scores low OR bear argument overwhelmingly strong
+
+Reply ONLY with YES or NO.
 No explanation. No punctuation. Only YES or NO."""
 
 RISK_MANAGER_PROMPT = """Role: Risk Manager
@@ -384,6 +409,19 @@ def adversarial_check_v2(
             except Exception as e:
                 scores[name] = 5
                 journal["agents"][name] = {"model": "TIMEOUT", "response": str(e), "score": 5}
+    
+    # ── Pre-filter: Skip obviously bad candidates (save tokens) ──
+    # Reject if BOTH scanner AND liquidity are critically low (<= 2)
+    # Allow entry if at least ONE is acceptable (>= 3)
+    scanner_score = scores.get("scanner", 5)
+    liquidity_score = scores.get("liquidity", 5)
+    
+    if scanner_score <= 2 and liquidity_score <= 2:
+        reason = f"pre_filter:REJECT scanner={scanner_score} liquidity={liquidity_score} (both critically low)"
+        journal["pre_filter"] = {"passed": False, "reason": reason}
+        return False, reason, journal
+    
+    journal["pre_filter"] = {"passed": True, "scanner": scanner_score, "liquidity": liquidity_score}
 
     # ── Phase 2: Bull & Bear (parallel, tier-1 pool) ─────────────
     # Map score keys to prompt variable names

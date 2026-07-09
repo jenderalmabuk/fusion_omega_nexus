@@ -24,4 +24,4 @@ VISION_ENABLED = False  # Chart vision (requires GPT-4V)
 PARSE_REPORT = False  # Detailed parse reports
 
 # Notification (stub - will wire Telegram later)
-TELEGRAM_NOTIFY_ENABLED = False
+TELEGRAM_NOTIFY_ENABLED = True  # Enable Telegram notifications
