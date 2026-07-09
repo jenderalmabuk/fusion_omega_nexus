@@ -183,9 +183,9 @@ services:
   revo_adaptive:
     image: freqtradeorg/freqtrade:stable
     container_name: revo_adaptive_signal_bybit_paper
-    user: root
+    user: ftuser
     environment:
-      - FREQTRADE__CONFIG=/freqtrade/user_data/config_bybit_paper.json
+      - FREQTRADE__CONFIG=/freqtrade/user_data/configs/config.bybit.paper.json
       - FREQTRADE__STRATEGY=RevoAdaptiveStrategy
     volumes:
       - ../revo_adaptive/user_data:/freqtrade/user_data
@@ -195,7 +195,8 @@ services:
       - ../revo_adaptive/revo_core:/freqtrade/user_data/revo_core
       - ../runtime/revo:/runtime/revo
     restart: unless-stopped
-    command: ["trade", "--config", "/freqtrade/user_data/config_bybit_paper.json", "--strategy", "RevoAdaptiveStrategy"]
+    entrypoint: ["/usr/local/bin/python3", "-m", "freqtrade"]
+    command: ["trade", "--config", "/freqtrade/user_data/configs/config.bybit.paper.json", "--strategy", "RevoAdaptiveStrategy"]
     depends_on:
       fastapi:
         condition: service_started
