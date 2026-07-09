@@ -69,18 +69,47 @@ class FuturesTestnet:
         return self._signed("GET", "/fapi/v1/openOrders", {"symbol": symbol})
 
     # ---- precision ----
-    def _f(self, symbol: str) -> Dict[str, float]:
+    @staticmethod
+    def _generic_filters(qty_hint: float = 0.0) -> Dict[str, float]:
+        """Price-magnitude-based generic precision for DRY mode (no network).
+        Many altcoins do not exist on testnet; exchangeInfo must never be
+        required — or able to raise — during a paper run."""
+        if qty_hint >= 1000:
+            return {"step": 1.0, "tick": 0.0001}
+        if qty_hint >= 10:
+            return {"step": 0.1, "tick": 0.001}
+        return {"step": 0.000001, "tick": 0.000001}
+
+    def _f(self, symbol: str, hint: float = 0.0) -> Dict[str, float]:
+        if self.dry:
+            # DRY: never call testnet exchangeInfo (network errors would consume signals)
+            return self._generic_filters(hint)
         if symbol not in self._filters:
-            info = self._public("/fapi/v1/exchangeInfo")
-            for s in info.get("symbols", []):
-                step = tick = 0.0
-                for fl in s.get("filters", []):
-                    if fl["filterType"] == "LOT_SIZE":
-                        step = float(fl["stepSize"])
-                    elif fl["filterType"] == "PRICE_FILTER":
-                        tick = float(fl["tickSize"])
-                self._filters[s["symbol"]] = {"step": step, "tick": tick}
+            try:
+                info = self._public("/fapi/v1/exchangeInfo")
+                for s in info.get("symbols", []):
+                    step = tick = 0.0
+                    for fl in s.get("filters", []):
+                        if fl["filterType"] == "LOT_SIZE":
+                            step = float(fl["stepSize"])
+                        elif fl["filterType"] == "PRICE_FILTER":
+                            tick = float(fl["tickSize"])
+                    self._filters[s["symbol"]] = {"step": step, "tick": tick}
+            except Exception as exc:
+                print(f"[WARN] exchangeInfo fetch failed ({exc}) — using generic precision")
+                return self._generic_filters(hint)
         return self._filters.get(symbol, {"step": 0.001, "tick": 0.01})
+
+    @staticmethod
+    def _round_step(value: float, step: float) -> float:
+        if step <= 0:
+            return value
+        return round(round(value / step) * step, 8)
+
+    def round_qty(self, symbol: str, qty: float) -> float:
+        if self.dry:
+            return round(qty, 6) if qty < 10 else round(qty, 1)
+        return self._round_step(qty, self._f(symbol, qty)["step"])
 
     @staticmethod
     def _round_step(value: float, step: float) -> float:

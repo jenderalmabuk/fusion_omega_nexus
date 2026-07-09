@@ -9,6 +9,7 @@ Usage:
 """
 
 import importlib
+import json
 import os
 import sys
 import yaml
@@ -36,10 +37,68 @@ cli_args = [a for a in sys.argv[1:] if a != "--dry"]  # engine is dry by default
 cli_has_symbols = "--symbols" in cli_args
 args = []
 
+def _tg_alert(text: str) -> None:
+    """Best-effort Telegram alert (used before engine import)."""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        return
+    try:
+        import requests
+        requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                      json={"chat_id": int(chat_id), "text": text}, timeout=10)
+    except Exception:
+        pass
+
+
+def _normalize_pair(pair: str) -> str:
+    """Freqtrade format 'BTC/USDT:USDT' -> 'BTCUSDT'."""
+    return pair.split(":")[0].replace("/", "").strip().upper()
+
+
+def _load_universe_fallback() -> list:
+    """Load universe from scanner output when symbols_file is empty."""
+    candidates = []
+    env_src = os.environ.get("UNIVERSE_SOURCE", "")
+    if env_src:
+        candidates.append(env_src)
+    revo_dir = os.environ.get("REVO_RUNTIME_DIR",
+                              os.path.join(os.path.dirname(__file__), "..", "runtime", "revo"))
+    candidates.append(os.path.join(revo_dir, "freqtrade_pairlist.json"))
+    candidates.append(os.path.join(revo_dir, "pair_universe_all.json"))
+    for path in candidates:
+        try:
+            with open(path) as f:
+                data = json.load(f)
+        except Exception:
+            continue
+        raw = data.get("pairs", data) if isinstance(data, dict) else data
+        if not isinstance(raw, list):
+            continue
+        symbols = [_normalize_pair(p) for p in raw if isinstance(p, str) and p.strip()]
+        symbols = [s for s in symbols if s.endswith("USDT")]
+        if symbols:
+            print(f"[nexus-runner] Universe loaded from fallback: {path} ({len(symbols)} symbols)")
+            return symbols
+    return []
+
+
 symbols_from_file = []
 if "symbols_file" in cfg and not cli_has_symbols:
-    with open(os.path.join(os.path.dirname(__file__), cfg["symbols_file"])) as f:
-        symbols_from_file = f.read().split()
+    try:
+        with open(os.path.join(os.path.dirname(__file__), cfg["symbols_file"])) as f:
+            symbols_from_file = f.read().split()
+    except FileNotFoundError:
+        print(f"[nexus-runner] WARNING: symbols_file '{cfg['symbols_file']}' not found")
+
+if not symbols_from_file and not cli_has_symbols:
+    symbols_from_file = _load_universe_fallback()
+
+if not cli_has_symbols and len(symbols_from_file) < 10:
+    msg = (f"UNIVERSE EMPTY/TOO SMALL (n={len(symbols_from_file)}) for bot '{BOT_NAME}' — "
+           f"check bots/universe.txt or UNIVERSE_SOURCE / runtime/revo/freqtrade_pairlist.json")
+    print(f"[nexus-runner] WARNING: {msg}")
+    _tg_alert(f"⚠️ {msg}")
 
 for key, val in cfg.items():
     if key == "symbols_file":
