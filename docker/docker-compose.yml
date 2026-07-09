@@ -177,6 +177,30 @@ services:
         condition: service_started
     profiles: ["bots"]
 
+  # ============================================================
+  # Revo Adaptive — Freqtrade with Nexus integration
+  # ============================================================
+  revo_adaptive:
+    image: freqtradeorg/freqtrade:stable
+    container_name: revo_adaptive_signal_bybit_paper
+    user: root
+    environment:
+      - FREQTRADE__CONFIG=/freqtrade/user_data/config_bybit_paper.json
+      - FREQTRADE__STRATEGY=RevoAdaptiveStrategy
+    volumes:
+      - ../revo_adaptive/user_data:/freqtrade/user_data
+      - ../revo_adaptive/strategies:/freqtrade/user_data/strategies
+      - ../revo_adaptive/configs:/freqtrade/user_data/configs
+      - ../revo_adaptive/scripts:/freqtrade/user_data/scripts
+      - ../revo_adaptive/revo_core:/freqtrade/user_data/revo_core
+      - ../runtime/revo:/runtime/revo
+    restart: unless-stopped
+    command: ["trade", "--config", "/freqtrade/user_data/config_bybit_paper.json", "--strategy", "RevoAdaptiveStrategy"]
+    depends_on:
+      fastapi:
+        condition: service_started
+    profiles: ["bots"]
+
 volumes:
   timescale_data:
     driver: local

@@ -1,0 +1,67 @@
+{
+    "max_open_trades": 20,
+    "stake_amount": 50,
+    "stake_currency": "USDT",
+    "tradable_balance_ratio": 0.95,
+    "dry_run_wallet": 1000,
+    "fee": 0.0006,
+    "timeframe": "5m",
+    "process_throttle_secs": 5,
+    "trading_mode": "futures",
+    "fiat_display_currency": "USD",
+    "exchange": {
+        "name": "bybit",
+        "key": "${BYBIT_API_KEY}",
+        "secret": "${BYBIT_API_SECRET}",
+        "pair_whitelist": [],
+        "pair_blacklist": [
+            ".*(UP|DOWN|BULL|BEAR)/.*",
+            ".*USDC/USDT:USDT",
+            ".*USDE/USDT:USDT",
+            ".*FDUSD/USDT:USDT"
+        ],
+        "ccxt_config": {},
+        "ccxt_async_config": {},
+        "demo_trading": false
+    },
+    "pairlists": [
+        {
+            "method": "RemotePairList",
+            "pairlist_url": "file:////freqtrade/user_data/local/revo_alpha/runtime/bybit/freqtrade_pairlist.json",
+            "mode": "whitelist",
+            "processing_mode": "filter",
+            "number_assets": 200,
+            "refresh_period": 300,
+            "keep_pairlist_on_failure": true,
+            "read_timeout": 60
+        }
+    ],
+    "edge": {
+        "enabled": false
+    },
+    "telegram": {
+        "enabled": true,
+        "token": "${TELEGRAM_TOKEN}",
+        "chat_id": "${TELEGRAM_CHAT_ID}"
+    },
+    "db_url": "sqlite:////freqtrade/user_data/tradesv3.paper.sqlite",
+    "logfile": "/freqtrade/user_data/logs/freqtrade.log",
+    "internals": {
+        "process_throttle_secs": 5
+    },
+    "$schema": "https://schema.freqtrade.io/schema.json",
+    "margin_mode": "isolated",
+    "dataformat_ohlcv": "json",
+    "dry_run": true,
+    "cancel_open_orders_on_exit": true,
+    "entry_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1
+    },
+    "exit_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1
+    }
+}
