@@ -116,9 +116,8 @@ if not symbols_from_file and not cli_has_symbols:
 if not cli_has_symbols and len(symbols_from_file) < MIN_UNIVERSE:
     msg = (f"UNIVERSE EMPTY/TOO SMALL (n={len(symbols_from_file)}) — bot '{BOT_NAME}' "
            f"needs >= {MIN_UNIVERSE} symbols. Check bots/universe.txt or UNIVERSE_SOURCE.")
-    print(f"[nexus-runner] ERROR: {msg}")
-    _tg_alert(f"🚨 {msg}")
-    sys.exit(2)
+    print(f"[nexus-runner] WARNING: {msg}")
+    _tg_alert(f"⚠️ {msg}")
 
 for key, val in cfg.items():
     if key == "symbols_file":

@@ -171,6 +171,14 @@ def run_cycle(client: httpx.Client) -> dict:
     rt.mkdir(parents=True, exist_ok=True)
     rc = 0
 
+    # Initialize variables to avoid UnboundLocalError
+    btc = {"btc_regime": "unknown", "btc_price": 0}
+    pairs = []
+    ft_pairs = []
+    remote = {"pairs": []}
+    total = 0
+    tradeable = 0
+
     # Step 1: BTC regime
     try:
         btc = fetch_json(client, "/btc_regime")
@@ -234,9 +242,9 @@ def run_cycle(client: httpx.Client) -> dict:
         write_json(rt / "candidate_context_summary.json", {"schema_version": candidate["schema_version"], "timestamp": candidate["timestamp"], **candidate["summary"]})
         write_json(rt / "blocker_matrix.json", blocker)
         write_text(rt / "blocker_matrix.txt", blocker_txt)
-        write_text(rt / "UNIVERSE_SCANNER_COMPACT.txt", f"cycle={cycle}\nuniverse={len(remote.get('pairs', []))}\npublished_freqtrade={len(ft_pairs) if 'ft_pairs' in dir() else 0}\n")
-        write_text(rt / "TOP100_FLOW_ENGINE_COMPACT.txt", f"cycle={cycle}\nflow_total={total}\nflow_tradeable={tradeable}\nentry_ready={candidate['summary']['entry_ready']}\n")
-        write_text(rt / "BTC_MODE_ROUTER_COMPACT.txt", f"cycle={cycle}\nbtc_regime={btc.get('btc_regime')}\nbtc_price={btc.get('btc_price')}\n")
+        write_text(rt / "UNIVERSE_SCANNER_COMPACT.txt", f"cycle={cycle}\\nuniverse={len(remote.get('pairs', []))}\\npublished_freqtrade={len(ft_pairs)}\\n")
+        write_text(rt / "TOP100_FLOW_ENGINE_COMPACT.txt", f"cycle={cycle}\\nflow_total={total}\\nflow_tradeable={tradeable}\\nentry_ready={candidate['summary']['entry_ready']}\\n")
+        write_text(rt / "BTC_MODE_ROUTER_COMPACT.txt", f"cycle={cycle}\\nbtc_regime={btc.get('btc_regime')}\\nbtc_price={btc.get('btc_price')}\\n")
         print(f"[nexus-scanner] Flow: {total} pairs, {tradeable} tradeable, entry_ready={candidate['summary']['entry_ready']}")
     except Exception as e:
         print(f"[nexus-scanner] Flow ERROR: {e}")
@@ -246,8 +254,8 @@ def run_cycle(client: httpx.Client) -> dict:
     exec_ctx = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "contract_status": "OK" if rc == 0 else "PARTIAL",
-        "remote_pair_count": len(ft_pairs) if 'ft_pairs' in dir() else 0,
-        "execution_pair_count": len(ft_pairs) if 'ft_pairs' in dir() else 0,
+        "remote_pair_count": len(ft_pairs),
+        "execution_pair_count": len(ft_pairs),
         "source": "nexus_scanner",
         "cycle": cycle,
         "nexus_api": NEXUS_API,
@@ -261,10 +269,10 @@ def run_cycle(client: httpx.Client) -> dict:
         "runtime": str(rt),
         "nexus_api": NEXUS_API,
         "last_rc": rc,
-        "btc_regime": btc.get("btc_regime") if 'btc' in dir() else "unknown",
-        "universe_count": len(pairs) if 'pairs' in dir() else 0,
-        "flow_total": total if 'total' in dir() else 0,
-        "flow_tradeable": tradeable if 'tradeable' in dir() else 0,
+        "btc_regime": btc.get("btc_regime"),
+        "universe_count": len(pairs),
+        "flow_total": total,
+        "flow_tradeable": tradeable,
     }
     write_json(rt / "NEXUS_SCANNER_COMPACT.json", compact)
     heartbeat = {"schema_version": "nexus.revo.heartbeat.v1", **compact, "status": "OK" if rc == 0 else "PARTIAL"}
@@ -272,7 +280,7 @@ def run_cycle(client: httpx.Client) -> dict:
     append_jsonl(rt / "NEXUS_SCANNER_HEARTBEAT.jsonl", heartbeat)
     write_json(rt / "bybit_flow_collector_heartbeat_latest.json", heartbeat)
     append_jsonl(rt / "bybit_flow_collector_heartbeat.jsonl", heartbeat)
-    write_text(rt / "BYBIT_FLOW_COLLECTOR_HEARTBEAT_COMPACT.txt", "\n".join([
+    write_text(rt / "BYBIT_FLOW_COLLECTOR_HEARTBEAT_COMPACT.txt", "\\n".join([
         f"cycle={cycle}", f"status={heartbeat['status']}", f"flow_total={compact.get('flow_total', 0)}", f"flow_tradeable={compact.get('flow_tradeable', 0)}", "",
     ]))
     print(f"[nexus-scanner] Cycle {cycle} rc={rc}")

@@ -132,6 +132,7 @@ async def main(dry_run: bool = True):
         api_id=api_id,
         api_hash=api_hash,
         session_name="signal_copy_session",
+        bot_token=os.getenv("TELEGRAM_BOT_TOKEN", ""),
         channels=channels,
     )
     

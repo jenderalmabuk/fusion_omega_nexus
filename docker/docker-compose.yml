@@ -106,7 +106,6 @@ services:
       PYTHONUNBUFFERED: "1"
       NEXUS_API_URL: http://fastapi:8000
       STATE_DIR: /state
-      HEARTBEAT_DIR: /state
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
       NINE_ROUTER_API_KEY: ${NINE_ROUTER_API_KEY}
@@ -136,7 +135,6 @@ services:
       PYTHONUNBUFFERED: "1"
       NEXUS_API_URL: http://fastapi:8000
       STATE_DIR: /state
-      HEARTBEAT_DIR: /state
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
       NINE_ROUTER_API_KEY: ${NINE_ROUTER_API_KEY}
@@ -159,8 +157,11 @@ services:
   # Nexus Scanner — writes Revo-compatible JSON runtime files
   # ============================================================
   nexus_scanner:
-    image: nexus-bot:latest
+    build:
+      context: ..
+      dockerfile: docker/bot/Dockerfile
     container_name: nexus_scanner
+    user: root
     environment:
       NEXUS_API_URL: http://fastapi:8000
       REVO_RUNTIME_DIR: /runtime/revo
