@@ -101,6 +101,7 @@ services:
   m30_imbalance:
     image: nexus-bot:latest
     container_name: nexus_m30_imbalance
+    user: root
     environment:
       BOT_NAME: m30_imbalance
       PYTHONUNBUFFERED: "1"
@@ -123,6 +124,8 @@ services:
         condition: service_started
     restart: unless-stopped
     profiles: ["bots"]
+    networks:
+      - nexus_net
 
   # ============================================================
   # H1 Bot — consumes Nexus FastAPI, dry/paper by default
@@ -130,6 +133,7 @@ services:
   h1_imbalance:
     image: nexus-bot:latest
     container_name: nexus_h1_imbalance
+    user: root
     environment:
       BOT_NAME: h1_imbalance
       PYTHONUNBUFFERED: "1"
@@ -152,6 +156,8 @@ services:
         condition: service_started
     restart: unless-stopped
     profiles: ["bots"]
+    networks:
+      - nexus_net
 
   # ============================================================
   # Nexus Scanner — writes Revo-compatible JSON runtime files
@@ -184,9 +190,13 @@ services:
     image: freqtradeorg/freqtrade:stable
     container_name: revo_adaptive_signal_bybit_paper
     user: ftuser
+    env_file:
+      - ../.env
     environment:
       - FREQTRADE__CONFIG=/freqtrade/user_data/configs/config.bybit.paper.json
       - FREQTRADE__STRATEGY=RevoAdaptiveStrategy
+      - FREQTRADE__TELEGRAM__TOKEN=${TELEGRAM_TOKEN}
+      - FREQTRADE__TELEGRAM__CHAT_ID=${TELEGRAM_CHAT_ID}
     volumes:
       - ../revo_adaptive/user_data:/freqtrade/user_data
       - ../revo_adaptive/strategies:/freqtrade/user_data/strategies
@@ -194,6 +204,7 @@ services:
       - ../revo_adaptive/scripts:/freqtrade/user_data/scripts
       - ../revo_adaptive/revo_core:/freqtrade/user_data/revo_core
       - ../runtime/revo:/runtime/revo
+      - ../runtime/revo:/freqtrade/user_data/local/revo_alpha/runtime/bybit
     restart: unless-stopped
     entrypoint: ["/usr/local/bin/python3", "-m", "freqtrade"]
     command: ["trade", "--config", "/freqtrade/user_data/configs/config.bybit.paper.json", "--strategy", "RevoAdaptiveStrategy"]
@@ -201,6 +212,12 @@ services:
       fastapi:
         condition: service_started
     profiles: ["bots"]
+    networks:
+      - nexus_net
+
+networks:
+  nexus_net:
+    external: true
 
 volumes:
   timescale_data:
