@@ -126,10 +126,10 @@ class NexusDataBridge:
         rsi = 100 - (100 / (1 + rs))
         return float(rsi.iloc[-1]) if not pd.isna(rsi.iloc[-1]) else 50.0
 
-    def _calc_cvd_proxy(self, df: pd.DataFrame) -> float:
-        """Proxy CVD z-score from volume distribution."""
+    def _calc_cvd_proxy(self, df: pd.DataFrame, source: str = "nexus_cache") -> Dict[str, float]:
+        """Proxy CVD z-score from volume distribution. Returns dict with zscore and source tag."""
         if df.empty or len(df) < 20:
-            return 0.0
+            return {"cvd_zscore": 0.0, "cvd_source": source}
 
         df = df.copy()
         df['directional_vol'] = df['volume'] * np.where(df['close'] > df['open'], 1, -1)
@@ -138,10 +138,10 @@ class NexusDataBridge:
         mean = cvd.tail(20).mean()
         std = cvd.tail(20).std()
         if std == 0:
-            return 0.0
+            return {"cvd_zscore": 0.0, "cvd_source": source}
 
         z = (cvd.iloc[-1] - mean) / std
-        return float(z)
+        return {"cvd_zscore": float(z), "cvd_source": source}
 
     def _build_oi_history(self) -> Dict[str, Dict[int, float]]:
         """Build in-memory OI history from last N scans for all symbols."""
@@ -249,7 +249,9 @@ class NexusDataBridge:
 
         price = float(df_5m['close'].iloc[-1])
         rsi = self._calc_rsi(df_5m['close'], period=14)
-        cvd_zscore = self._calc_cvd_proxy(df_5m)
+        cvd_result = self._calc_cvd_proxy(df_5m, source="nexus_cache")
+        cvd_zscore = cvd_result["cvd_zscore"]
+        cvd_source = cvd_result["cvd_source"]
         imbalance = cvd_zscore / 3.0
 
         oi_metrics = self._calc_oi_changes(symbol, scan_data)
@@ -288,6 +290,7 @@ class NexusDataBridge:
             "price": price,
             "rsi": rsi,
             "cvd_zscore": cvd_zscore,
+            "cvd_source": cvd_source,
             "imbalance": imbalance,
             "funding_rate": funding_rate,
             "price_change_15m_pct": price_change_15m_pct,

@@ -316,7 +316,13 @@ def adversarial_check_v2(
     tp = s.get("tp", 0)
     imb_side = s.get("imb_side", side_raw)
     t_complete = str(s.get("t_complete", "?"))[:19]
-    rr = 2
+    # Compute RR from entry/sl/tp instead of hardcoded 2.0
+    if sl and entry and tp:
+        risk = abs(entry - sl)
+        reward = abs(tp - entry)
+        rr = round(reward / risk, 2) if risk > 0 else 2.0
+    else:
+        rr = 2.0
 
     # ── Extract context fields (from engine + ltf) ──────────────
     # Price/volume
