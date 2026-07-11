@@ -131,19 +131,18 @@ DEDUP_WINDOW_SEC = float(os.getenv("SIGNAL_COPY_DEDUP_WINDOW_SEC", "1800"))
 
 # --- Vision (Tahap 2): read the chart/outlook image attached to a signal ---
 VISION_ENABLED = _bool("SIGNAL_COPY_VISION_ENABLED", False)
-# "ollama" (local model, free) or "n8n" (webhook to your n8n flow).
-VISION_BACKEND = os.getenv("SIGNAL_COPY_VISION_BACKEND", "ollama").strip().lower()
-OLLAMA_URL = os.getenv("SIGNAL_COPY_OLLAMA_URL", "http://localhost:11434").strip()
-VISION_MODEL = os.getenv("SIGNAL_COPY_VISION_MODEL", "qwen2.5vl:3b").strip()
+# "openai" (OpenAI-compatible: OpenRouter / Google Gemini openai-endpoint / OpenAI / similar)
+# or "n8n" (webhook to your n8n flow).
+VISION_BACKEND = os.getenv("SIGNAL_COPY_VISION_BACKEND", "openai").strip().lower()
 VISION_TIMEOUT_SEC = float(os.getenv("SIGNAL_COPY_VISION_TIMEOUT_SEC", "300"))
 N8N_WEBHOOK_URL = os.getenv("SIGNAL_COPY_N8N_WEBHOOK_URL", "").strip()
 # OpenAI-compatible cloud backend (OpenRouter / Google Gemini openai-endpoint /
 # OpenAI / similar). Fast + offloads the VPS CPU. Set BACKEND=openai to use.
-VISION_OPENAI_BASE_URL = os.getenv("SIGNAL_COPY_VISION_OPENAI_BASE_URL", "").strip()
+# OpenRouter base URL: https://openrouter.ai/api/v1
+# Free vision models on OpenRouter: google/gemini-2.0-flash-exp:free, google/gemini-flash-1.5, etc.
+VISION_OPENAI_BASE_URL = os.getenv("SIGNAL_COPY_VISION_OPENAI_BASE_URL", "https://openrouter.ai/api/v1").strip()
 VISION_OPENAI_API_KEY = os.getenv("SIGNAL_COPY_VISION_OPENAI_API_KEY", "").strip()
-VISION_OPENAI_MODEL = os.getenv("SIGNAL_COPY_VISION_OPENAI_MODEL", "gpt-4o-mini").strip()
-# If the cloud backend is rate-limited/unavailable, fall back to local Ollama.
-VISION_FALLBACK_OLLAMA = _bool("SIGNAL_COPY_VISION_FALLBACK_OLLAMA", True)
+VISION_OPENAI_MODEL = os.getenv("SIGNAL_COPY_VISION_OPENAI_MODEL", "google/gemini-2.0-flash-exp:free").strip()
 
 # --- Adversarial gate (Tahap 3): bull/bear debate before entry ---
 ADVERSARIAL_ENABLED = _bool("SIGNAL_COPY_ADVERSARIAL_ENABLED", True)
