@@ -934,6 +934,16 @@ class Engine:
         even when the price feed is empty. (1.5c)
         """
         my_trades = [x for x in self.trades if x["symbol"] == symbol]
+        # Initialize watermark for symbols without trades to latest closed bar,
+        # so newly created PENDING orders don't replay historical bars (F-01).
+        if symbol not in self._last_managed_ts:
+            df_init, _ = self._manage_df(symbol)
+            if df_init is not None and len(df_init) > 0:
+                df_init = _drop_forming_bar(df_init, "1m")
+                if len(df_init) > 0:
+                    ts = pd_to_datetime_safe(df_init.iloc[-1]["open_time"])
+                    if ts is not None:
+                        self._last_managed_ts[symbol] = ts.replace(tzinfo=dt.timezone.utc).timestamp()
         if not my_trades:
             return
         # 1) Expiry BEFORE fill: never let empty data leave stale PENDINGs alive.
