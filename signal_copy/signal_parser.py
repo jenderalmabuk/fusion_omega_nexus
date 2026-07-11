@@ -42,7 +42,8 @@ _PAIR_CONCAT_RE = re.compile(
 _PAIR_CASHTAG_RE = re.compile(r"\$([A-Za-z][A-Za-z0-9]{1,14})\b")
 
 _SIDE_RE = re.compile(
-    r"(?:position|side|direction|type|signal|setup(?:\s*utama)?|signal\s*type)\s*[:\\-]?\s*.*?\b(LONG|SHORT|BUY|SELL)\b",
+    r"(?:position|side|direction|type|signal|setup(?:\s*utama)?)\s*[:\-]?\s*[*_`(]*\s*"
+    r"(LONG|SHORT|BUY|SELL)\b",
     re.IGNORECASE,
 )
 _SIDE_INLINE_RE = re.compile(r"\b(LONG|SHORT)\b", re.IGNORECASE)
@@ -80,20 +81,21 @@ _ENTRY_NOW_ZONE_RE = re.compile(
     r"\$?([\d.,]+)\s*(?:[-–~]+|\bto\b)\s*\$?([\d.,]+)",
     re.IGNORECASE,
 )
-# New: numbered-list entry format like "Entry Targets:\n1) 2.24\n2) 2.30"
+# Numbered-list entry format like "Entry Targets:\n1) 2.24\n2) 2.30"
 # This format has no prices on the same line as the label.
 _ENTRY_LIST_LABEL_RE = re.compile(
     r"(?:entry\s*targets?|entry\s*zone|entry\s*points?)\s*:\s*$",
     re.IGNORECASE | re.MULTILINE,
 )
 _ENTRY_LIST_NUMBER_RE = re.compile(r"\b\d{1,2}\s*[.)]\s*\$?([\d.,]+)\b", re.IGNORECASE)
+# Market entry with NO explicit price: "Entry Long now", "Entry market", "CMP".
 _ENTRY_MARKET_RE = re.compile(
     r"\bentry\b[^\n\d]{0,18}?\b(now|market|market\s*price|cmp|sekarang)\b",
     re.IGNORECASE,
 )
 
 _SL_RE = re.compile(
-    r"(?:stop\s*loss|stoploss|stop\s*target|stop|sl)\s*[:\\-–—]*\s*[\\-–—]?\s*[*_`]*\$?([\d.,]+)(?!\s*[.)])",
+    r"(?:stop\s*loss|stoploss|stop\s*target|stop|sl)\s*[:\\-–—]*\s*[\-–—]?\s*[*_`]*\$?([\d.,]+)(?!\s*[.)])",
     re.IGNORECASE,
 )
 # New: numbered-list SL format like "Stop Target:\n1) 2.37"
@@ -104,15 +106,14 @@ _SL_LIST_LABEL_RE = re.compile(
 _SL_LIST_NUMBER_RE = re.compile(r"\b\d{1,2}\s*[.)]\s*\$?([\d.,]+)\b", re.IGNORECASE)
 
 # Take profits: capture the whole targets block then extract numbers.
-# EXCLUDES "Entry Targets:" block - only matches "Take-Profit" or "Target" (singular after Entry)
 _TP_BLOCK_RE = re.compile(
-    r"(?:take[-\s]*profits?|take[-\s]*profit\s*targets?|tp)\b(.*?)(?:stop\s*loss|stoploss|stop\s*target|\bstop\b|\bsl\b|trailing|$)",
+    r"(?:take\s*profits?|targets?|tps?)\b(.*?)(?:stop\s*loss|stoploss|\bstop\b|\bsl\b|⛔|$)",
     re.IGNORECASE | re.DOTALL,
 )
 # A line that carries a take-profit value, e.g. "TP1 365", "TP 1 → 365",
 # "TP1: 386.0", "Target 2 - 415", "Take Profit 365".
 _TP_LINE_RE = re.compile(r"(?:take\s*profits?|targets?|\btp)\s*(\d{1,2})?\b", re.IGNORECASE)
-_NUMBER_RE = re.compile(r"\$?(\d+(?:[.,]\d+)?)")
+_NUMBER_RE = re.compile(r"\$?([\d][\d.,]*\d|\d)")
 
 # Strong indicator that text is a trade call (need at least entry+side+pair).
 _SIGNAL_HINT_RE = re.compile(
@@ -233,16 +234,13 @@ def _extract_take_profits(text: str) -> List[float]:
             continue
         line_for_numbers = re.sub(r"\b\d{1,2}\s*\)\s*(?=\d)", "", line)
         line_for_numbers = re.sub(
-            r"\bTP\s*\d{1,2}\b\s*[:\\-–—]*", "", line_for_numbers, flags=re.IGNORECASE
+            r"\bTP\s*\d{1,2}\b\s*[:\-–—]*", "", line_for_numbers, flags=re.IGNORECASE
         )
-        # Split on commas first to handle "TP: 60000,62000,65000"
-        parts = [p.strip() for p in line_for_numbers.split(",")]
         nums = []
-        for part in parts:
-            for nm in _NUMBER_RE.finditer(part):
-                v = _to_float(nm.group(1))
-                if v is not None:
-                    nums.append(v)
+        for nm in _NUMBER_RE.finditer(line_for_numbers):
+            v = _to_float(nm.group(1))
+            if v is not None:
+                nums.append(v)
         if not nums:
             continue
         if m.group(1):  # label had an index like TP1 / TP 1
@@ -257,14 +255,11 @@ def _extract_take_profits(text: str) -> List[float]:
     block = _TP_BLOCK_RE.search(text)
     if block:
         block_text = re.sub(r"\b\d{1,2}\s*\)\s*(?=\d)", "", block.group(1))
-        block_text = re.sub(r"\bTP\s*\d{1,2}\b\s*[:\\-–—]*", "", block_text, flags=re.IGNORECASE)
-        # Split on commas for the block too
-        parts = [p.strip() for p in block_text.split(",")]
-        for part in parts:
-            for m in _NUMBER_RE.finditer(part):
-                v = _to_float(m.group(1))
-                if v is not None and v > 0:
-                    tps.append(v)
+        block_text = re.sub(r"\bTP\s*\d{1,2}\b\s*[:\-–—]*", "", block_text, flags=re.IGNORECASE)
+        for m in _NUMBER_RE.finditer(block_text):
+            v = _to_float(m.group(1))
+            if v is not None and v > 0:
+                tps.append(v)
     return tps
 
 
@@ -350,11 +345,9 @@ def parse_signal(
     if entry_low is None:
         # Numbered-list entry format: "Entry Targets:\n1) 2.24\n2) 2.30"
         if _ENTRY_LIST_LABEL_RE.search(text):
-            # Find section after "Entry Targets:" label
             m = _ENTRY_LIST_LABEL_RE.search(text)
             if m:
                 remainder = text[m.end():]
-                # Extract numbers until next section or end
                 entries = []
                 for nm in _ENTRY_LIST_NUMBER_RE.finditer(remainder):
                     v = _to_float(nm.group(1))
@@ -380,7 +373,7 @@ def parse_signal(
     if m:
         candidate = _to_float(m.group(1))
         # Reject if it's just a TP/SL index (1,2,3...) - likely a numbered list label
-        if candidate is not None and candidate > 10:  # Real SL prices > 10 for most pairs
+        if candidate is not None and candidate > 10:
             sl = candidate
     # Numbered-list SL format: "Stop Target:\n1) 2.37"
     if sl is None and _SL_LIST_LABEL_RE.search(text):
@@ -414,10 +407,6 @@ def parse_signal(
 
     # --- entry type (limit vs market) ---
     entry_type = "limit" if _LIMIT_RE.search(text) else "market"
-    # Auto-upgrade to limit when entry zone (range) is specified —
-    # a zone implies "wait for price to arrive", which is a limit order.
-    if entry_type == "market" and entry_low is not None and entry_high is not None and entry_high - entry_low > 0:
-        entry_type = "limit"
 
     # --- timeframe ---
     timeframe = None
