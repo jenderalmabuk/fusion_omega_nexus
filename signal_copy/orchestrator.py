@@ -513,8 +513,7 @@ class SignalCopyOrchestrator:
         price = _f(pc.result.metrics_snapshot.get("price"))
         entry = sig.entry_mid
         if self._wait_for_limit(sig, price):
-            if True:
-                self._pending_limits[signal_id] = {"result": pc.result, "created": time.time()}
+            self._pending_limits[signal_id] = {"result": pc.result, "created": time.time()}
                 await self.confirmations.mark(
                     signal_id,
                     ConfirmState.APPROVED,

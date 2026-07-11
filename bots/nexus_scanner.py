@@ -242,9 +242,9 @@ def run_cycle(client: httpx.Client) -> dict:
         write_json(rt / "candidate_context_summary.json", {"schema_version": candidate["schema_version"], "timestamp": candidate["timestamp"], **candidate["summary"]})
         write_json(rt / "blocker_matrix.json", blocker)
         write_text(rt / "blocker_matrix.txt", blocker_txt)
-        write_text(rt / "UNIVERSE_SCANNER_COMPACT.txt", f"cycle={cycle}\\nuniverse={len(remote.get('pairs', []))}\\npublished_freqtrade={len(ft_pairs)}\\n")
-        write_text(rt / "TOP100_FLOW_ENGINE_COMPACT.txt", f"cycle={cycle}\\nflow_total={total}\\nflow_tradeable={tradeable}\\nentry_ready={candidate['summary']['entry_ready']}\\n")
-        write_text(rt / "BTC_MODE_ROUTER_COMPACT.txt", f"cycle={cycle}\\nbtc_regime={btc.get('btc_regime')}\\nbtc_price={btc.get('btc_price')}\\n")
+        write_text(rt / "UNIVERSE_SCANNER_COMPACT.txt", f"cycle={cycle}\nuniverse={len(remote.get('pairs', []))}\npublished_freqtrade={len(ft_pairs)}\n")
+        write_text(rt / "TOP100_FLOW_ENGINE_COMPACT.txt", f"cycle={cycle}\nflow_total={total}\nflow_tradeable={tradeable}\nentry_ready={candidate['summary']['entry_ready']}\n")
+        write_text(rt / "BTC_MODE_ROUTER_COMPACT.txt", f"cycle={cycle}\nbtc_regime={btc.get('btc_regime')}\nbtc_price={btc.get('btc_price')}\n")
         print(f"[nexus-scanner] Flow: {total} pairs, {tradeable} tradeable, entry_ready={candidate['summary']['entry_ready']}")
     except Exception as e:
         print(f"[nexus-scanner] Flow ERROR: {e}")
@@ -280,7 +280,7 @@ def run_cycle(client: httpx.Client) -> dict:
     append_jsonl(rt / "NEXUS_SCANNER_HEARTBEAT.jsonl", heartbeat)
     write_json(rt / "bybit_flow_collector_heartbeat_latest.json", heartbeat)
     append_jsonl(rt / "bybit_flow_collector_heartbeat.jsonl", heartbeat)
-    write_text(rt / "BYBIT_FLOW_COLLECTOR_HEARTBEAT_COMPACT.txt", "\\n".join([
+    write_text(rt / "BYBIT_FLOW_COLLECTOR_HEARTBEAT_COMPACT.txt", "\n".join([
         f"cycle={cycle}", f"status={heartbeat['status']}", f"flow_total={compact.get('flow_total', 0)}", f"flow_tradeable={compact.get('flow_tradeable', 0)}", "",
     ]))
     print(f"[nexus-scanner] Cycle {cycle} rc={rc}")

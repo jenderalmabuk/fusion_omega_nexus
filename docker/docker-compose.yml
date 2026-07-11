@@ -36,7 +36,7 @@ services:
     environment:
       DATABASE_URL: postgresql://nexus:${NEXUS_DB_PASSWORD:?NEXUS_DB_PASSWORD is required (no default)}@timescaledb:5432/nexus
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       timescaledb:
         condition: service_healthy
@@ -101,7 +101,6 @@ services:
   m30_imbalance:
     image: nexus-bot:latest
     container_name: nexus_m30_imbalance
-    user: root
     environment:
       BOT_NAME: m30_imbalance
       PYTHONUNBUFFERED: "1"
@@ -136,7 +135,6 @@ services:
   h1_imbalance:
     image: nexus-bot:latest
     container_name: nexus_h1_imbalance
-    user: root
     environment:
       BOT_NAME: h1_imbalance
       PYTHONUNBUFFERED: "1"
@@ -173,7 +171,6 @@ services:
       context: ..
       dockerfile: docker/bot/Dockerfile
     container_name: nexus_scanner
-    user: root
     environment:
       NEXUS_API_URL: http://fastapi:8000
       REVO_RUNTIME_DIR: /runtime/revo
@@ -239,7 +236,6 @@ services:
       context: ..
       dockerfile: docker/bot/Dockerfile
     container_name: nexus_whalescanner
-    user: root
     environment:
       WHALE_RUNTIME_DIR: /app/runtime/whales
     volumes:
@@ -260,7 +256,6 @@ services:
       context: ..
       dockerfile: docker/signal_copy/Dockerfile
     container_name: nexus_signal_copy
-    user: root
     environment:
       PYTHONUNBUFFERED: "1"
       NEXUS_API_URL: http://fastapi:8000
