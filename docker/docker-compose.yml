@@ -113,10 +113,12 @@ services:
       NINE_ROUTER_BASE: ${NINE_ROUTER_BASE:-http://host.docker.internal:20128/v1}
       ADVERSARIAL_MODEL: ${ADVERSARIAL_MODEL:-gc/gemini-2.5-pro}
       ADVERSARIAL_MODEL_FALLBACK: ${ADVERSARIAL_MODEL_FALLBACK:-gc/gemini-2.5-pro}
-      ADVERSARIAL_VERSION: ${ADVERSARIAL_VERSION:-v1}
+      ADVERSARIAL_VERSION: ${ADVERSARIAL_VERSION:-v2}
+      WHALE_RUNTIME_DIR: /app/runtime/whales
     volumes:
       - ../runtime/state:/state
       - ../runtime/logs:/logs
+      - ../runtime/whales:/app/runtime/whales
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -126,6 +128,7 @@ services:
     profiles: ["bots"]
     networks:
       - nexus_net
+      - docker_default
 
   # ============================================================
   # H1 Bot — consumes Nexus FastAPI, dry/paper by default
@@ -145,10 +148,12 @@ services:
       NINE_ROUTER_BASE: ${NINE_ROUTER_BASE:-http://host.docker.internal:20128/v1}
       ADVERSARIAL_MODEL: ${ADVERSARIAL_MODEL:-gc/gemini-2.5-pro}
       ADVERSARIAL_MODEL_FALLBACK: ${ADVERSARIAL_MODEL_FALLBACK:-gc/gemini-2.5-pro}
-      ADVERSARIAL_VERSION: ${ADVERSARIAL_VERSION:-v1}
+      ADVERSARIAL_VERSION: ${ADVERSARIAL_VERSION:-v2}
+      WHALE_RUNTIME_DIR: /app/runtime/whales
     volumes:
       - ../runtime/state:/state
       - ../runtime/logs:/logs
+      - ../runtime/whales:/app/runtime/whales
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -158,6 +163,7 @@ services:
     profiles: ["bots"]
     networks:
       - nexus_net
+      - docker_default
 
   # ============================================================
   # Nexus Scanner — writes Revo-compatible JSON runtime files
@@ -190,21 +196,30 @@ services:
     image: freqtradeorg/freqtrade:stable
     container_name: revo_adaptive_signal_bybit_paper
     user: ftuser
-    env_file:
-      - ../.env
     environment:
-      - FREQTRADE__CONFIG=/freqtrade/user_data/configs/config.bybit.paper.json
+      - FREQTRADE__CONFIG=/freqtrade/configs/config.bybit.paper.runtime.json
       - FREQTRADE__STRATEGY=RevoAdaptiveStrategy
       - FREQTRADE__TELEGRAM__TOKEN=${TELEGRAM_TOKEN}
       - FREQTRADE__TELEGRAM__CHAT_ID=${TELEGRAM_CHAT_ID}
+      - REVO_ENTRY_MIN_SCORE=8
+      - REVO_ENTRY_DISCOUNT_MIN_PCT=2.5
+      - REVO_ENTRY_RSI_MAX=45
+      - REVO_MIN_QVOL_5M=200000
+      - REVO_ER_CHOP_MAX=0.15
+      - REVO_ATR_PCT_MAX=4.0
+      - REVO_FLOW_MAX_AGE_SEC=120
+      - REVO_FLOW_CONTEXT_PATH=/freqtrade/user_data/local/revo_alpha/runtime/bybit/revo_flow_context.json
+      - REVO_ENTRY_AUDIT_PATH=/freqtrade/user_data/local/revo_entry_audit.jsonl
     volumes:
-      - ../revo_adaptive/user_data:/freqtrade/user_data
+      - ../revo_adaptive:/freqtrade
       - ../revo_adaptive/strategies:/freqtrade/user_data/strategies
       - ../revo_adaptive/configs:/freqtrade/user_data/configs
       - ../revo_adaptive/scripts:/freqtrade/user_data/scripts
       - ../revo_adaptive/revo_core:/freqtrade/user_data/revo_core
-      - ../runtime/revo:/runtime/revo
       - ../runtime/revo:/freqtrade/user_data/local/revo_alpha/runtime/bybit
+      - ../runtime/revo:/freqtrade/user_data/revo_alpha/runtime/bybit
+    ports:
+      - "127.0.0.1:8081:8080"
     restart: unless-stopped
     entrypoint: ["/usr/local/bin/python3", "-m", "freqtrade"]
     command: ["trade", "--config", "/freqtrade/user_data/configs/config.bybit.paper.json", "--strategy", "RevoAdaptiveStrategy"]
@@ -214,9 +229,93 @@ services:
     profiles: ["bots"]
     networks:
       - nexus_net
+      - docker_default
+
+  # ============================================================
+  # Whale Scanner — on-chain large transfer monitor (async 24/7)
+  # ============================================================
+  whalescanner:
+    build:
+      context: ..
+      dockerfile: docker/bot/Dockerfile
+    container_name: nexus_whalescanner
+    user: root
+    environment:
+      WHALE_RUNTIME_DIR: /app/runtime/whales
+    volumes:
+      - ../runtime/whales:/app/runtime/whales
+      - ../runtime/whales/token_chain_map.json:/app/runtime/whales/token_chain_map.json
+      - ../runtime/whales/exchange_labels.json:/app/runtime/whales/exchange_labels.json
+    restart: unless-stopped
+    command: ["python", "-u", "bots/whalescanner.py"]
+    profiles: ["bots"]
+    networks:
+      - docker_default
+
+  # ============================================================
+  # Signal Copy Pipeline — Telegram → Parse → Validate → Execute
+  # ============================================================
+  signal_copy:
+    build:
+      context: ..
+      dockerfile: docker/signal_copy/Dockerfile
+    container_name: nexus_signal_copy
+    user: root
+    environment:
+      PYTHONUNBUFFERED: "1"
+      NEXUS_API_URL: http://fastapi:8000
+      # Signal Copy specific
+      SIGNAL_COPY_TG_API_ID: ${TELEGRAM_API_ID}
+      SIGNAL_COPY_TG_API_HASH: ${TELEGRAM_API_HASH}
+      SIGNAL_COPY_TG_SESSION: ${TELEGRAM_SESSION_NAME:-signal_copy_session}
+      SIGNAL_COPY_TG_LISTENER_BOT_TOKEN: ${SIGNAL_COPY_TG_LISTENER_BOT_TOKEN}
+      SIGNAL_COPY_TG_CHANNELS: ${SIGNAL_COPY_TG_CHANNELS}
+      # Dual channel notifications (new format)
+      SIGNAL_COPY_PARSER_NOTIFY_BOT_TOKEN: ${SIGNAL_COPY_PARSER_NOTIFY_BOT_TOKEN}
+      SIGNAL_COPY_PARSER_NOTIFY_CHAT_ID: ${SIGNAL_COPY_PARSER_NOTIFY_CHAT_ID}
+      SIGNAL_COPY_TRADES_NOTIFY_BOT_TOKEN: ${SIGNAL_COPY_TRADES_NOTIFY_BOT_TOKEN}
+      SIGNAL_COPY_TRADES_NOTIFY_CHAT_ID: ${SIGNAL_COPY_TRADES_NOTIFY_CHAT_ID}
+      # Legacy confirm bot (deprecated - kept for backward compat)
+      SIGNAL_COPY_CONFIRM_BOT_TOKEN: ${SIGNAL_COPY_CONFIRM_BOT_TOKEN}
+      SIGNAL_COPY_CONFIRM_CHAT_ID: ${SIGNAL_COPY_CONFIRM_CHAT_ID}
+      # Behavior
+      SIGNAL_COPY_RISK_PCT: ${SIGNAL_COPY_RISK_PCT:-0.01}
+      SIGNAL_COPY_DRY_RUN: ${SIGNAL_COPY_DRY_RUN:-true}
+      SIGNAL_COPY_AUTO_EXECUTE: ${SIGNAL_COPY_AUTO_EXECUTE:-false}
+      SIGNAL_COPY_ADVERSARIAL_ENABLED: ${SIGNAL_COPY_ADVERSARIAL_ENABLED:-true}
+      SIGNAL_COPY_PARSE_REPORT: ${SIGNAL_COPY_PARSE_REPORT:-false}
+      SIGNAL_COPY_NOTIFY_REJECTED: ${SIGNAL_COPY_NOTIFY_REJECTED:-true}
+      SIGNAL_COPY_NOTIFY_WEAK: ${SIGNAL_COPY_NOTIFY_WEAK:-true}
+      # Legacy validation mode (less strict, like old bot)
+      SIGNAL_COPY_LEGACY_VALIDATION: ${SIGNAL_COPY_LEGACY_VALIDATION:-false}
+      # Discord (optional)
+      SIGNAL_COPY_DISCORD_ENABLED: ${SIGNAL_COPY_DISCORD_ENABLED:-false}
+      SIGNAL_COPY_DISCORD_BOT_TOKEN: ${SIGNAL_COPY_DISCORD_BOT_TOKEN}
+      SIGNAL_COPY_DISCORD_CHANNELS: ${SIGNAL_COPY_DISCORD_CHANNELS}
+      # Vision (optional)
+      SIGNAL_COPY_VISION_ENABLED: ${SIGNAL_COPY_VISION_ENABLED:-false}
+      SIGNAL_COPY_OLLAMA_URL: ${SIGNAL_COPY_OLLAMA_URL:-http://host.docker.internal:11434}
+      SIGNAL_COPY_VISION_MODEL: ${SIGNAL_COPY_VISION_MODEL:-qwen2.5vl:3b}
+    volumes:
+      - ../runtime/state:/state
+      - ../runtime/logs:/logs
+      - ../runtime/whales:/app/runtime/whales
+      - ../signal_copy_session.session:/app/signal_copy_session.session
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      fastapi:
+        condition: service_started
+    restart: unless-stopped
+    profiles: ["bots"]
+    networks:
+      - nexus_net
+      - docker_default
 
 networks:
   nexus_net:
+    external: true
+  docker_default:
     external: true
 
 volumes:

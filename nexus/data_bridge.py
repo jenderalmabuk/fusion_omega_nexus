@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import glob
 import json
+import os
 import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import aiohttp
 import pandas as pd
 import numpy as np
 
@@ -28,10 +30,24 @@ class NexusDataBridge:
     Replaces 956-line AdvancedDataEngine with ~50 lines of cache reads.
     """
 
-    def __init__(self, cache_dir: str = None):
-        self.cache_dir = Path(cache_dir or Path(__file__).parent.parent / "data")
+    def __init__(self, cache_dir: str = None, api_url: str = None):
+        # Default to runtime/whales inside container (mounted from host)
+        self.cache_dir = Path(cache_dir or Path(__file__).parent.parent / "runtime" / "whales")
         if not self.cache_dir.exists():
-            raise FileNotFoundError(f"Scanner cache dir not found: {self.cache_dir}")
+            # Fallback: try /app/data (legacy)
+            fallback = Path("/app/data")
+            if fallback.exists():
+                self.cache_dir = fallback
+            else:
+                # Try the host's data directory
+                host_data = Path(__file__).parent.parent / "data"
+                if host_data.exists():
+                    self.cache_dir = host_data
+                else:
+                    raise FileNotFoundError(f"Scanner cache dir not found: {self.cache_dir}")
+
+        # FastAPI URL for klines (reads from TimescaleDB)
+        self.api_url = api_url or os.getenv("NEXUS_API_URL", "http://fastapi:8000")
 
         # Cache latest scan metadata in memory (TTL 60s)
         self._scan_cache: Optional[Dict] = None
@@ -59,21 +75,43 @@ class NexusDataBridge:
         self._scan_cache_ts = now
         return data
 
+    async def _fetch_klines_from_api(self, symbol: str, tf: str, limit: int = 100) -> Optional[pd.DataFrame]:
+        """Fetch OHLCV from FastAPI (TimescaleDB)."""
+        try:
+            url = f"{self.api_url}/klines/binance/{symbol}"
+            params = {"tf": tf, "limit": limit}
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        if data.get("data"):
+                            df = pd.DataFrame(data["data"])
+                            # Rename columns to match expected format
+                            df = df.rename(columns={
+                                "open_time": "timestamp",
+                                "open": "open",
+                                "high": "high",
+                                "low": "low",
+                                "close": "close",
+                                "volume": "volume",
+                            })
+                            return df.tail(limit).copy()
+        except Exception as e:
+            pass
+        return None
+
     def _load_klines(self, symbol: str, tf: str, limit: int = 100) -> Optional[pd.DataFrame]:
-        """Load OHLCV from parquet cache."""
+        """Load OHLCV from parquet cache or FastAPI."""
+        # Try parquet cache first
         tf_dir = self.cache_dir / tf
-        if not tf_dir.exists():
-            return None
-
-        parquets = sorted(glob.glob(str(tf_dir / f"{symbol}_*.parquet")), reverse=True)
-        if not parquets:
-            return None
-
-        df = pd.read_parquet(parquets[0])
-        if df.empty:
-            return None
-
-        return df.tail(limit).copy()
+        if tf_dir.exists():
+            parquets = sorted(glob.glob(str(tf_dir / f"{symbol}_*.parquet")), reverse=True)
+            if parquets:
+                df = pd.read_parquet(parquets[0])
+                if not df.empty:
+                    return df.tail(limit).copy()
+        # Fallback to FastAPI (runs in async context via get_advanced_metrics)
+        return None
 
     def _calc_rsi(self, closes: pd.Series, period: int = 14) -> float:
         """Simple RSI calculation."""
@@ -197,8 +235,10 @@ class NexusDataBridge:
         """Drop-in replacement for AdvancedDataEngine.get_advanced_metrics()."""
         scan_data = self._load_latest_scan()
 
-        # Load 5m klines (most recent bars for price + RSI)
+        # Load 5m klines (most recent bars for price + RSI) - try cache first, then API
         df_5m = self._load_klines(symbol, "5m", limit=100)
+        if df_5m is None or df_5m.empty:
+            df_5m = await self._fetch_klines_from_api(symbol, "5m", limit=100)
         if df_5m is None or df_5m.empty:
             return {
                 "symbol": symbol,

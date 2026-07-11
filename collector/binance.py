@@ -23,11 +23,11 @@ BASE = os.getenv("BINANCE_FAPI_BASE", "https://fapi.binance.com")
 KLINE_TFS = ["1m", "5m", "15m", "30m", "1h", "4h"]
 TF_SEC = {"1m": 60, "3m": 180, "5m": 300, "15m": 900, "30m": 1800,
           "1h": 3600, "4h": 14400, "1d": 86400}
-KLINE_LIMIT = int(os.getenv("KLINE_LIMIT", "60"))
+KLINE_LIMIT = int(os.getenv("KLINE_LIMIT", "500"))
 LOOP_SEC = int(os.getenv("COLLECTOR_LOOP_SEC", "60"))
 OI_LOOP_SEC = int(os.getenv("OI_LOOP_SEC", "300"))
 FUNDING_LOOP_SEC = int(os.getenv("FUNDING_LOOP_SEC", "900"))
-CONCURRENCY = int(os.getenv("COLLECTOR_CONCURRENCY", "8"))
+CONCURRENCY = int(os.getenv("COLLECTOR_CONCURRENCY", "4"))
 
 
 def _ts(ms: int) -> datetime:

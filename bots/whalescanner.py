@@ -369,14 +369,24 @@ class ChainWorker:
         return f"{event_type} {v}"
 
     def _save_event(self, event: Dict[str, Any]):
-        """Save event to JSONL file."""
+        """Save event to JSONL file + latest per chain/symbol (atomic write)."""
+        # 1. Append to chain events JSONL
         path = BASE_DIR / f"{self.chain_key}_events.jsonl"
         with open(path, "a") as f:
             f.write(json.dumps(event) + "\n")
-        # Also save latest per symbol for ADVv2
-        latest_path = BASE_DIR / f"latest_whale_{event['symbol']}.json"
-        with open(latest_path, "w") as f:
-            json.dump(event, f)
+        
+        # 2. Save latest per chain+symbol (atomic: temp + rename)
+        latest_name = f"latest_whale_{self.chain_key}_{event['symbol']}.json"
+        latest_path = BASE_DIR / latest_name
+        tmp_path = latest_path.with_suffix(latest_path.suffix + ".tmp")
+        
+        # Add age_weight if not present (will be computed by engine, but include for completeness)
+        if "age_weight" not in event:
+            event["age_weight"] = "NONE"
+        
+        with open(tmp_path, "w") as f:
+            json.dump(event, f, default=str)
+        tmp_path.rename(latest_path)
 
     async def run(self):
         """Main loop: connect, listen, reconnect on disconnect."""

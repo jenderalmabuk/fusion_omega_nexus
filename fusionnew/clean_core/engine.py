@@ -560,30 +560,48 @@ class Engine:
                     "max_dd": self.risk.max_dd / self.risk.equity_ref * 100 if self.risk.equity_ref else 20.0,
                 }
                 
-                # ── VIP PIPELINE: Silent Accumulation → Whale Scanner → VIP Fast Lane ──
+                # ── VIP PIPELINE: Silent Accumulation → Whale Scanner Context → VIP Fast Lane ──
                 from clean_core.silent_accumulation import detect_silent_accumulation
                 from clean_core.vip_fast_lane import compute_vip_score
                 from pathlib import Path as PathLib
                 import json as json_lib
                 
-                # 1. Silent Accumulation
+                # 1. Silent Accumulation (non-mandatory, bonus score only)
                 accum = detect_silent_accumulation(ltf, prev_state="NO_ACCUMULATION")
                 
-                # 2. Whale Scanner (load latest event from JSONL)
+                # 2. Whale Scanner Context (async 24/7, non-blocking)
                 whale_event = None
-                whale_file = PathLib(os.getenv("WHALE_RUNTIME_DIR", "/app/runtime/whales")) / f"latest_whale_{symbol.replace('USDT', '')}.json"
+                whale_dir = PathLib(os.getenv("WHALE_RUNTIME_DIR", "/app/runtime/whales"))
+                # Use chain-aware filename: latest_whale_{chain}_{symbol}.json
+                base_symbol = symbol.replace("USDT", "")
+                whale_file = whale_dir / f"latest_whale_ethereum_{base_symbol}.json"  # default to ethereum
+                # Try to find any chain file for this symbol
+                if not whale_file.exists():
+                    for wf in whale_dir.glob(f"latest_whale_*_{base_symbol}.json"):
+                        whale_file = wf
+                        break
+                
                 if whale_file.exists():
                     try:
                         with open(whale_file) as wf:
                             whale_event = json_lib.load(wf)
-                            # Compute age
+                            # Compute age in minutes
                             from datetime import datetime as dt_mod, timezone as tz_mod
                             event_ts = dt_mod.fromisoformat(whale_event["timestamp"].replace("Z", "+00:00"))
                             whale_age = (dt_mod.now(tz_mod.utc) - event_ts).total_seconds() / 60.0
                             whale_event["age_minutes"] = whale_age
-                            # Filter old events (>4h = history only)
-                            if whale_age > 240:
+                            # Age weighting: 0-5m very strong (but need confirm), 5-15m strong, 15-60m relevant, 1-4h context, >4h ignored
+                            if whale_age > 240:  # >4h = history only
                                 whale_event = None
+                            elif whale_age < 5:
+                                # very recent - mark but engine should wait for block confirmation
+                                whale_event["age_weight"] = "VERY_STRONG_UNCONFIRMED"
+                            elif whale_age <= 15:
+                                whale_event["age_weight"] = "STRONG"
+                            elif whale_age <= 60:
+                                whale_event["age_weight"] = "RELEVANT"
+                            else:
+                                whale_event["age_weight"] = "CONTEXT"
                     except Exception:
                         whale_event = None
                 
@@ -597,13 +615,19 @@ class Engine:
                 smc_ctx = {
                     "ob_detected": bool(s.get("ob_entry")),
                     "imbalance": bool(s.get("imbalance")),
-                    "breaker": False,  # ponytail: implement breaker detection
+                    "breaker": False,
                 }
                 
-                # 5. Daily context (placeholder for now)
+                # 5. Daily context (placeholder)
                 daily_ctx = {"daily_trend": "NEUTRAL", "daily_structure": "INTACT"}
                 
-                # 6. VIP Fast Lane scoring
+                # 6. Setup score from recent_setups (confidence proxy)
+                setup_score = s.get("score", 0)  # setup quality score
+                if setup_score == 0:
+                    # derive from setup freshness / age
+                    setup_score = max(0, 10 - (len(ltf) - s.get("ce", len(ltf))))
+                
+                # 7. VIP Fast Lane scoring
                 vip = compute_vip_score(
                     accumulation=accum,
                     whale_event=whale_event,
@@ -611,15 +635,21 @@ class Engine:
                     smc_context=smc_ctx,
                     daily_context=daily_ctx,
                     flow_verdict=flow_verdict,
+                    setup_score=setup_score,
                 )
                 
-                # 7. Enrich ADVv2 context with VIP data
+                # 8. Enrich ADVv2 context with ALL confirmation data
                 context.update({
                     # Whale enrichment
                     "whale_bias": whale_event["bias"] if whale_event else "NEUTRAL",
                     "whale_event_type": whale_event.get("event_type", "NONE") if whale_event else "NONE",
                     "whale_value_usd": whale_event.get("value_usd", 0) if whale_event else 0,
                     "whale_age_minutes": whale_event.get("age_minutes", None) if whale_event else None,
+                    "whale_confidence": whale_event.get("confidence_score", 0) if whale_event else 0,
+                    "whale_age_weight": whale_event.get("age_weight", "NONE") if whale_event else "NONE",
+                    "from_label": whale_event.get("from_label", "") if whale_event else "",
+                    "to_label": whale_event.get("to_label", "") if whale_event else "",
+                    "tx_hash": whale_event.get("tx_hash", "") if whale_event else "",
                     # Silent accumulation enrichment
                     "accumulation_state": accum["state"],
                     "accumulation_score": accum["score"],
@@ -627,12 +657,49 @@ class Engine:
                     "vip_status": vip["status"],
                     "vip_score": vip["vip_score"],
                     "vip_trigger_ready": vip["trigger_ready"],
+                    # Flow + setup
+                    "flow_verdict": flow_verdict,
+                    "setup_score": setup_score,
                 })
                 
-                # 8. VIP enrichment complete — NON-BLOCKING (priority only, never gate)
-                # VIP Fast Lane prioritizes candidates but NEVER bypasses ADVv2 Judge
+                # 9. Gate logic (NON-BLOCKING priority only)
+                # VIP_TRIGGER_READY → ADVv2 priority
+                # Not ready but setup_score >= 6 → ADVv2 fallback
+                # setup_score < 6 → watchlist/skip
+                # Flow hostile → downgrade only (not hard skip)
                 priority = "HIGH" if vip["trigger_ready"] else ("MEDIUM" if vip["vip_score"] >= 40 else "NORMAL")
-                print(f"✅ [VIP] {symbol} → ADVv2 ({priority}): score={vip['vip_score']}/100 trigger={vip['trigger_ready']} accum={accum['state']} whale={context['whale_bias']}")
+                
+                # Flow hostile check - downgrade not skip
+                if flow_verdict == "hostile":
+                    if priority == "HIGH":
+                        priority = "MEDIUM"
+                    elif priority == "MEDIUM":
+                        priority = "NORMAL"
+                    print(f"⚠️ [FLOW] {symbol} hostile → priority downgraded to {priority}")
+                
+                # Determine if should proceed to ADVv2
+                proceed_to_adv = False
+                adv_reason = ""
+                
+                if vip["trigger_ready"]:
+                    proceed_to_adv = True
+                    adv_reason = "VIP_TRIGGER_READY"
+                elif setup_score >= 6:
+                    proceed_to_adv = True
+                    adv_reason = f"setup_score={setup_score}>=6 (fallback)"
+                else:
+                    proceed_to_adv = False
+                    adv_reason = f"setup_score={setup_score}<6 (watchlist)"
+                
+                context["proceed_to_adv"] = proceed_to_adv
+                context["adv_reason"] = adv_reason
+                
+                print(f"✅ [VIP] {symbol} → {priority} ({adv_reason}): score={vip['vip_score']}/100 trigger={vip['trigger_ready']} accum={accum['state']} whale={context['whale_bias']} flow={flow_verdict} setup={setup_score}")
+                
+                if not proceed_to_adv:
+                    self._stats["watchlist"] = self._stats.get("watchlist", 0) + 1
+                    self._flog("WATCHLIST", dict(symbol=symbol, reason=adv_reason, vip_score=vip['vip_score'], setup_score=setup_score))
+                    return
                 
                 s["tier"] = self.tier
                 s["direction"] = "LONG" if s.get("side") == "BULL" else "SHORT"

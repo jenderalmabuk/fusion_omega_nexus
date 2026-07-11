@@ -300,6 +300,16 @@ class UniverseScanner:
                 if df is not None and not df.empty:
                     parquet_path = tf_dir / f"{symbol}_{ts}.parquet"
                     df.to_parquet(parquet_path)
+                    
+                    # Auto-cleanup: delete old parquet files for this symbol
+                    # Keep only the most recent one (the one we just wrote)
+                    old_files = sorted(tf_dir.glob(f"{symbol}_*.parquet"))
+                    if len(old_files) > 1:
+                        for old in old_files[:-1]:  # all except the last (newest)
+                            try:
+                                old.unlink()
+                            except Exception:
+                                pass  # ignore errors, don't break scan loop
         
         print(f"[scanner] Cache saved to {self.cache_dir}")
 
