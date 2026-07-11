@@ -137,13 +137,28 @@ async def main():
         # If this looks like an execution message, also send to trades channel
         if "EXECUTED" in text or "EXECUTION FAILED" in text or "CLOSE" in text:
             try:
-                await trades_notify_transport.send(text, wait_delivery=False)
+                await send_trades_notification(text)
             except Exception:
-                pass
+                logger.exception("trades notification error")
 
     orch._notify = patched_notify
 
     print(f"[SIGNAL COPY] Orchestrator ready (dry_run={dry_run})")
+
+    # ------------------------------------------------------------------
+    # Pending Limits Polling — execute limit orders when price reaches zone
+    # ------------------------------------------------------------------
+    async def _poll_pending_limits():
+        while True:
+            await asyncio.sleep(15)  # poll every 15 seconds
+            try:
+                await orch.check_pending_limits()
+            except Exception as e:
+                logger.exception("Pending limits poll error: %s", e)
+
+    # Start polling task
+    asyncio.create_task(_poll_pending_limits())
+    print("[SIGNAL COPY] Pending limits polling started (15s interval)")
 
     # ------------------------------------------------------------------
     # Telegram Listener — Telethon + aiogram fallback
@@ -164,7 +179,8 @@ async def main():
     from signal_copy.listeners.telegram_listener import TelegramSignalListener
 
     # Link the orchestrator's handle_incoming_text as the callback
-    async def on_message(text, source_name, source_chat_id=None, source=None, image=None):
+    # Listener calls: on_message(text, name, chat_id, image)
+    async def on_message(text, source_name, source_chat_id=None, image=None):
         try:
             await orch.handle_incoming_text(
                 text=text,
@@ -172,7 +188,7 @@ async def main():
                 source_chat_id=source_chat_id,
             )
         except Exception:
-            pass  # sudah dilog di orchestrator
+            logger.exception("on_message error")
 
     tg_listener = TelegramSignalListener(
         on_message=on_message,

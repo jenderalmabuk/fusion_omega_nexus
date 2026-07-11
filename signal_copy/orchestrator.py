@@ -159,7 +159,7 @@ class SignalCopyOrchestrator:
         return await send_trades_notification(text)
 
     async def start_background_tasks(self):
-        if self._reporter_task is None:
+        if self._reporter_task is None and self.vip_reporter is not None:
             self._reporter_task = asyncio.create_task(self.vip_reporter.loop())
             logger.info("[SIGNAL_COPY] Background reporter task started.")
         asyncio.create_task(self._leaderboard_loop())

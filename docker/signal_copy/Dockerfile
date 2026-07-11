@@ -36,9 +36,6 @@ COPY --chown=nexus:nexus notifications/ ./notifications/
 COPY --chown=nexus:nexus risk/ ./risk/
 COPY --chown=nexus:nexus execution/ ./execution/
 COPY --chown=nexus:nexus utils/ ./utils/
-# Copy whale scanner config files
-COPY --chown=nexus:nexus runtime/whales/token_chain_map.json ./bots/token_chain_map.json
-COPY --chown=nexus:nexus runtime/whales/exchange_labels.json ./bots/exchange_labels.json
 # Copy runtime whales for whale data
 COPY --chown=nexus:nexus runtime/whales/ ./runtime/whales/
 
