@@ -180,6 +180,7 @@ async def _via_openai(image_b64: str, symbol: str, raw_text: str) -> Optional[Di
         ]}],
         "max_tokens": 4096,
         "temperature": 0,
+        "stream": False,
     }
     url = scfg.VISION_OPENAI_BASE_URL.rstrip("/") + "/chat/completions"
     headers = {"Authorization": f"Bearer {scfg.VISION_OPENAI_API_KEY}",
