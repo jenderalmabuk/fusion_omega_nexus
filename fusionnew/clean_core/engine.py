@@ -889,6 +889,10 @@ class Engine:
     def _expire_pending_if_stale(self, t: Dict[str, Any], symbol: str) -> bool:
         """Expiry check based on wall-clock age — runs BEFORE any fill check so
         stale orders are always cancelled even when price data is empty. (1.5c)"""
+        # Gateway-managed positions: expiry handled by gateway trader
+        if t.get("via_gateway"):
+            return False
+
         age_min = (time.time() - t["opened_at"]) / 60.0
         if age_min > t["expiry_min"]:
             try:

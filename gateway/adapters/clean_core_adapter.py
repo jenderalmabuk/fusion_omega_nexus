@@ -48,10 +48,13 @@ def build_intent(*, symbol: str, side: str, entry: float, sl: float,
                  regime: str = "TRENDING", confidence: float = 0.5,
                  tier: str = "Standard", leverage: Optional[int] = None,
                  tag: str = "", adv_snapshot: Optional[Dict[str, Any]] = None) -> OrderIntent:
+    # Map clean_core BUY/SELL -> OrderIntent LONG/SHORT
+    side_map = {"BUY": "LONG", "SELL": "SHORT", "LONG": "LONG", "SHORT": "SHORT"}
+    mapped_side = side_map.get(str(side).upper(), str(side).upper())
     return OrderIntent(
         source="M30H1_ENGINE",
         symbol=symbol,
-        side=str(side).upper(),
+        side=mapped_side,
         entry_price=float(entry),
         sl_price=float(sl),
         tps=[float(t) for t in tps if t and t > 0],
