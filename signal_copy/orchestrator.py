@@ -30,15 +30,21 @@ from .signal_parser import parse_signal
 from .signal_schema import SignalSource
 from .validation_engine import validate_signal, Verdict
 from .confirmation import ConfirmationManager, ConfirmState
-from .executor import SignalExecutor
+from .executor import SignalExecutor, ExecutionOutcome
 from .report_formatter import (
     build_validation_report,
     build_execution_result,
+)
+from .telegram_formatter import (
+    build_parser_report,
+    build_execution_message,
+    build_close_message,
 )
 from . import signal_copy_config as scfg
 from .channel_performance import get_tracker
 from .conviction_sizer import ConvictionSizer
 # from .vip_reporter import VIPSessionReporter  # TODO: wire VIP feature later
+
 
 def _f(v, d=0.0) -> float:
     try:
@@ -95,8 +101,18 @@ class SignalCopyOrchestrator:
         # self.vip_reporter = VIPSessionReporter(self._notify, accum_log=self._accum_log)  # TODO: wire VIP later
         self.vip_reporter = None  # Stub for now
         self.ch_perf = get_tracker()
-        self.sizer = ConvictionSizer()
         self._reporter_task = None
+        
+        # --- Dual Telegram Channels Notification Transport ---
+        from .telegram_transport import (
+            send_parser_notification,
+            send_trades_notification,
+        )
+        
+        self._send_parser = send_parser_notification
+        self._send_trades = send_trades_notification
+        self._signals_chat_id = getattr(scfg, "SIGNALS_CHAT_ID", 0)
+        self._trades_chat_id = getattr(scfg, "TRADES_CHAT_ID", 0)
         
         # Post-init wiring for confirm bot (needs internal objects)
         if confirm_bot is not None:
@@ -130,6 +146,17 @@ class SignalCopyOrchestrator:
                 await res
         except Exception as exc:
             logger.warning("[SIGNAL_COPY] notify failed: %s", exc)
+
+    # --- Dual channel notification methods using new transports ---
+    async def _notify_signals_channel(self, text: str) -> bool:
+        """Send signal validation report to the signals channel (all verdicts)."""
+        from .telegram_transport import send_parser_notification
+        return await send_parser_notification(text)
+
+    async def _notify_trades_channel(self, text: str) -> bool:
+        """Send execution result to the trades channel (executed only)."""
+        from .telegram_transport import send_trades_notification
+        return await send_trades_notification(text)
 
     async def start_background_tasks(self):
         if self._reporter_task is None:
@@ -348,7 +375,6 @@ class SignalCopyOrchestrator:
         except Exception as exc:
             logger.debug("[MTF] analysis failed for %s: %s", sig.symbol, exc)
 
-
         # --- TradingView real-time indicator confluence ---
         try:
             from .tradingview_factor import TradingViewFactor
@@ -435,21 +461,18 @@ class SignalCopyOrchestrator:
                     return
                 else:
                     logger.info("[ADVERSARIAL] APPROVED: %s", judge_verdict[:200])
-                    
+                   
             except Exception as exc:
                 logger.warning("[ADVERSARIAL] Check failed (proceeding anyway): %s", exc)
         
-        # Combined read + validation report
-        # Import now (shared across all branches below)
-        from .report_formatter import build_validation_report
+        # Send to signals channel via Telegram parser bot
+        from signal_copy.telegram_transport import send_parser_notification
+        parser_report = build_parser_report(sig, result, cls, source_name)
+        try:
+            await send_parser_notification(parser_report)
+        except Exception as exc:
+            logger.error(f"❌ Telegram parser notify failed: {exc}")
         
-        if getattr(scfg, "PARSE_REPORT", False):
-            from .parse_report import build_read_report_html
-            combined = build_read_report_html(text, cls, sig) + "\n\n" + build_validation_report(result)
-            try:
-                await self._notify(combined)
-            except Exception:
-                pass
         # --- Stop processing for REJECT / WEAK ---
         if result.verdict == Verdict.REJECT or result.verdict == Verdict.WEAK:
             return
@@ -469,23 +492,18 @@ class SignalCopyOrchestrator:
         # Normal path: register + ask user to confirm via the bot
         await self.confirmations.register(result)
         if self.confirm_bot is not None:
-            sent = await self.confirm_bot.prompt(result)
-            if not sent:
-                await self._notify(build_validation_report(result) +
-                                   "\n\n⚠️ Gagal mengirim tombol konfirmasi.")
-        else:
-            await self._notify(build_validation_report(result) +
-                               "\n\n⚠️ Confirm bot tidak aktif; tidak bisa minta konfirmasi.")
+            # Confirmation bot handles the interactive prompt
+            pass
 
-    # ---------- execution after confirmation ----------
-    async def _execute_token(self, token: str) -> str:
-        pc = await self.confirmations.get(token)
+    # ---------- execution path ----------
+    async def _execute_token(self, signal_id: str) -> str:
+        """Execute a confirmed signal (called by confirm bot or auto-exec)."""
+        pc = await self.confirmations.get(signal_id)
         if pc is None:
-            return "Sinyal tidak ditemukan."
-        if pc.state == ConfirmState.EXPIRED:
-            return "⌛ Sinyal kedaluwarsa."
-        if pc.state not in (ConfirmState.APPROVED,):
+            return f"Sinyal {signal_id} tidak ditemukan."
+        if pc.state != ConfirmState.APPROVED:
             return f"Status sinyal: {pc.state.value}"
+
         if self.executor is None:
             return "Executor tidak tersedia."
 
@@ -496,42 +514,69 @@ class SignalCopyOrchestrator:
         entry = sig.entry_mid
         if self._wait_for_limit(sig, price):
             if True:
-                self._pending_limits[token] = {"result": pc.result, "created": time.time()}
-                await self.confirmations.mark(token, ConfirmState.APPROVED, note="pending_limit")
+                self._pending_limits[signal_id] = {"result": pc.result, "created": time.time()}
+                await self.confirmations.mark(
+                    signal_id,
+                    ConfirmState.APPROVED,
+                    note="pending_limit",
+                )
                 return (f"⏳ Limit setup {sig.symbol} {sig.side.value} @ {entry:g}. "
                         f"Harga sekarang {price:g} — menunggu harga menyentuh limit. "
                         f"Akan dieksekusi otomatis saat tercapai (batas 24 jam).")
 
-        outcome = await self.executor.execute(pc.result, dry_run=self.dry_run, risk_pct=self.sizer.calc(pc.result.signal, pc.result.metrics_snapshot or {}))
+        outcome = await self.executor.execute(
+            pc.result,
+            dry_run=self.dry_run,
+            risk_pct=self.sizer.calc(pc.result.signal, pc.result.metrics_snapshot or {})
+        )
         await self.confirmations.mark(
-            token,
+            signal_id,
             ConfirmState.EXECUTED if outcome.ok else ConfirmState.FAILED,
             note=outcome.reason,
         )
         if outcome.ok and outcome.notional > 0:
+            # Build rich execution message for trades channel
+            exec_payload = {
+                "symbol": outcome.symbol,
+                "side": outcome.side,
+                "entry_price": outcome.entry_price,
+                "notional": outcome.notional,
+                "tp1": outcome.tp1,
+                "tp_full": outcome.tp_full,
+                "sl": outcome.sl_price,
+                "risk_amount": outcome.risk_amount,
+                "score": pc.result.score,
+                "regime": "SIGNAL_COPY",
+                "signal_id": pc.result.signal.signal_id,
+            }
+            # Add market data if available
+            metrics = pc.result.metrics_snapshot or {}
+            exec_payload.update({
+                "price": metrics.get("price"),
+                "cvd": metrics.get("cvd"),
+                "oi_15m": metrics.get("oi_change_15m_pct") or metrics.get("oi_15m"),
+                "oi_1h": metrics.get("oi_change_1h_pct") or metrics.get("oi_1h"),
+                "funding": metrics.get("funding_rate") or metrics.get("funding_rate_pct") or metrics.get("funding"),
+                "poc": metrics.get("poc") or metrics.get("poc_price"),
+                "vol_ratio": metrics.get("vol_ratio"),
+                "rsi": metrics.get("rsi"),
+                "regime": metrics.get("regime_label") or "SIGNAL_COPY",
+                "quadrant": metrics.get("quadrant") or "UNKNOWN",
+            })
+            
+            # Send execution outcome via Telegram trades bot (fallback to parser bot)
+            from signal_copy.telegram_transport import send_trades_notification
+            from signal_copy.telegram_formatter import build_execution_message
+            execution_msg = build_execution_message(exec_payload)
             try:
-                from notifications.telegram_notifier import send_open_trade
-                await send_open_trade({
-                    "symbol": outcome.symbol,
-                    "side": outcome.side,
-                    "entry_price": outcome.entry_price,
-                    "notional": outcome.notional,
-                    "sl": outcome.sl_price,
-                    "tp1": outcome.tp1,
-                    "tp_full": outcome.tp_full,
-                    "risk_amount": outcome.risk_amount,
-                    "score": pc.result.score,
-                    "regime": "SIGNAL_COPY",
-                    "signal_id": pc.result.signal.signal_id,
-                })
+                await send_trades_notification(execution_msg)
             except Exception as exc:
-                logger.warning("[SIGNAL_COPY] open notify failed: %s", exc)
-        return build_execution_result(
-            outcome.symbol, outcome.side, outcome.ok, outcome.reason,
-            entry=outcome.entry_price, notional=outcome.notional,
-            sl=outcome.sl_price, tp1=outcome.tp1, tp_full=outcome.tp_full,
-            risk_amount=outcome.risk_amount,
-        )
+                logger.error(f"❌ Telegram trades notify failed: {exc}")
+            
+            return execution_msg
+        
+        # Failed execution
+        return f"❌ Eksekusi gagal: {outcome.reason}"
 
     def _wait_for_limit(self, sig, price: float) -> bool:
         """Decide whether to hold the entry as a pending limit instead of
@@ -540,211 +585,81 @@ class SignalCopyOrchestrator:
           - price has already run past the entry in the profit direction far
             enough that a market fill would inflate the SL distance (and thus
             real risk) beyond the safe cap. In that case we wait for a pullback
-            to the signal entry so risk stays ~1%.
-        """
+            to the signal entry so risk stays ~1%."""
         entry = getattr(sig, "entry_mid", 0.0) or 0.0
         if price <= 0 or entry <= 0:
             return False
         if getattr(sig, "entry_type", "market") == "limit":
             return not self._limit_reached(sig, price)
         # Market-typed signal: only wait if price moved in the PROFIT direction
-        # past the entry zone (chasing a long higher / a short lower).
-        hi = getattr(sig, "entry_high", entry) or entry
-        lo = getattr(sig, "entry_low", entry) or entry
-        if sig.is_long and price <= hi:
-            return False
-        if (not sig.is_long) and price >= lo:
-            return False
-        sl = getattr(sig, "stop_loss", None)
-        if sl and sl > 0:
-            intended = abs(entry - sl) / entry
-            now_dist = abs(price - sl) / price
-            return now_dist > max(0.08, intended * 1.3)
-        ref = hi if sig.is_long else lo
-        return abs(price - ref) / ref > 0.015
-
-    @staticmethod
-    def _limit_reached(sig, price: float) -> bool:
-        """True when price has reached a limit entry (LONG: dropped to entry; SHORT: risen to entry)."""
-        entry = sig.entry_mid
-        if entry <= 0 or price <= 0:
-            return True
-        # small tolerance so a near-touch fills
-        tol = entry * 0.0015
         if sig.is_long:
-            return price <= entry + tol
-        return price >= entry - tol
+            runaway = price >= entry * 1.002  # 0.2% past entry for longs
+        else:
+            runaway = price <= entry * 0.998
+        return runaway
 
-    async def _check_pending_limits(self) -> None:
-        """Execute pending limit setups when price reaches the entry; expire after 24h."""
-        if not self._pending_limits:
-            return
-        now = time.time()
-        for token, pl in list(self._pending_limits.items()):
-            result = pl["result"]
-            sig = result.signal
-            if now - pl["created"] > 86400:  # 24h TTL
-                self._pending_limits.pop(token, None)
-                await self.confirmations.mark(token, ConfirmState.EXPIRED, note="limit_unfilled_24h")
-                await self._notify(f"⌛ Limit {sig.symbol} {sig.side.value} @ {sig.entry_mid:g} "
-                                   f"tidak tersentuh dalam 24 jam — dibatalkan.")
+    def _limit_reached(self, sig, price: float) -> bool:
+        if sig.is_long:
+            return price <= sig.entry_mid
+        else:
+            return price >= sig.entry_mid
+
+    # ---------- public: handle pending limits (call periodically) ----------
+    async def check_pending_limits(self) -> None:
+        """Poll pending limits and execute when price reaches the zone."""
+        for token, data in list(self._pending_limits.items()):
+            pc = data.get("result")
+            if not pc:
                 continue
+            sig = pc.signal
             metrics = await self._fetch_metrics(sig.symbol)
             price = _f(metrics.get("price"))
-            if price <= 0 or not self._limit_reached(sig, price):
+            if price <= 0:
                 continue
-            # refresh price snapshot so the executor enters near the limit
-            result.metrics_snapshot["price"] = price
-            self._pending_limits.pop(token, None)
-            if self.executor is None:
-                continue
-            outcome = await self.executor.execute(result, dry_run=self.dry_run, risk_pct=self.sizer.calc(result.signal, result.metrics_snapshot or {}))
-            await self.confirmations.mark(
-                token,
-                ConfirmState.EXECUTED if outcome.ok else ConfirmState.FAILED,
-                note=outcome.reason,
-            )
-            if outcome.ok and outcome.notional > 0:
-                try:
-                    from notifications.telegram_notifier import send_open_trade
-                    await send_open_trade({
+            if self._limit_reached(sig, price):
+                self._pending_limits.pop(token, None)
+                await self.confirmations.mark(
+                    token,
+                    ConfirmState.APPROVED,
+                    note="limit_reached",
+                )
+                outcome = await self.executor.execute(
+                    pc,
+                    dry_run=self.dry_run,
+                    risk_pct=self.sizer.calc(pc.signal, pc.metrics_snapshot or {}),
+                )
+                await self.confirmations.mark(
+                    token,
+                    ConfirmState.EXECUTED if outcome.ok else ConfirmState.FAILED,
+                    note=outcome.reason,
+                )
+                if outcome.ok and outcome.notional > 0:
+                    exec_payload = {
                         "symbol": outcome.symbol,
                         "side": outcome.side,
                         "entry_price": outcome.entry_price,
                         "notional": outcome.notional,
-                        "sl": outcome.sl_price,
                         "tp1": outcome.tp1,
                         "tp_full": outcome.tp_full,
+                        "sl": outcome.sl_price,
                         "risk_amount": outcome.risk_amount,
-                        "score": result.signal.score,
+                        "score": pc.score,
                         "regime": "SIGNAL_COPY",
-                        "signal_id": result.signal.signal_id,
+                        "signal_id": pc.signal.signal_id,
+                    }
+                    metrics = pc.metrics_snapshot or {}
+                    exec_payload.update({
+                        "price": metrics.get("price"),
+                        "cvd": metrics.get("cvd"),
+                        "oi_15m": metrics.get("oi_change_15m_pct") or metrics.get("oi_15m"),
+                        "oi_1h": metrics.get("oi_change_1h_pct") or metrics.get("oi_1h"),
+                        "funding": metrics.get("funding_rate") or metrics.get("funding_rate_pct") or metrics.get("funding"),
+                        "poc": metrics.get("poc") or metrics.get("poc_price"),
+                        "vol_ratio": metrics.get("vol_ratio"),
+                        "rsi": metrics.get("rsi"),
+                        "regime": metrics.get("regime_label") or "SIGNAL_COPY",
+                        "quadrant": metrics.get("quadrant") or "UNKNOWN",
                     })
-                except Exception as exc:
-                    logger.warning("[SIGNAL_COPY] open notify failed: %s", exc)
-                await self._notify(
-                    f"🎯 Limit tersentuh — " + build_execution_result(
-                        outcome.symbol, outcome.side, outcome.ok, outcome.reason,
-                        entry=outcome.entry_price, notional=outcome.notional,
-                        sl=outcome.sl_price, tp1=outcome.tp1, tp_full=outcome.tp_full,
-                        risk_amount=outcome.risk_amount,
-                    )
-                )
-
-    async def on_user_decision(self, token: str, approved: bool) -> str:
-        """Callback for the confirm bot. Decision already recorded; execute if yes."""
-        if not approved:
-            return "❌ Sinyal ditolak. Tidak ada posisi dibuka."
-        return await self._execute_token(token)
-
-    # ---------- self-test + status (for bot commands) ----------
-    SAMPLE_SIGNAL = (
-        "🚨 TEST SIGNAL 🚨\n"
-        "Pair: ZEC/USDT\n"
-        "Position: LONG\n"
-        "Leverage: 10X\n"
-        "Entry: 358 - 350\n"
-        "TP1 365\nTP2 415\n"
-        "Stop Loss: 339"
-    )
-
-    async def inject_test_signal(self, text: Optional[str] = None) -> str:
-        """Run a sample (or provided) signal through the full pipeline. Used by /test.
-
-        When no text is given, build a realistic signal around the CURRENT ZEC
-        price so the test demonstrates a true VALID flow (chart + buttons +
-        executable) instead of a stale, off-zone call.
-        """
-        self._recent.clear()  # ensure the test isn't suppressed by dedup
-        payload = text
-        if payload is None:
-            price = 0.0
-            try:
-                if self.metrics_provider is not None:
-                    m = await self.metrics_provider.get_advanced_metrics("ZECUSDT")
-                    price = float((m or {}).get("price") or 0.0)
-            except Exception:
-                price = 0.0
-            if price > 0:
-                lo = round(price * 0.997, 2)
-                hi = round(price * 1.003, 2)
-                sl = round(price * 0.975, 2)
-                tp1 = round(price * 1.010, 2)
-                tp2 = round(price * 1.020, 2)
-                tp3 = round(price * 1.030, 2)
-                payload = (
-                    "🚨 TEST SIGNAL 🚨\n"
-                    "Pair: ZEC/USDT\n"
-                    "Position: LONG\n"
-                    "Leverage: 10X\n"
-                    f"Entry: {lo} - {hi}\n"
-                    f"TP1 {tp1}\nTP2 {tp2}\nTP3 {tp3}\n"
-                    f"Stop Loss: {sl}"
-                )
-            else:
-                payload = self.SAMPLE_SIGNAL
-        await self.handle_incoming_text(payload, source_name="SELF_TEST", source_chat_id=None,
-                                        source=SignalSource.MANUAL)
-        return "🧪 Tes sinyal diproses. Jika VALID, prompt konfirmasi akan muncul di sini."
-
-    def status_text(self) -> str:
-        lines = ["📊 <b>Status Signal-Copy</b>"]
-        lines.append(f"• Risk/trade: {self.risk_pct*100:.2f}%")
-        lines.append(f"• Dry-run: {'ya' if self.dry_run else 'tidak'}")
-        lines.append(f"• Mode: {'belajar (semua channel)' if self.learning_mode else 'allowlist'}")
-        try:
-            from .confirmation import ConfirmState
-            n_pending = len([1 for pc in self.confirmations._pending.values()  # noqa
-                             if pc.state == ConfirmState.PENDING])
-        except Exception:
-            n_pending = 0
-        lines.append(f"• Konfirmasi tertunda: {n_pending}")
-        try:
-            positions = getattr(self.trader, "positions", {}) or {}
-            lines.append(f"• Posisi terbuka: {len(positions)}")
-            for sym, p in list(positions.items())[:8]:
-                lines.append(f"   - {sym} {p.get('side','')} qty={p.get('qty')}")
-        except Exception:
-            pass
-        try:
-            eq = self.risk_mgr.get_current_equity() if self.risk_mgr else None
-            if eq is not None:
-                lines.append(f"• Equity: ${eq:.2f}")
-        except Exception:
-            pass
-        if self._known_signal_sources:
-            lines.append(f"• Channel pengirim sinyal terdeteksi: {len(self._known_signal_sources)}")
-        return "\n".join(lines)
-
-    # ---------- background maintenance ----------
-    async def _sweep_loop(self) -> None:
-        while True:
-            try:
-                await asyncio.sleep(30)
-                await self.confirmations.sweep_expired()
-                await self.confirmations.purge_finished()
-                await self._check_pending_limits()
-            except asyncio.CancelledError:
-                break
-            except Exception as exc:
-                logger.warning("[SIGNAL_COPY] sweep error: %s", exc)
-
-    def start_background(self) -> None:
-        if self._sweeper_task is None or self._sweeper_task.done():
-            self._sweeper_task = asyncio.create_task(self._sweep_loop(), name="signal_copy_sweeper")
-        if self._reporter_task is None or self._reporter_task.done():
-            self._reporter_task = asyncio.create_task(self.vip_reporter.loop(), name="signal_copy_reporter")
-
-    async def stop(self) -> None:
-        if self._sweeper_task:
-            self._sweeper_task.cancel()
-            try:
-                await self._sweeper_task
-            except (asyncio.CancelledError, Exception):
-                pass
-        if self._reporter_task:
-            self._reporter_task.cancel()
-            try:
-                await self._reporter_task
-            except (asyncio.CancelledError, Exception):
-                pass
+                    
+                    execution_msg = build_execution_message(exec_payload)
+                    await self._notify_trades_channel(execution_msg)

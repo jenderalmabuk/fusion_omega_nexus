@@ -303,7 +303,18 @@ def _factor_tradingview(sig: ParsedSignal, m: Dict[str, Any]) -> Factor:
     return Factor("TradingView", mx * 0.2, mx, False, detail)
     
 def validate_signal(sig: ParsedSignal, metrics: Optional[Dict[str, Any]]) -> ValidationResult:
-    """Run all factors and compute a verdict."""
+    """Run all factors and compute a verdict.
+    
+    Legacy mode (LEGACY_VALIDATION=1): Minimal checks — price reachable, SL present,
+    basic trend alignment. Let the user decide. This mirrors the old bot behavior
+    where almost everything was sent to Telegram for manual review.
+    """
+    import os
+    legacy_mode = os.getenv("SIGNAL_COPY_LEGACY_VALIDATION", "0").strip().lower() in ("1", "true", "yes")
+    
+    if legacy_mode:
+        return _legacy_validate(sig, metrics)
+    
     metrics = metrics or {}
     hard_blocks: List[str] = []
 
@@ -360,4 +371,140 @@ def validate_signal(sig: ParsedSignal, metrics: Optional[Dict[str, Any]]) -> Val
                 "price_change_15m_pct", "regime_label",
             )
         },
+    )
+
+
+def _legacy_validate(sig: ParsedSignal, metrics: Dict[str, Any]) -> ValidationResult:
+    """Legacy validation — permissive, mirrors old bot behavior.
+    
+    Only hard-blocks:
+    - No live price
+    - SL missing or absurdly wide (>20%)
+    - Price already ran far past entry in profit direction (chasing)
+    
+    Everything else gets VALID (user decides via confirmation bot).
+    """
+    metrics = metrics or {}
+    hard_blocks: List[str] = []
+    factors = []
+    
+    price = _f(metrics.get("price"))
+    
+    # Hard block: no price data
+    if price <= 0:
+        hard_blocks.append("no live price data")
+        return ValidationResult(
+            signal=sig, verdict=Verdict.REJECT, score=0.0,
+            factors=[Factor("Price", 0, 100, False, "no live price")],
+            hard_blocks=hard_blocks, metrics_snapshot=metrics
+        )
+    
+    # Hard block: SL missing or absurdly wide
+    sl_pct = sig.sl_distance_pct()
+    if sl_pct is None:
+        hard_blocks.append("missing stop loss")
+    elif sl_pct > 20.0:  # safety cap
+        hard_blocks.append(f"SL too wide {sl_pct:.1f}%")
+    
+    # Hard block: price already chased past entry in profit direction
+    if getattr(sig, "entry_type", "market") == "market":
+        entry_mid = sig.entry_mid or 0
+        if entry_mid > 0:
+            if sig.is_long and price > entry_mid * 1.02:  # 2% above entry
+                hard_blocks.append(f"price {price:.4f} chased {((price-entry_mid)/entry_mid*100):.1f}% above LONG entry")
+            elif not sig.is_long and price < entry_mid * 0.98:  # 2% below entry
+                hard_blocks.append(f"price {price:.4f} chased {((entry_mid-price)/entry_mid*100):.1f}% below SHORT entry")
+    
+    # Factors (informational, don't gate execution)
+    mx_price = 20.0
+    if sig.entry_type == "limit":
+        ref = sig.entry_mid
+        dist_pct = abs(price - ref) / ref * 100.0 if ref else 999
+        if dist_pct <= 5.0:
+            factors.append(Factor("Price/Entry", mx_price, mx_price, True, f"limit @ {ref:g}, {dist_pct:.2f}% away"))
+        else:
+            factors.append(Factor("Price/Entry", mx_price * 0.5, mx_price, True, f"limit @ {ref:g}, {dist_pct:.2f}% away (far)"))
+    else:
+        low, high = sig.entry_low, sig.entry_high
+        zone_w = max(high - low, high * 0.001)
+        tol = zone_w * 0.5 + high * 0.25 / 100.0
+        if low - tol <= price <= high + tol:
+            factors.append(Factor("Price/Entry", mx_price, mx_price, True, f"price {price:g} near zone"))
+        else:
+            factors.append(Factor("Price/Entry", mx_price * 0.6, mx_price, True, f"price {price:g} off-zone (legacy: still allowed)"))
+    
+    # OI - informational only
+    oi15 = _f(metrics.get("oi_change_15m_pct"))
+    oi1h = _f(metrics.get("oi_change_1h_pct"))
+    rising = (oi15 + oi1h) / 2.0 if (oi15 != 0 or oi1h != 0) else 0
+    mx_oi = 15.0
+    if rising > 0:
+        factors.append(Factor("OI", mx_oi, mx_oi, True, f"OI rising {rising:+.2f}%"))
+    else:
+        factors.append(Factor("OI", mx_oi * 0.5, mx_oi, True, f"OI flat/falling {rising:+.2f}%"))
+    
+    # CVD - informational
+    cvd_z = _f(metrics.get("cvd_zscore"))
+    imbalance = _f(metrics.get("imbalance"))
+    flow = cvd_z if cvd_z != 0 else imbalance * 3.0
+    aligned = flow > 0 if sig.is_long else flow < 0
+    mx_cvd = 15.0
+    if aligned and abs(flow) > 0.5:
+        factors.append(Factor("CVD/Flow", mx_cvd, mx_cvd, True, f"flow {flow:+.2f} with {sig.side.value}"))
+    else:
+        factors.append(Factor("CVD/Flow", mx_cvd * 0.6, mx_cvd, True, f"flow {flow:+.2f} neutral"))
+    
+    # RSI - informational
+    rsi = _f(metrics.get("rsi"), 50.0)
+    mx_rsi = 15.0
+    if sig.is_long:
+        if rsi >= 75:
+            factors.append(Factor("RSI", mx_rsi * 0.5, mx_rsi, True, f"RSI {rsi:.0f} high but allowed"))
+        elif rsi <= 30:
+            factors.append(Factor("RSI", mx_rsi, mx_rsi, True, f"RSI {rsi:.0f} oversold (dip buy)"))
+        else:
+            factors.append(Factor("RSI", mx_rsi, mx_rsi, True, f"RSI {rsi:.0f} ok"))
+    else:
+        if rsi <= 25:
+            factors.append(Factor("RSI", mx_rsi * 0.5, mx_rsi, True, f"RSI {rsi:.0f} low but allowed"))
+        elif rsi >= 70:
+            factors.append(Factor("RSI", mx_rsi, mx_rsi, True, f"RSI {rsi:.0f} overbought (sell rally)"))
+        else:
+            factors.append(Factor("RSI", mx_rsi, mx_rsi, True, f"RSI {rsi:.0f} ok"))
+    
+    # Trend - informational
+    chg15 = _f(metrics.get("price_change_15m_pct"))
+    regime = str(metrics.get("regime_label", "")).upper()
+    mx_trend = 15.0
+    aligned_trend = chg15 > 0 if sig.is_long else chg15 < 0
+    if aligned_trend:
+        factors.append(Factor("Trend", mx_trend, mx_trend, True, f"{regime} {chg15:+.2f}% with {sig.side.value}"))
+    else:
+        factors.append(Factor("Trend", mx_trend * 0.6, mx_trend, True, f"{regime} {chg15:+.2f}% against {sig.side.value} (legacy: allowed)"))
+    
+    # Geometry - just informational
+    rr_tp1 = sig.rr_ratio(0)
+    rr_best = sig.rr_best()
+    mx_geo = 20.0
+    if sl_pct is not None and rr_tp1 is not None:
+        factors.append(Factor("Geometry/RR", mx_geo, mx_geo, True, f"SL {sl_pct:.2f}% | RR tp1 {rr_tp1:.2f}/best {rr_best:.2f}"))
+    else:
+        factors.append(Factor("Geometry/RR", mx_geo * 0.5, mx_geo, True, "incomplete TP/SL"))
+    
+    earned = sum(f.score for f in factors)
+    possible = sum(f.max_score for f in factors)
+    score = (earned / possible * 100.0) if possible else 0.0
+    
+    if hard_blocks:
+        verdict = Verdict.REJECT
+    else:
+        verdict = Verdict.VALID  # Legacy: almost everything is VALID
+    
+    return ValidationResult(
+        signal=sig,
+        verdict=verdict,
+        score=score,
+        factors=factors,
+        hard_blocks=hard_blocks,
+        metrics_snapshot=metrics,
     )
