@@ -514,14 +514,14 @@ class SignalCopyOrchestrator:
         entry = sig.entry_mid
         if self._wait_for_limit(sig, price):
             self._pending_limits[signal_id] = {"result": pc.result, "created": time.time()}
-                await self.confirmations.mark(
-                    signal_id,
-                    ConfirmState.APPROVED,
-                    note="pending_limit",
-                )
-                return (f"⏳ Limit setup {sig.symbol} {sig.side.value} @ {entry:g}. "
-                        f"Harga sekarang {price:g} — menunggu harga menyentuh limit. "
-                        f"Akan dieksekusi otomatis saat tercapai (batas 24 jam).")
+            await self.confirmations.mark(
+                signal_id,
+                ConfirmState.APPROVED,
+                note="pending_limit",
+            )
+            return (f"⏳ Limit setup {sig.symbol} {sig.side.value} @ {entry:g}. "
+                    f"Harga sekarang {price:g} — menunggu harga menyentuh limit. "
+                    f"Akan dieksekusi otomatis saat tercapai (batas 24 jam).")
 
         outcome = await self.executor.execute(
             pc.result,
