@@ -14,7 +14,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError(
         "DATABASE_URL environment variable is required (no insecure default). "
-        "Example: postgresql://nexus:<password>@timescaledb:5432/nexus"
+        "Example: postgresql://nexus:***@timescaledb:5432/nexus"
     )
 # Comma-separated allowed origins; no wildcard default.
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]

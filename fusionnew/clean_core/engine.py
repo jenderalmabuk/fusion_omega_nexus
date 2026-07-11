@@ -35,6 +35,11 @@ from backtest.faithful_imbalance import (
 )
 from clean_core.executor import FuturesTestnet
 
+# --- Execution Gateway integration ---
+from gateway.adapters.clean_core_adapter import open_via_gateway_sync
+
+USE_GATEWAY = os.getenv("USE_EXECUTION_GATEWAY", "true").lower() in ("1", "true", "yes")
+
 try:
     from config import TELEGRAMBOTTOKEN, TELEGRAM_CHAT_ID
 except Exception:
@@ -800,6 +805,56 @@ class Engine:
     def _open_pending(self, symbol: str, s: Dict[str, Any]) -> None:
         side = "BUY" if s["side"] == "BULL" else "SELL"
         entry, sl, tp = s["entry"], s["sl"], s["tp"]
+
+        # ── GATEWAY MODE (env toggle) ────────────────────────────────────────
+        if not self.dry and USE_GATEWAY:
+            result = open_via_gateway_sync(
+                dry_run=self.dry,
+                symbol=symbol,
+                side=side,
+                entry=entry,
+                sl=sl,
+                tps=[tp] if tp else [],
+                risk_pct=self.risk.risk_pct,
+                regime="TRENDING",
+                confidence=0.65,
+                tier=self.tier,
+                leverage=self.leverage,
+                tag=f"{self.tier}_{symbol}_{s['side']}_{s['t_complete']}",
+                adv_snapshot={}
+            )
+
+            if result.get("ok"):
+                step = LTF_MIN[TIERS[self.tier]["ltf"]]
+                rec = {
+                    "symbol": symbol, "tier": self.tier, "side": side, "imb_side": s["side"],
+                    "entry": entry, "sl": sl, "tp": tp, "qty": 0,
+                    "status": "PENDING",
+                    "t_complete": str(s["t_complete"]),
+                    "expiry_min": FIB_EXPIRY * step, "opened_at": time.time(),
+                    "gateway_intent_id": result.get("intent_id"),
+                    "gateway_notional": result.get("notional"),
+                    "via_gateway": True,
+                }
+                rec.update(self._oi_snapshot(symbol))
+                self.trades.append(rec)
+                self._flog("SETUP_GATEWAY", rec)
+
+                msg = (f"🆕 SETUP {self.tier} {side} {symbol}\n"
+                       f"Entry {entry:.6g} | SL {sl:.6g} | TP {tp:.6g} | notional {result.get('notional', 0):.2f}\n"
+                       f"Gateway: {result.get('reason', 'opened')}")
+                print(msg)
+                tg(msg)
+                return
+
+            else:
+                msg = f"⚠️ GATEWAY REJECTED {symbol} {side}: {result.get('reason')}"
+                print(msg)
+                tg(msg)
+                self._flog("GATEWAY_REJECT", {"symbol": symbol, "side": side, "reason": result.get("reason")})
+                return
+
+        # ── DRY RUN / FALLBACK: original local simulation ────────────────────
         qty = self.ex.round_qty(symbol, self.risk.qty_for(entry, sl))
         if qty <= 0:
             return
@@ -847,6 +902,10 @@ class Engine:
         return False
 
     def _manage_pending(self, t: Dict[str, Any], symbol: str, hi: float, lo: float) -> None:
+        # Gateway-managed positions: skip local SL/TP placement
+        if t.get("via_gateway"):
+            return
+
         if self._filled(t, symbol, hi, lo):
             t["status"] = "OPEN"
             tp_note = "software SL/TP"
@@ -867,6 +926,10 @@ class Engine:
             self._flog("FILL", t)
 
     def _manage_open(self, t: Dict[str, Any], symbol: str, hi: float, lo: float, close: float) -> None:
+        # Gateway-managed positions: exits handled by gateway trader
+        if t.get("via_gateway"):
+            return
+
         exit_price = reason = None
         if self.dry:
             if t["side"] == "BUY":

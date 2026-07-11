@@ -76,8 +76,20 @@ async def main():
     if not dry_run:
         from risk.risk_engine import RiskManager
         risk_mgr = RiskManager()
-        trader = risk_mgr  # RiskManager doubles as trader interface
-        print("[SIGNAL COPY] LIVE mode: RiskManager active")
+        
+        # ── GATEWAY MODE: inject gateway shim instead of direct trader ───────
+        # This makes SignalExecutor talk to the Execution Gateway (single process,
+        # single connection, unified risk) instead of its own exchange connection.
+        try:
+            from gateway.adapters.signal_copy_adapter import GatewayTraderShim, RemoteRiskStub
+            trader = GatewayTraderShim()          # has submit_open() -> gateway
+            risk_mgr = RemoteRiskStub(trader)     # reserve/commit -> no-ops (gateway does it)
+            print("[SIGNAL COPY] GATEWAY mode: GatewayTraderShim + RemoteRiskStub active")
+        except Exception as e:
+            # Fallback to original wiring if gateway not available
+            trader = risk_mgr  # RiskManager doubles as trader interface
+            print(f"[SIGNAL COPY] GATEWAY adapter not available, using local RiskManager: {e}")
+            print("[SIGNAL COPY] LIVE mode: RiskManager active")
     else:
         from signal_copy.executor import SignalExecutor
         # Stub trader for dry_run
