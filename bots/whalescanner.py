@@ -203,6 +203,7 @@ class ChainWorker:
         watchlist: Dict[str, str],  # token_symbol -> contract_address
         exchange_labels: Dict[str, str],
         price_cache_ref: Dict[str, float],
+        decimals_map: Dict[str, int],  # symbol -> decimals for this chain
     ):
         self.chain_key = chain_key
         self.rpc_url = rpc_url
@@ -211,6 +212,7 @@ class ChainWorker:
         self.addr_to_symbol: Dict[str, str] = {v.lower(): k for k, v in watchlist.items()}
         self.labels = exchange_labels
         self.prices = price_cache_ref
+        self.decimals_map = decimals_map
         self.event_count = 0
         self.last_reconnect = 0.0
         self._ws: Any = None
@@ -283,6 +285,9 @@ class ChainWorker:
                 # Lookup token
                 symbol = self.addr_to_symbol.get(address, "UNKNOWN")
 
+                # Get decimals for this symbol on this chain
+                decimals = self.decimals_map.get(symbol, 18)
+
                 # Parse value (ERC-20 Transfer value is in data field, uint256 hex)
                 try:
                     value_int = int(value_hex, 16)
@@ -295,8 +300,7 @@ class ChainWorker:
                 if price <= 0:
                     continue  # can't evaluate without price
 
-                value_usd = value_int * price / (10 ** 18)  # assume 18 decimals
-                # ponytail: tokens with != 18 decimals need manual mapping
+                value_usd = value_int * price / (10 ** decimals)  # use actual decimals
 
                 if value_usd < WHALE_THRESHOLDS["small"]:
                     continue
@@ -415,24 +419,32 @@ class WhaleScannerOrchestrator:
         """
         Build per-chain watchlist from token_chain_map.json.
         Returns: chain_key -> {symbol: contract_address}
+        Also builds chain -> {symbol: decimals} for value conversion.
         """
         token_map = load_token_map()
         watchlists: Dict[str, Dict[str, str]] = {}
+        decimals_map: Dict[str, Dict[str, int]] = {}
 
         for sym, info in token_map.items():
             chains = info.get("chains", {})
+            decimals = info.get("decimals", 18)
             for chain_key, contract_addr in chains.items():
                 if chain_key not in RPC_ENDPOINTS:
                     continue
                 if contract_addr and contract_addr != "0x":
                     if chain_key not in watchlists:
                         watchlists[chain_key] = {}
+                        decimals_map[chain_key] = {}
                     watchlists[chain_key][sym] = contract_addr
+                    decimals_map[chain_key][sym] = decimals
 
         print(f"\nWatchlists by chain:")
         for chain, tokens in sorted(watchlists.items(), key=lambda x: -len(x[1])):
             print(f"  {CHAIN_NAMES.get(chain, chain):20s} → {len(tokens)} tokens")
         print(f"  Total watchlist: {sum(len(v) for v in watchlists.values())} entries")
+
+        # Store decimals map for value conversion
+        self.decimals_map = decimals_map
 
         return watchlists
 
@@ -485,6 +497,13 @@ class WhaleScannerOrchestrator:
                 print(f"[SKIP] {chain_key}: no RPC endpoint configured")
                 continue
 
+            # Build decimals map for this chain from token_map
+            token_map = load_token_map()
+            decimals_map = {}
+            for sym in tokens.keys():
+                info = token_map.get(sym, {})
+                decimals_map[sym] = info.get("decimals", 18)
+
             worker = ChainWorker(
                 chain_key=chain_key,
                 rpc_url=rpc,
@@ -492,6 +511,7 @@ class WhaleScannerOrchestrator:
                 watchlist=tokens,
                 exchange_labels=labels,
                 price_cache_ref=self.price_cache,
+                decimals_map=decimals_map,
             )
             self.workers.append(worker)
 
