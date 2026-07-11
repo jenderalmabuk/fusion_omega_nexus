@@ -8,3 +8,4 @@ pandas==2.2.2
 pyarrow==24.0.0
 requests==2.32.3
 aiogram==3.28.2
+websockets==13.1

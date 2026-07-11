@@ -20,6 +20,9 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 from pathlib import Path
 
+# F-14: move websockets import to module level
+import websockets
+
 # ── Config ─────────────────────────────────────────────────────
 # Docker-compatible: use env var or fallback to repo root
 BASE_DIR = Path(os.getenv("WHALE_RUNTIME_DIR", "/app/runtime/whales"))
@@ -219,7 +222,6 @@ class ChainWorker:
 
     async def connect(self):
         """Open WebSocket connection."""
-        import websockets
         self._ws = await websockets.connect(self.rpc_url, max_size=10_485_760, ping_interval=30)
         print(f"[{self.chain_name}] WebSocket connected")
 
@@ -572,11 +574,5 @@ def main():
 
 
 if __name__ == "__main__":
-    # install deps if missing
-    try:
-        import websockets
-    except ImportError:
-        import subprocess
-        subprocess.check_call(["pip3", "install", "websockets"])
-        import websockets
+    # F-14: websockets already imported at module level
     main()

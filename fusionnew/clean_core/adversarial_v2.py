@@ -498,10 +498,18 @@ def adversarial_check_v2(
                 }
                 if not ok and name == "execution_guard":
                     return False, f"exec_guard:{resp[:80]}", journal
+                if not ok and name == "risk_manager":
+                    return False, f"risk_manager:{resp[:80]}", journal
             except Exception as e:
+                # Timeout or error → pass: None (unknown), will reject below
                 journal["agents"][name] = {
-                    "model": "TIMEOUT", "response": str(e), "passed": False,
+                    "model": "TIMEOUT", "response": str(e), "passed": None,
                 }
+
+    # After all agents: any timeout/error (passed=None) → reject (fail-close)
+    for name in ("risk_manager", "execution_guard"):
+        if journal["agents"].get(name, {}).get("passed") is None:
+            return False, f"{name}:TIMEOUT", journal
 
     # ── Phase 5: Trade Journal (final, pool) ─────────────────────
     risk_ok = journal["agents"].get("risk_manager", {}).get("passed", True)
