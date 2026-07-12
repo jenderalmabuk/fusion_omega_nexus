@@ -108,12 +108,14 @@ services:
       STATE_DIR: /state
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      HEARTBEAT_DIR: /state
       NINE_ROUTER_API_KEY: ${NINE_ROUTER_API_KEY}
       NINE_ROUTER_BASE: ${NINE_ROUTER_BASE:-http://host.docker.internal:20128/v1}
       ADVERSARIAL_MODEL: ${ADVERSARIAL_MODEL:-gc/gemini-2.5-pro}
       ADVERSARIAL_MODEL_FALLBACK: ${ADVERSARIAL_MODEL_FALLBACK:-gc/gemini-2.5-pro}
       ADVERSARIAL_VERSION: ${ADVERSARIAL_VERSION:-v2}
       WHALE_RUNTIME_DIR: /app/runtime/whales
+      LOG_DIR: /tmp
     volumes:
       - ../runtime/state:/state
       - ../runtime/logs:/logs
@@ -142,12 +144,14 @@ services:
       STATE_DIR: /state
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      HEARTBEAT_DIR: /state
       NINE_ROUTER_API_KEY: ${NINE_ROUTER_API_KEY}
       NINE_ROUTER_BASE: ${NINE_ROUTER_BASE:-http://host.docker.internal:20128/v1}
       ADVERSARIAL_MODEL: ${ADVERSARIAL_MODEL:-gc/gemini-2.5-pro}
       ADVERSARIAL_MODEL_FALLBACK: ${ADVERSARIAL_MODEL_FALLBACK:-gc/gemini-2.5-pro}
       ADVERSARIAL_VERSION: ${ADVERSARIAL_VERSION:-v2}
       WHALE_RUNTIME_DIR: /app/runtime/whales
+      LOG_DIR: /tmp
     volumes:
       - ../runtime/state:/state
       - ../runtime/logs:/logs

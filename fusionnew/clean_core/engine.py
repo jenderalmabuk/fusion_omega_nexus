@@ -36,9 +36,14 @@ from backtest.faithful_imbalance import (
 from clean_core.executor import FuturesTestnet
 
 # --- Execution Gateway integration ---
-from gateway.adapters.clean_core_adapter import open_via_gateway_sync
+try:
+    from gateway.adapters.clean_core_adapter import open_via_gateway_sync
+    _GATEWAY_AVAILABLE = True
+except ImportError:
+    open_via_gateway_sync = None
+    _GATEWAY_AVAILABLE = False
 
-USE_GATEWAY = os.getenv("USE_EXECUTION_GATEWAY", "true").lower() in ("1", "true", "yes")
+USE_GATEWAY = _GATEWAY_AVAILABLE and os.getenv("USE_EXECUTION_GATEWAY", "true").lower() in ("1", "true", "yes")
 
 try:
     from config import TELEGRAMBOTTOKEN, TELEGRAM_CHAT_ID
@@ -807,7 +812,7 @@ class Engine:
         entry, sl, tp = s["entry"], s["sl"], s["tp"]
 
         # ── GATEWAY MODE (env toggle) ────────────────────────────────────────
-        if not self.dry and USE_GATEWAY:
+        if not self.dry and USE_GATEWAY and open_via_gateway_sync is not None:
             result = open_via_gateway_sync(
                 dry_run=self.dry,
                 symbol=symbol,
