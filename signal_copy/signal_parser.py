@@ -197,6 +197,19 @@ def _to_float(raw: str) -> Optional[float]:
         return None
 
 
+_BINANCE_THOUSAND = {
+    "PEPEUSDT": "1000PEPEUSDT",
+    "BONKUSDT": "1000BONKUSDT",
+    "FLOKIUSDT": "1000FLOKIUSDT",
+    "SHIBUSDT": "1000SHIBUSDT",
+    "LUNCUSDT": "1000LUNCUSDT",
+    "PEPE": "1000PEPEUSDT",
+    "BONK": "1000BONKUSDT",
+    "FLOKI": "1000FLOKIUSDT",
+    "SHIB": "1000SHIBUSDT",
+    "LUNC": "1000LUNCUSDT",
+}
+
 def _normalize_symbol(base: str, quote: Optional[str]) -> str:
     base = (base or "").upper().strip().lstrip("$")
     # Clean Bybit .P suffix (e.g. BSBUSDT.P -> BSBUSDT)
@@ -208,10 +221,15 @@ def _normalize_symbol(base: str, quote: Optional[str]) -> str:
     # If base already ends with a quote (e.g. "ZECUSDT"), keep as-is.
     for q in _QUOTES:
         if base.endswith(q) and base != q:
-            return base
+            result = base
+            # Normalize Binance thousand-lot pairs (PEPEUSDT → 1000PEPEUSDT)
+            result = _BINANCE_THOUSAND.get(result, result)
+            return result
     if quote == "PERP" or quote == "USD":
         quote = "USDT"
-    return f"{base}{quote}"
+    result = f"{base}{quote}"
+    result = _BINANCE_THOUSAND.get(result, result)
+    return result
 
 
 def _normalize_side(token: str) -> Optional[SignalSide]:

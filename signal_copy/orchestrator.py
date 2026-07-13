@@ -92,6 +92,9 @@ class SignalCopyOrchestrator:
         # chat ids whose messages must never be parsed as signals (e.g. our own
         # confirm bot, to prevent its prompts from re-triggering the pipeline).
         self.ignore_chat_ids: set = set()
+        # channels that get parsed + notified but NEVER auto-executed
+        # (calibration / forward-test mode)
+        self.calib_channels: set = set()
         # whale-accumulation narratives captured for the (upcoming) accumulation
         # pipeline. Tahap 1 only records + (optionally) surfaces them.
         self._accum_log: list = []
@@ -304,14 +307,10 @@ class SignalCopyOrchestrator:
         if source_chat_id is not None and source_chat_id in self.ignore_chat_ids:
             return
 
-        # Calibration channels: read-only — report what we understood, no trade.
-        if source_chat_id is not None and source_chat_id in self.calib_channels:
-            try:
-                rep = await self.read_only_report(text, source_name, image, source)
-                await self._notify("🧪 <b>KALIBRASI</b>\n" + rep)
-            except Exception as exc:
-                logger.warning("[SIGNAL_COPY] calib report failed: %s", exc)
-            return
+        # Calibration channels: parse + validate + notify, but NEVER auto-execute.
+        # Falls through to normal pipeline; execution is blocked later by
+        # checking calib_channels before _execute_token.
+        calib = source_chat_id is not None and source_chat_id in self.calib_channels
 
         # --- classify first (routing label + detailed read report) ---
         from .classifier import classify_message, MessageType
@@ -335,6 +334,8 @@ class SignalCopyOrchestrator:
             return
 
         logger.info("[SIGNAL_COPY] parsed: %s", sig.summary())
+
+        # (parse summary collected via build_parser_report after validation)
 
         # Learning mode: remember + surface the source channel id so the user can
         # add it to the allowlist. Notify once per new source.
@@ -380,13 +381,15 @@ class SignalCopyOrchestrator:
             from .tradingview_factor import TradingViewFactor
             tv = TradingViewFactor()
             tv_data = await tv.fetch(sig.symbol)
-            if tv_data:
+            if tv_data and tv_data.get("_ta"):
                 tv_score = tv.compute_confluence(tv_data, sig.side.value)
                 metrics["tradingview"] = tv_score
                 logger.info("[TV] %s side=%s tv_score=%.1f",
-                           sig.symbol, sig.side.value, tv_score["score"])
+                           sig.symbol, sig.side.value, tv_score.get("score", 0))
+            else:
+                logger.warning("[TV] no data returned for %s (rate limited?)", sig.symbol)
         except Exception as exc:
-            logger.debug("[TV] fetch failed for %s: %s", sig.symbol, exc)
+            logger.warning("[TV] fetch failed for %s: %s", sig.symbol, exc)
 
         # --- Tahap 2.5: read the chart image (vision) for EVERY image-bearing
         # signal: (a) fill missing TP/SL/timeframe, and (b) feed a chart
@@ -421,20 +424,22 @@ class SignalCopyOrchestrator:
         logger.info("[SIGNAL_COPY] %s -> %s score=%.1f (tp=%s sl=%s entry=%s tf=%s)",
                     sig.symbol, result.verdict.value, result.score,
                     sig.tp_source, sig.sl_source, sig.entry_type, sig.timeframe or "-")
-        
+
+        # --- Consolidated report builder ---
+        from .telegram_formatter import build_parser_report
+        _adv_verdict = ""
+
         # --- ADVERSARIAL CHECK (only for VALID signals) ---
         if result.verdict == Verdict.VALID and getattr(scfg, "ADVERSARIAL_ENABLED", True):
             try:
                 import sys
                 from pathlib import Path
-                # Import nexus adversarial module
                 nexus_root = Path(__file__).parent.parent
                 sys.path.insert(0, str(nexus_root))
                 from fusionnew.clean_core.adversarial import bull_bear_check
                 
                 logger.info("[ADVERSARIAL] Running bull/bear debate for %s %s", sig.symbol, sig.side.value)
                 
-                # Build adversarial context from signal + metrics
                 adv_context = {
                     "symbol": sig.symbol,
                     "side": sig.side.value,
@@ -447,46 +452,51 @@ class SignalCopyOrchestrator:
                     "cvd_zscore": metrics.get("cvd_zscore", 0),
                     "validation_score": result.score,
                 }
-                
-                # Run debate (3 LLM calls: bull, bear, judge)
+
                 approved, judge_verdict = await asyncio.to_thread(
                     bull_bear_check, sig.symbol, adv_context
                 )
-                
+
                 if not approved:
                     logger.warning("[ADVERSARIAL] REJECTED by judge: %s", judge_verdict[:200])
                     result.verdict = Verdict.REJECT
                     result.hard_blocks.append(f"Adversarial: {judge_verdict[:100]}")
-                    await self._notify(f"🚫 Adversarial REJECT: {sig.symbol}\n{judge_verdict[:300]}")
-                    return
+                    _adv_verdict = judge_verdict
                 else:
                     logger.info("[ADVERSARIAL] APPROVED: %s", judge_verdict[:200])
                    
             except Exception as exc:
                 logger.warning("[ADVERSARIAL] Check failed (proceeding anyway): %s", exc)
         
-        # Send to signals channel via Telegram parser bot
-        from signal_copy.telegram_transport import send_parser_notification
-        parser_report = build_parser_report(sig, result, cls, source_name)
+        # --- Build ONE consolidated report and send ---
+        consolidated = build_parser_report(
+            sig, result, cls, source_name,
+            calib=calib,
+            adversarial_verdict=_adv_verdict,
+        )
         try:
-            await send_parser_notification(parser_report)
+            from .telegram_transport import send_parser_notification
+            await send_parser_notification(consolidated)
         except Exception as exc:
-            logger.error(f"❌ Telegram parser notify failed: {exc}")
-        
+            logger.error("❌ Consolidated notify failed: %s", exc)
+
         # --- Stop processing for REJECT / WEAK ---
         if result.verdict == Verdict.REJECT or result.verdict == Verdict.WEAK:
             return
 
-        if self.executor is None:
-            await self._notify(build_validation_report(result) +
-                               "\n\n⚠️ Executor belum terkonfigurasi (mode notifikasi saja).")
+        # Calibration channel: validate only, never execute
+        if calib:
+            logger.info("[SIGNAL_COPY] calib channel — skip execution for %s", sig.symbol)
             return
+
+        if self.executor is None:
+            return  # consolidated report already sent above
 
         if self.auto_execute:
             await self.confirmations.register(result)
             await self.confirmations.resolve(result.signal.signal_id, approved=True)
             status = await self._execute_token(result.signal.signal_id)
-            await self._notify(build_validation_report(result) + "\n\n" + status)
+            # Execution status sent via trades bot, not parser bot
             return
 
         # Normal path: register + ask user to confirm via the bot

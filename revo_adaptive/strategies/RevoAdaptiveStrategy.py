@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,6 +13,8 @@ from pandas import DataFrame
 
 from freqtrade.strategy import IStrategy
 from freqtrade.persistence import Trade
+
+logger = logging.getLogger(__name__)
 
 
 class RevoAdaptiveStrategy(IStrategy):
@@ -74,7 +77,7 @@ class RevoAdaptiveStrategy(IStrategy):
 
     def _cfg(self):
         return {
-            "min_score": int(float(os.environ.get("REVO_ENTRY_MIN_SCORE", os.environ.get("SIG_ENTRY_MIN_SCORE", "8")))),
+            "min_score": int(float(os.environ.get("REVO_ENTRY_MIN_SCORE", os.environ.get("SIG_ENTRY_MIN_SCORE", "7")))),
             "discount": float(os.environ.get("REVO_ENTRY_DISCOUNT_MIN_PCT", os.environ.get("SIG_ENTRY_DISCOUNT_MIN_PCT", "2.5"))),
             "rsi_max": float(os.environ.get("REVO_ENTRY_RSI_MAX", os.environ.get("SIG_ENTRY_RSI_MAX", "45"))),
             "min_qvol": float(os.environ.get("REVO_MIN_QVOL_5M", os.environ.get("SIG_MIN_QVOL_5M", "200000"))),
@@ -127,7 +130,7 @@ class RevoAdaptiveStrategy(IStrategy):
         df["oi_proxy"] = volume.pct_change(3).replace([np.inf, -np.inf], np.nan).fillna(0) * 100
 
         flow = self._flow_record(metadata.get("pair", ""))
-        use_real_flow = bool(flow) and not self._flow_is_stale(flow, int(os.environ.get("REVO_FLOW_MAX_AGE_SEC", "120")))
+        use_real_flow = bool(flow) and not self._flow_is_stale(flow, int(os.environ.get("REVO_FLOW_MAX_AGE_SEC", "660")))
         flow_direction = str(flow.get("flow_direction") or flow.get("flow_authority") or "NO_TRADE").upper()
         real_cvd_z = float(flow.get("cvd_zscore_15m", flow.get("cvd_zscore", flow.get("cvd_z", 0))) or 0)
         real_oi = float(flow.get("oi_delta_pct_15m", flow.get("oi_delta_15m_pct", flow.get("oi15", 0))) or 0)
@@ -148,11 +151,15 @@ class RevoAdaptiveStrategy(IStrategy):
         df["rsi_ok"] = (df["rsi"] <= c["rsi_max"]).astype(int)
         df["liq_ok"] = (df["qvol_5m"] >= c["min_qvol"]).astype(int)
         df["vol_ok"] = np.where(df["real_flow_available"] == 1, (df["real_vol_z"] >= -0.5).astype(int), (df["vol_z_proxy"] >= 0.8).astype(int))
-        df["cvd_ok"] = np.where(df["real_flow_available"] == 1, (df["real_cvd_z"] > 0).astype(int), (df["cvd_proxy"] > 0).astype(int))
-        df["oi_ok"] = np.where(df["real_flow_available"] == 1, (df["real_oi_delta"] > 0).astype(int), (df["oi_proxy"] > 0).astype(int))
+
+        # FIX: cvd_ok threshold relaxed from >0 to >-0.5 (don't require net buying, just not aggressive selling)
+        df["cvd_ok"] = np.where(df["real_flow_available"] == 1, (df["real_cvd_z"] > -0.5).astype(int), (df["cvd_proxy"] > -0.5).astype(int))
+
+        # FIX: oi_ok neutral when data missing/zero (was penalizing score)
+        df["oi_ok"] = np.where(df["real_flow_available"] == 1, (df["real_oi_delta"].abs() > 0).astype(int), 1)
 
         # Real funding when context is available; neutral fallback in pure OHLCV backtests.
-        df["funding_ok"] = np.where(df["real_flow_available"] == 1, ((df["real_funding_z"] <= -1.0) | (df["real_funding_rate"] <= 0)).astype(int), 0)
+        df["funding_ok"] = np.where(df["real_flow_available"] == 1, ((df["real_funding_z"] <= -1.0) | (df["real_funding_rate"] <= 0)).astype(int), 1)
         df["funding_crowded"] = np.where(df["real_flow_available"] == 1, ((df["real_funding_z"] >= 1.0) | (df["real_funding_rate"] >= 0.0003)).astype(int), 0)
 
         df["pair_uptrend_pullback"] = ((df["ema50"] > df["ema200"]) & (df["at_discount"] == 1)).astype(int)
@@ -227,30 +234,54 @@ class RevoAdaptiveStrategy(IStrategy):
         c = self._cfg()
         dataframe["enter_long"] = 0
 
-        # Kill zone filter — ICT/SMC principle: only trade high-probability sessions.
-        # Crypto follows forex session patterns:
-        #   07:00-12:00 UTC = London (volatility expansion)
-        #   12:00-16:00 UTC = NY overlap (highest volume, true moves)
-        # Outside kill zones = low vol noise, skip.
-        # _now = pd.Timestamp.now(tz="UTC")
-        # _hour = _now.hour
-        # if not (7 <= _hour < 16):
-        #     return dataframe  # outside kill zone — no entries
-
+        # Pullback identity: require uptrend context (additive bonus in score)
+        # and flow alignment when real data available
+        flow_guard = (
+            (dataframe["real_flow_available"] == 0) |  # no flow data = allow
+            (dataframe["real_flow_long"] == 1)         # flow allows LONG
+        )
+        # Quality gates: liquidity + score + RSI + not explosive ATR + flow
+        # Discount & trend are ADDITIVE in score, not hard requirements
         cond = (
             (dataframe["liq_ok"] == 1) &
             (dataframe["entry_score"] >= c["min_score"]) &
-            (dataframe["at_discount"] == 1) &
             (dataframe["rsi_ok"] == 1) &
-            (dataframe["atr_explosive"] == 0)
-            # ponytail: real_flow_hostile guard skipped — flow collector
-            # writes per-pair data without global flow_direction, causing
-            # all pairs to appear hostile. Re-add when flow collector
-            # produces valid flow_direction at root level.
+            (dataframe["atr_explosive"] == 0) &
+            flow_guard
         )
-        # Shotgun guard: max 2 entries per 5m candle
-        # Freqtrade calls populate_entry_trend once per candle per pair.
-        # Track entry count per candle_time via instance dict.
+
+        # --- NEAR-MISS LOGGING ---
+        _near = dataframe.iloc[-1]
+        _score = int(_near.get("entry_score", 0))
+        _discount = int(_near.get("at_discount", 0))
+        _rsi = int(_near.get("rsi_ok", 0))
+        _cvd = int(_near.get("cvd_ok", 0))
+        _oi = int(_near.get("oi_ok", 0))
+        _fund = int(_near.get("funding_ok", 0))
+        _liq = int(_near.get("liq_ok", 0))
+        _chop = int(_near.get("er_chop", 0))
+        _atr = int(_near.get("atr_explosive", 0))
+        _crowd = int(_near.get("funding_crowded", 0))
+        _trend = int(_near.get("pair_uptrend_pullback", 0))
+        _candle = str(_near.get("date", ""))
+        if _score >= c["min_score"] - 2 and not bool(cond.iloc[-1]):
+            _fail = []
+            if not _discount: _fail.append("discount")
+            if not _rsi: _fail.append("rsi")
+            if not _cvd: _fail.append("cvd")
+            if not _oi: _fail.append("oi")
+            if not _fund: _fail.append("funding")
+            if not _liq: _fail.append("liq")
+            if _chop: _fail.append("chop")
+            if _atr: _fail.append("atr")
+            if _crowd: _fail.append("crowded")
+            if not _trend: _fail.append("trend")
+            logger.info(f"[NEAR-MISS] {metadata['pair']} score={_score} candle={_candle} "
+                           f"fail=[{','.join(_fail)}] d={_discount} r={_rsi} c={_cvd} o={_oi} "
+                           f"f={_fund} l={_liq} t={_trend} ch={_chop} at={_atr} cr={_crowd}")
+        # --- END NEAR-MISS ---
+
+        # Shotgun guard: max 2 entries per 5m candle (only current candle, not historical)
         _candle_ts = int(dataframe.iloc[-1]["date"].timestamp())
         _key = f"_last_entry_candle"
         if not hasattr(self, _key):
@@ -259,19 +290,25 @@ class RevoAdaptiveStrategy(IStrategy):
         # Clean old candles (>10 min ago)
         _tracker = {ts: cnt for ts, cnt in _tracker.items() if _candle_ts - ts <= 600}
         _this_candle_count = _tracker.get(_candle_ts, 0)
-        if _this_candle_count >= 2:
-            cond &= False
+
+        # Only allow entry on current candle if we haven't hit the limit
+        if _this_candle_count >= 2 or not bool(cond.iloc[-1]):
+            # Mask all (including current candle)
+            cond = cond & False
         else:
-            _candidates = dataframe[cond].copy()
-            if len(_candidates) > 2 - _this_candle_count:
-                _top_idx = _candidates.nlargest(2 - _this_candle_count, "entry_score").index
-                _keep_mask = dataframe.index.isin(_top_idx)
-                cond = cond & _keep_mask
-            # Pre-increment for next pair in same candle
-            _tracker[_candle_ts] = _this_candle_count + int(cond.sum())
+            # Allow current candle entry
+            _tracker[_candle_ts] = _this_candle_count + 1
+            # Keep only current candle True, mask all historical
+            cond = cond & False
+            cond.iloc[-1] = True
+
         setattr(self, _key, _tracker)
-        dataframe.loc[cond, "enter_long"] = 1
-        dataframe.loc[cond, "enter_tag"] = "revo_adaptive_v1"
+
+        # Set enter_long only on current candle
+        if bool(cond.iloc[-1]):
+            dataframe.loc[dataframe.index[-1], "enter_long"] = 1
+            dataframe.loc[dataframe.index[-1], "enter_tag"] = "revo_adaptive_v1"
+
         self._audit_entry_signal(dataframe, metadata, cond)
         return dataframe
 

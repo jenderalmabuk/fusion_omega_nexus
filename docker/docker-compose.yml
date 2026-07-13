@@ -200,29 +200,28 @@ services:
     environment:
       - FREQTRADE__CONFIG=/freqtrade/configs/config.bybit.paper.runtime.json
       - FREQTRADE__STRATEGY=RevoAdaptiveStrategy
-      - FREQTRADE__TELEGRAM__TOKEN=${TELEGRAM_TOKEN}
+      - FREQTRADE__TELEGRAM__TOKEN=${SIGNAL_COPY_TRADES_NOTIFY_BOT_TOKEN}
       - FREQTRADE__TELEGRAM__CHAT_ID=${TELEGRAM_CHAT_ID}
-      - REVO_ENTRY_MIN_SCORE=8
+      - REVO_ENTRY_MIN_SCORE=6
       - REVO_ENTRY_DISCOUNT_MIN_PCT=2.5
       - REVO_ENTRY_RSI_MAX=45
       - REVO_MIN_QVOL_5M=200000
       - REVO_ER_CHOP_MAX=0.15
       - REVO_ATR_PCT_MAX=4.0
-      - REVO_FLOW_MAX_AGE_SEC=120
+      - REVO_FLOW_MAX_AGE_SEC=660
       - REVO_FLOW_CONTEXT_PATH=/freqtrade/user_data/local/revo_alpha/runtime/bybit/revo_flow_context.json
       - REVO_ENTRY_AUDIT_PATH=/freqtrade/user_data/local/revo_entry_audit.jsonl
     volumes:
-      - ../revo_adaptive:/freqtrade
       - ../revo_adaptive/strategies:/freqtrade/user_data/strategies
       - ../revo_adaptive/configs:/freqtrade/user_data/configs
       - ../revo_adaptive/scripts:/freqtrade/user_data/scripts
       - ../revo_adaptive/revo_core:/freqtrade/user_data/revo_core
+      - ../revo_adaptive/user_data:/freqtrade/user_data
       - ../runtime/revo:/freqtrade/user_data/local/revo_alpha/runtime/bybit
       - ../runtime/revo:/freqtrade/user_data/revo_alpha/runtime/bybit
     ports:
       - "127.0.0.1:8081:8080"
     restart: unless-stopped
-    entrypoint: ["/usr/local/bin/python3", "-m", "freqtrade"]
     command: ["trade", "--config", "/freqtrade/user_data/configs/config.bybit.paper.json", "--strategy", "RevoAdaptiveStrategy"]
     depends_on:
       fastapi:

@@ -19,8 +19,8 @@ from collector.universe import load_universe
 
 BASE = os.getenv("BINANCE_FAPI_BASE", "https://fapi.binance.com")
 
-# Engine-critical TFs: 1m (manage), 5m/15m (LTF), 30m/1h (zone TIERS), 4h (H4)
-KLINE_TFS = ["1m", "5m", "15m", "30m", "1h", "4h"]
+# Engine-critical TFs: 1m (manage), 3m/5m/15m (LTF), 30m/1h (zone TIERS), 4h (H4)
+KLINE_TFS = ["1m", "3m", "5m", "15m", "30m", "1h", "4h"]
 TF_SEC = {"1m": 60, "3m": 180, "5m": 300, "15m": 900, "30m": 1800,
           "1h": 3600, "4h": 14400, "1d": 86400}
 KLINE_LIMIT = int(os.getenv("KLINE_LIMIT", "500"))

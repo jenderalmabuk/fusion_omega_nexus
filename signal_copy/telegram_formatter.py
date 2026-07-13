@@ -231,8 +231,10 @@ def build_parser_report(
     result: Any,
     cls: Any = None,
     source_name: str = "",
+    calib: bool = False,
+    adversarial_verdict: str = "",
 ) -> str:
-    """Build rich parser validation report with market data for the parser channel."""
+    """Build ONE consolidated report: parse + validation + adversarial."""
     symbol = getattr(sig, "symbol", "UNKNOWN").upper()
     side = getattr(sig, "side", "UNKNOWN")
     side_str = side.value if hasattr(side, "value") else str(side).upper()
@@ -244,12 +246,14 @@ def build_parser_report(
     take_profits = getattr(sig, "take_profits", [])
     leverage = getattr(sig, "leverage", 0.0)
     risk_pct = getattr(sig, "risk_pct", 0.0)
+    timeframe = getattr(sig, "timeframe", "") or "-"
 
     verdict = result.verdict.value if hasattr(result.verdict, "value") else str(result.verdict)
     score = getattr(result, "score", 0.0)
 
-    # Get metrics from result
-    metrics = getattr(result, "metrics", {}) or {}
+    # Metrics
+    m = getattr(result, "metrics_snapshot", {}) or getattr(result, "metrics", {}) or {}
+    metrics = m
     price = metrics.get("price", 0.0)
     rsi = metrics.get("rsi", 0.0)
     cvd = metrics.get("cvd", metrics.get("cvd_zscore", 0.0))
@@ -259,59 +263,115 @@ def build_parser_report(
     poc = metrics.get("poc", 0.0)
     vol_ratio = metrics.get("vol_ratio", 0.0)
     regime = metrics.get("regime_label", "UNKNOWN")
-    quadrant = "UNKNOWN"  # would need from metrics
     btc_corr = metrics.get("btc_correlation", 0.0)
     btc_bias = metrics.get("btc_bias", "NEUTRAL")
+    mtf = metrics.get("mtf_alignment", {})
+    mtf_score = mtf.get("score", 0.0) if isinstance(mtf, dict) else 0.0
+    tv = metrics.get("tradingview", {})
+    tv_score = tv.get("score", 0.0) if isinstance(tv, dict) else 0.0
 
     icon = "🟢" if side_str == "LONG" else "🔴"
-    verdict_icon = {"VALID": "✅", "WEAK": "⚠️", "REJECT": "❌"}.get(verdict, "❓")
+    verdict_data = {
+        "VALID": ("✅", "VALID"),
+        "WEAK": ("⚠️", "WEAK"),
+        "REJECT": ("❌", "REJECT"),
+    }
+    v_icon, v_label = verdict_data.get(verdict, ("❓", verdict))
 
     # Format entry range
     if entry_low and entry_high:
-        entry_str = f"{format_price(entry_low)} - {format_price(entry_high)}"
+        entry_str = f"{format_price(entry_low)} — {format_price(entry_high)}"
     else:
         entry_str = format_price(entry_mid)
 
-    # Format TPs
-    tp_str = ", ".join(format_price(tp) for tp in take_profits[:3]) if take_profits else "N/A"
-    tp1 = take_profits[0] if len(take_profits) > 0 else 0.0
-    tp_full = take_profits[-1] if len(take_profits) > 1 else (take_profits[0] if take_profits else 0.0)
+    # Format TPs dengan numbering
+    if take_profits:
+        tp_lines = []
+        num_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"]
+        for i, tp in enumerate(take_profits):
+            num = num_emojis[i] if i < len(num_emojis) else f"{i+1}."
+            tp_lines.append(f"   {num} {format_price(tp)}")
+        tp_str = "\n".join(tp_lines)
+    else:
+        tp_str = "   N/A"
 
     # Risk/Reward
+    rr_str = "N/A"
     if entry_mid > 0 and stop_loss > 0:
         risk = abs(entry_mid - stop_loss)
-        rr1 = abs(tp1 - entry_mid) / risk if risk > 0 and tp1 > 0 else 0
-        rr_full = abs(tp_full - entry_mid) / risk if risk > 0 and tp_full > 0 else 0
-        rr_str = f"RR: TP1 {rr1:.2f} | Full {rr_full:.2f}"
-    else:
-        rr_str = "RR: N/A"
+        if risk > 0:
+            tp1 = take_profits[0] if take_profits else 0.0
+            tp_full = take_profits[-1] if len(take_profits) > 1 else (take_profits[0] if take_profits else 0.0)
+            rr1 = abs(tp1 - entry_mid) / risk if tp1 > 0 else 0
+            rr_full = abs(tp_full - entry_mid) / risk if tp_full > 0 else 0
+            rr_str = f"TP1: {rr1:.2f}R | Full: {rr_full:.2f}R"
 
     tv_link = get_tradingview_link(symbol)
 
-    lines = [
-        f"{verdict_icon} <b>VALIDASI {verdict}</b> {icon} {side_str} {symbol}",
-        f"📡 Sumber: {source_name or 'Unknown'}",
-        f"💰 Entry: {entry_str}",
-        f"🎯 TP: {tp_str}",
-        f"🛑 SL: {format_price(stop_loss)}",
-        f"⚖️ {rr_str}",
-        f"⚙️ Leverage: {leverage:.0f}x | Risk: {risk_pct*100:.1f}%",
-        f"📊 Score: {score:+.1f}/100",
-    ]
+    # Hard blocks
+    hard_blocks = getattr(result, "hard_blocks", []) or []
 
-    # Market data block
-    lines.extend([
-        "────────────────────",
-        f"📈 CVD: {cvd:,.0f} {'🟢' if cvd >= 0 else '🔴'}",
-        f"📉 OI 15m: {oi_15m:+.2f}% | OI 1h: {oi_1h:+.2f}%",
-        f"💸 Funding: {funding:+.4f}%",
-        f"🎛️ POC: {format_price(poc)} | VolRatio: {vol_ratio:.2f} | RSI: {rsi:.1f}",
-        f"⚙️ Regime: {regime} | Kuadran: {quadrant}",
-        f"🧭 BTC Bias: {btc_bias} | Corr: {btc_corr:.2f}",
-        f'🔗 <a href="{tv_link}">📊 Lihat Chart TradingView</a>',
-        "────────────────────",
-        _mode_footer(),
-    ])
+    # Build consolidated message
+    lines = []
+
+    # Header: calib banner or badge
+    if calib:
+        lines.append("🧪 <b>KALIBRASI MODE</b>")
+        lines.append("━" * 20)
+
+    # Section 1: Signal summary
+    lines.append(f"{v_icon} <b>{v_label}</b> │ {icon} <b>{side_str}</b> │ <b>{symbol}</b>")
+    lines.append(f"📡 Sumber: <i>{source_name or 'Unknown'}</i>")
+    lines.append("")
+    lines.append("📋 <b>DETAIL SINYAL</b>")
+    lines.append(f"   💰 Entry: <b>{entry_str}</b>")
+    lines.append(f"   🛑 SL: <b>{format_price(stop_loss)}</b>")
+    lines.append(f"   🎯 TP:")
+    lines.append(tp_str)
+    lines.append(f"   ⚙️ Leverage: {(leverage or 0):.0f}x | TF: {timeframe or '-'}")
+    lines.append(f"   ⚖️ RR: {rr_str}")
+    lines.append("")
+
+    # Section 2: Validation score
+    lines.append("📊 <b>HASIL VALIDASI</b>")
+    lines.append(f"   Skor: <b>{score:+.1f}/100</b>")
+    if mtf_score:
+        lines.append(f"   MTF: {mtf_score:.0f}/100 | TV: {tv_score:.0f}/100")
+    if hard_blocks:
+        lines.append("   ⛔ Block:")
+        for b in hard_blocks:
+            lines.append(f"      • {b}")
+    lines.append("")
+
+    # Section 3: Market data (only show fields with actual data)
+    lines.append("📈 <b>DATA PASAR</b>")
+    lines.append(f"   Harga: {format_price(price)} | RSI: {rsi:.1f} | Regime: {regime}")
+    cvd_val = cvd if abs(cvd) > 0.001 else 0.0
+    lines.append(f"   CVD z: {cvd_val:+.2f} {'🟢' if cvd_val >= 0 else '🔴'} | OI: {oi_15m:+.2f}%/{oi_1h:+.2f}%")
+    if abs(funding) > 0:
+        lines.append(f"   Funding: {funding:+.4f}%")
+    if vol_ratio:
+        lines.append(f"   VolRatio: {vol_ratio:.2f}")
+    if btc_bias and btc_bias != "NEUTRAL":
+        lines.append(f"   BTC Bias: {btc_bias} | Corr: {btc_corr:.2f}")
+    elif btc_corr:
+        lines.append(f"   BTC Corr: {btc_corr:.2f}")
+
+    # Section 4: Adversarial (if any)
+    if adversarial_verdict:
+        lines.append("")
+        lines.append(f"🚫 <b>ADVERSARIAL: REJECT</b>")
+        lines.append(f"   {adversarial_verdict[:300]}")
+
+    # Section 5: Calib note
+    if calib and verdict == "VALID" and not adversarial_verdict:
+        lines.append("")
+        lines.append("✅ <b>VALID — kalibrasi mode, tidak ada eksekusi</b>")
+
+    # Footer
+    lines.append("━" * 20)
+    lines.append(f'🔗 <a href="{tv_link}">📊 Chart TradingView</a>')
+    lines.append(_mode_footer())
 
     return "\n".join(lines)
 

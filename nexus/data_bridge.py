@@ -63,8 +63,12 @@ class NexusDataBridge:
         if self._scan_cache and (now - self._scan_cache_ts) < self._scan_cache_ttl:
             return self._scan_cache
 
-        # Find most recent scan JSON
+        # Find most recent scan JSON — try cache_dir, then data/
         jsons = sorted(glob.glob(str(self.cache_dir / "latest_scan_*.json")), reverse=True)
+        if not jsons:
+            # Fallback: data/ directory (host data)
+            data_dir = Path(__file__).parent.parent / "data"
+            jsons = sorted(glob.glob(str(data_dir / "latest_scan_*.json")), reverse=True)
         if not jsons:
             return {}
 
@@ -102,10 +106,18 @@ class NexusDataBridge:
 
     def _load_klines(self, symbol: str, tf: str, limit: int = 100) -> Optional[pd.DataFrame]:
         """Load OHLCV from parquet cache or FastAPI."""
-        # Try parquet cache first
+        # Try parquet cache first (runtime/whales/tf)
         tf_dir = self.cache_dir / tf
         if tf_dir.exists():
             parquets = sorted(glob.glob(str(tf_dir / f"{symbol}_*.parquet")), reverse=True)
+            if parquets:
+                df = pd.read_parquet(parquets[0])
+                if not df.empty:
+                    return df.tail(limit).copy()
+        # Fallback: try data/tf (host data directory)
+        host_tf_dir = Path(__file__).parent.parent / "data" / tf
+        if host_tf_dir.exists():
+            parquets = sorted(glob.glob(str(host_tf_dir / f"{symbol}_*.parquet")), reverse=True)
             if parquets:
                 df = pd.read_parquet(parquets[0])
                 if not df.empty:
@@ -149,6 +161,9 @@ class NexusDataBridge:
             return self._oi_history
 
         jsons = sorted(glob.glob(str(self.cache_dir / "latest_scan_*.json")))
+        if not jsons:
+            data_dir = Path(__file__).parent.parent / "data"
+            jsons = sorted(glob.glob(str(data_dir / "latest_scan_*.json")))
         if len(jsons) < 2:
             self._oi_history = {}
             return self._oi_history
@@ -165,7 +180,7 @@ class NexusDataBridge:
                 oi_map = data.get("oi", {})
                 for sym, exchs in oi_map.items():
                     # Use first exchange available (Bybit or Binance)
-                    total_oi = sum(float(v) for v in exchs.values())
+                    total_oi = sum(float(v) for v in exchs.values() if v is not None)
                     if sym not in history:
                         history[sym] = {}
                     history[sym][ts] = total_oi
@@ -189,6 +204,7 @@ class NexusDataBridge:
         # Current OI from latest scan
         oi_now = sum(
             float(v) for v in scan_data.get("oi", {}).get(symbol, {}).values()
+            if v is not None
         )
         if oi_now <= 0:
             return {"oi_change_15m_pct": 0.0, "oi_change_1h_pct": 0.0}

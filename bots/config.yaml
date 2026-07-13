@@ -7,7 +7,7 @@ m30_imbalance:
   direction: both
   tag: _medium
   ema_dist: 0
-  min_turn: 0
+  min_turn: 500000
   stoch_max: 50
   equity: 1000
   risk_pct: 0.01
@@ -30,7 +30,7 @@ h1_imbalance:
   direction: both
   tag: _h1_adversarial
   ema_dist: 0
-  min_turn: 0
+  min_turn: 500000
   stoch_max: 50
   equity: 1000
   risk_pct: 0.01

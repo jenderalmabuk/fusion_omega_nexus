@@ -31,6 +31,9 @@ import sys
 import httpx
 import logging
 
+# Load .env via signal_copy_config BEFORE any os.getenv() calls
+from signal_copy import signal_copy_config  # noqa: F401
+
 logger = logging.getLogger("fusion_whale_hunter")
 
 # ---------------------------------------------------------------------------
@@ -105,6 +108,18 @@ async def main():
         dry_run=dry_run,
         auto_execute=auto_execute,
     )
+
+    # Calibration channel: parse + notify, but NEVER auto-execute
+    # FusionXomegabot (-1003988458515) is the test channel
+    orch.calib_channels.add(-1003988458515)
+    # Also add SMALL test channel if configured
+    calib_env = os.getenv("SIGNAL_COPY_CALIBRATION_CHANNELS", "").strip()
+    if calib_env:
+        for cid in calib_env.split(","):
+            try:
+                orch.calib_channels.add(int(cid.strip()))
+            except ValueError:
+                pass
 
     # Override execution notification to use trades transport
     from signal_copy.telegram_formatter import build_execution_message, build_close_message

@@ -38,6 +38,16 @@ TF_SEC = {
 
 def fetch_recent(symbol: str, interval: str = "1h", limit: int = 300) -> pd.DataFrame:
     """Latest `limit` klines from Nexus. Returns same schema as backtest.data.fetch_recent."""
+    # Normalize Binance thousand-lot symbols (PEPEUSDT -> 1000PEPEUSDT)
+    _BINANCE_THOUSAND = {
+        "PEPEUSDT": "1000PEPEUSDT",
+        "BONKUSDT": "1000BONKUSDT",
+        "FLOKIUSDT": "1000FLOKIUSDT",
+        "SHIBUSDT": "1000SHIBUSDT",
+        "LUNCUSDT": "1000LUNCUSDT",
+    }
+    query_symbol = _BINANCE_THOUSAND.get(symbol, symbol)
+    
     client = _get_client()
     tf = interval
 
