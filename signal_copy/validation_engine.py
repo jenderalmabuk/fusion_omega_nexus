@@ -106,10 +106,23 @@ def _factor_price_freshness(sig: ParsedSignal, m: Dict[str, Any]) -> Factor:
             return Factor("Price/Entry", mx, mx, True, f"price {price:g} inside zone")
         return Factor("Price/Entry", mx * 0.7, mx, True, f"price {price:g} near zone")
 
-    # price already ran away from entry — chasing is bad
+    # Price is outside the tolerance band — but off-zone is a ROUTING input,
+    # not a quality defect. A good-confluence signal that's off-zone should
+    # become a limit / pending entry (see orchestrator._wait_for_limit), NOT a
+    # reject. So we score it PARTIAL + passed instead of zeroing it out, which
+    # is what used to silently kill high-confluence calls (e.g. BNB score 72
+    # rejected only because price had drifted from the entry zone).
     dist_pct = (min(abs(price - low), abs(price - high)) / high) * 100.0 if high else 999
-    # if it ran in the trade's favor beyond zone, it's a missed entry
-    return Factor("Price/Entry", 0.0, mx, False, f"price {price:g} off-zone by {dist_pct:.2f}%")
+    # Did price move to give a BETTER entry (pullback) or CHASE past the zone?
+    if sig.is_long:
+        better_entry = price < low    # dipped below a LONG zone = discount
+    else:
+        better_entry = price > high   # popped above a SHORT zone = premium
+    if better_entry:
+        return Factor("Price/Entry", mx * 0.75, mx, True,
+                      f"price {price:g} {dist_pct:.2f}% off-zone (better entry — limit)")
+    return Factor("Price/Entry", mx * 0.5, mx, True,
+                  f"price {price:g} chased {dist_pct:.2f}% past zone (route to pullback/limit)")
 
 
 def _factor_geometry(sig: ParsedSignal, m: Dict[str, Any]) -> Factor:
@@ -406,14 +419,11 @@ def _legacy_validate(sig: ParsedSignal, metrics: Dict[str, Any]) -> ValidationRe
     elif sl_pct > 20.0:  # safety cap
         hard_blocks.append(f"SL too wide {sl_pct:.1f}%")
     
-    # Hard block: price already chased past entry in profit direction
-    if getattr(sig, "entry_type", "market") == "market":
-        entry_mid = sig.entry_mid or 0
-        if entry_mid > 0:
-            if sig.is_long and price > entry_mid * 1.02:  # 2% above entry
-                hard_blocks.append(f"price {price:.4f} chased {((price-entry_mid)/entry_mid*100):.1f}% above LONG entry")
-            elif not sig.is_long and price < entry_mid * 0.98:  # 2% below entry
-                hard_blocks.append(f"price {price:.4f} chased {((entry_mid-price)/entry_mid*100):.1f}% below SHORT entry")
+    # NOTE: no "chase" hard-block here. Price drift from the entry is a ROUTING
+    # decision, not a reject reason — orchestrator._wait_for_limit turns a
+    # chased/off-zone signal into a pending-limit that waits for a pullback so
+    # risk stays ~1%. Hard-blocking it (as an earlier build did) threw away
+    # perfectly good calls. The old xomegabot never had this block.
     
     # Factors (informational, don't gate execution)
     mx_price = 20.0
