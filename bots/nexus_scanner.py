@@ -202,12 +202,13 @@ def run_cycle(client: httpx.Client) -> dict:
         write_csv(rt / "pair_universe_stage15.csv", remote["pairs"])
         write_csv(rt / "pair_universe_top100.csv", remote["pairs"][:100])
 
-        # Freqtrade pairlist
-        ft_pairs = [ft_pair(p["pair"]) for p in pairs[:200]]
+        # Freqtrade pairlist (FALLBACK: universe order; upgraded to flow-anchored
+        # in Step 3 when flow data is available)
+        ft_pairs = [ft_pair(p["pair"]) for p in pairs[:TOP_N]]
         ft_out = {"pairs": ft_pairs}
         write_json(rt / "pair_universe_freqtrade.json", ft_out)
         write_json(rt / "freqtrade_pairlist.json", ft_out)
-        print(f"[nexus-scanner] Universe: {len(pairs)} pairs, freqtrade: {len(ft_pairs)}")
+        print(f"[nexus-scanner] Universe: {len(pairs)} pairs, freqtrade(fallback): {len(ft_pairs)}")
     except Exception as e:
         print(f"[nexus-scanner] Universe ERROR: {e}")
         rc = 1
@@ -227,6 +228,22 @@ def run_cycle(client: httpx.Client) -> dict:
             revo_flow[pair] = rec
         # Write as old Revo format: {"BTC/USDT:USDT": {...}}
         write_json(rt / "revo_flow_context.json", revo_flow)
+
+        # Upgrade pairlist: anchor to flow-covered pairs so every traded pair has
+        # REAL flow data (no proxy fallback). Keep universe ranking (movers first),
+        # then append any remaining flow-covered pairs, capped at TOP_N.
+        flow_keys = set(revo_flow.keys())
+        if flow_keys:
+            ranked = [ft_pair(p["pair"]) for p in pairs]
+            ranked_covered = [p for p in ranked if p in flow_keys]
+            seen = set(ranked_covered)
+            remaining = [k for k in revo_flow.keys() if k not in seen]
+            ft_pairs = (ranked_covered + remaining)[:TOP_N]
+            ft_out = {"pairs": ft_pairs}
+            write_json(rt / "pair_universe_freqtrade.json", ft_out)
+            write_json(rt / "freqtrade_pairlist.json", ft_out)
+            print(f"[nexus-scanner] Pairlist flow-anchored: {len(ft_pairs)} pairs "
+                  f"(all with real flow, 0 proxy)")
         # Audit-friendly raw collector dumps.
         write_json(rt / "revo_flow_context_collector.json", revo_flow)
         write_csv(rt / "revo_flow_context_collector.csv", list(revo_flow.values()))
