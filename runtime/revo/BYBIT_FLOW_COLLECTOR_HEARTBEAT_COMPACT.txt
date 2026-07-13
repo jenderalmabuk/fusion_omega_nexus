@@ -1,4 +1,0 @@
-cycle=20260708T183950Z
-status=OK
-flow_total=266
-flow_tradeable=119

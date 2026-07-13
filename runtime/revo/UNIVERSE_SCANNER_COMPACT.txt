@@ -1,3 +1,0 @@
-cycle=20260708T183950Z
-universe=265
-published_freqtrade=200

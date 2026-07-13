@@ -12,6 +12,15 @@ __v0_jsx-dev-runtime.ts
 .env.*
 !.env.example
 
+# Credentials — NEVER commit (Telegram session = full account access)
+*.session
+*.session-journal
+
+# Paper/live trading databases (runtime state)
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
 # Common ignores
 node_modules
 .next/
