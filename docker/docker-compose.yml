@@ -202,9 +202,12 @@ services:
       - FREQTRADE__STRATEGY=RevoAdaptiveStrategy
       - FREQTRADE__TELEGRAM__TOKEN=${SIGNAL_COPY_TRADES_NOTIFY_BOT_TOKEN}
       - FREQTRADE__TELEGRAM__CHAT_ID=${TELEGRAM_CHAT_ID}
-      - REVO_ENTRY_MIN_SCORE=6
-      - REVO_ENTRY_DISCOUNT_MIN_PCT=2.5
-      - REVO_ENTRY_RSI_MAX=45
+      # MIN_SCORE=7 live (real-flow) ≈ backtest proxy-9 profit zone.
+      # Proxy backtest grants oi(+1)+funding(+2)=+3 free; live earns funding*2 only ~25%,
+      # so live is ~2pts lower for same setup. disc/rsi are price-gates validated by backtest.
+      - REVO_ENTRY_MIN_SCORE=7
+      - REVO_ENTRY_DISCOUNT_MIN_PCT=3.5
+      - REVO_ENTRY_RSI_MAX=40
       - REVO_MIN_QVOL_5M=200000
       - REVO_ER_CHOP_MAX=0.15
       - REVO_ATR_PCT_MAX=4.0
