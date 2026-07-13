@@ -31,6 +31,7 @@ class RevoAdaptiveBacktest(RevoAdaptiveStrategy):
             & (dataframe["entry_score"] >= c["min_score"])
             & (dataframe["rsi_ok"] == 1)
             & (dataframe["atr_explosive"] == 0)
+            & (dataframe["not_falling_knife"] == 1)
             & flow_guard
         )
 

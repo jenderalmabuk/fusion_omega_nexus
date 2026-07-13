@@ -79,6 +79,11 @@ class RevoAdaptiveStrategy(IStrategy):
         return {
             "min_score": int(float(os.environ.get("REVO_ENTRY_MIN_SCORE", os.environ.get("SIG_ENTRY_MIN_SCORE", "7")))),
             "discount": float(os.environ.get("REVO_ENTRY_DISCOUNT_MIN_PCT", os.environ.get("SIG_ENTRY_DISCOUNT_MIN_PCT", "2.5"))),
+            # Falling-knife floor: reject entries deeper than this % below EMA55.
+            # Default 999 = disabled (backward compatible). Backtest (Jun1-Jul10,
+            # 93 pairs) shows dist_ema55 < -7% flips net-negative (win% <20%);
+            # a -7% floor drops 150 losers (net -57.8) and lifts net +114.9 -> +172.7.
+            "discount_max": float(os.environ.get("REVO_ENTRY_DISCOUNT_MAX_PCT", "999")),
             "rsi_max": float(os.environ.get("REVO_ENTRY_RSI_MAX", os.environ.get("SIG_ENTRY_RSI_MAX", "45"))),
             "min_qvol": float(os.environ.get("REVO_MIN_QVOL_5M", os.environ.get("SIG_MIN_QVOL_5M", "200000"))),
             "er_chop": float(os.environ.get("REVO_ER_CHOP_MAX", "0.15")),
@@ -148,6 +153,9 @@ class RevoAdaptiveStrategy(IStrategy):
 
         df["dist_ema55_pct"] = ((close / df["ema55"] - 1.0) * 100).fillna(0)
         df["at_discount"] = (df["dist_ema55_pct"] <= -c["discount"]).astype(int)
+        # Falling-knife guard: 1 when price is NOT dislocated deeper than discount_max
+        # below EMA55. Deep dislocation = crash, not a healthy pullback (see _cfg note).
+        df["not_falling_knife"] = (df["dist_ema55_pct"] >= -c["discount_max"]).astype(int)
         df["rsi_ok"] = (df["rsi"] <= c["rsi_max"]).astype(int)
         df["liq_ok"] = (df["qvol_5m"] >= c["min_qvol"]).astype(int)
         df["vol_ok"] = np.where(df["real_flow_available"] == 1, (df["real_vol_z"] >= -0.5).astype(int), (df["vol_z_proxy"] >= 0.8).astype(int))
@@ -247,6 +255,7 @@ class RevoAdaptiveStrategy(IStrategy):
             (dataframe["entry_score"] >= c["min_score"]) &
             (dataframe["rsi_ok"] == 1) &
             (dataframe["atr_explosive"] == 0) &
+            (dataframe["not_falling_knife"] == 1) &
             flow_guard
         )
 

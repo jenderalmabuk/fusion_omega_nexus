@@ -208,6 +208,10 @@ services:
       - REVO_ENTRY_MIN_SCORE=7
       - REVO_ENTRY_DISCOUNT_MIN_PCT=3.5
       - REVO_ENTRY_RSI_MAX=40
+      # Falling-knife floor: reject entries deeper than 9% below EMA55 (crash, not
+      # pullback). Backtest MS=9 (=live pop): PF 1.487->1.561, DD 5.85->5.52%, net
+      # held (+205). Blocks both EVAA entries (-9.1%, -11.2%) that motivated it.
+      - REVO_ENTRY_DISCOUNT_MAX_PCT=9
       - REVO_MIN_QVOL_5M=200000
       - REVO_ER_CHOP_MAX=0.15
       - REVO_ATR_PCT_MAX=4.0
