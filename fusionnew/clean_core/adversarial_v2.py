@@ -44,15 +44,19 @@ else:
         "groq/openai/gpt-oss-120b",
     ]
 
-# Tier-1 pool (bull, bear — need reasoning quality)
-TIER1_POOL = [
-    "gc/gemini-2.5-pro",
-    "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
-    "gh/gpt-4.1",
-]
+# Tier-1 pool (bull, bear — need reasoning quality). Env-configurable.
+_TIER1_RAW = os.getenv("ADVERSARIAL_TIER1_POOL", "")
+if _TIER1_RAW:
+    TIER1_POOL = [m.strip() for m in _TIER1_RAW.split(",") if m.strip()]
+else:
+    TIER1_POOL = [
+        "cerebras/gpt-oss-120b",
+        "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+        "gh/gpt-4.1",
+    ]
 
 # Judge model — FIXED, must output strict YES/NO
-JUDGE_MODEL = os.getenv("ADVERSARIAL_JUDGE_MODEL", "gc/gemini-2.5-pro")
+JUDGE_MODEL = os.getenv("ADVERSARIAL_JUDGE_MODEL", "cerebras/gpt-oss-120b")
 
 # Round-robin counters (thread-safe via lock)
 _pool_idx = 0
@@ -60,7 +64,7 @@ _tier1_idx = 0
 _lock = threading.Lock()
 
 # Fallback model if pool exhausted
-FALLBACK_MODEL = os.getenv("ADVERSARIAL_MODEL_FALLBACK", "gc/gemini-2.5-pro")
+FALLBACK_MODEL = os.getenv("ADVERSARIAL_MODEL_FALLBACK", "cerebras/gpt-oss-120b")
 
 
 def _next_model(pool: List[str], tier1: bool = False) -> str:
@@ -199,7 +203,7 @@ Keep under 50 words. No formatting."""
 
 # ── LLM caller ──────────────────────────────────────────────────
 
-def _call_llm(prompt: str, model: str, timeout: int = 15) -> str:
+def _call_llm(prompt: str, model: str, timeout: int = 15, max_tokens: int = 512) -> str:
     """Single LLM call via 9router/OpenRouter-compatible API."""
     import requests
     if not LLM_API_KEY:
@@ -214,7 +218,10 @@ def _call_llm(prompt: str, model: str, timeout: int = 15) -> str:
             json={
                 "model": model,
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 120,
+                # 512 default (not 120): reasoning models (cerebras/nemotron) spend
+                # the budget on reasoning and emit no `content` at 120 -> empty/KeyError.
+                # Judge passes a higher budget so it can finish reasoning + emit verdict.
+                "max_tokens": max_tokens,
                 "temperature": 0.3,
             },
             timeout=timeout,
@@ -239,15 +246,21 @@ def _call_llm(prompt: str, model: str, timeout: int = 15) -> str:
                 choice = obj.get("choices", [{}])[0]
                 delta = choice.get("delta") or {}
                 msg = choice.get("message") or {}
-                if "content" in delta:
-                    chunks.append(delta["content"])
-                elif "content" in msg:
-                    chunks.append(msg["content"])
+                # Reasoning models may omit `content`; fall back to `reasoning_content`
+                # then `reasoning` (raw) if still empty.
+                val = (msg.get("content") or msg.get("reasoning_content")
+                       or msg.get("reasoning") or "")
+                if val:
+                    chunks.append(val)
             return "".join(chunks).strip()
-        # Non-streaming JSON response
-        text = text.split("data: [DONE]")[0].strip()
-        data = json.loads(text)
-        return data["choices"][0]["message"]["content"].strip()
+        # Non-streaming JSON response — use raw_decode to tolerate trailing data
+        # (some upstreams append "data: [DONE]" or newlines after the JSON body).
+        data = json.JSONDecoder().raw_decode(text.lstrip())[0]
+        msg = data["choices"][0]["message"]
+        # Same fallback chain for non-streaming: content → reasoning_content → reasoning
+        content = (msg.get("content") or msg.get("reasoning_content")
+                   or msg.get("reasoning") or "")
+        return content.strip()
     except Exception as e:
         return f"ERR:{e}"
 
@@ -256,8 +269,10 @@ def _call_agent(prompt: str, tier1: bool = False) -> Tuple[str, str]:
     """Call an agent with round-robin model. Returns (model_used, response)."""
     model = _next_model(MODEL_POOL, tier1=tier1)
     result = _call_llm(prompt, model)
-    # If pool model fails, try fallback
-    if result.startswith("ERR") or result.startswith("HTTP"):
+    # Retry with fallback if the pool model failed OR returned empty output.
+    # Some upstreams return HTTP 200 with no content; without this guard the
+    # empty string silently becomes neutral score 5 / auto-approve.
+    if (not result.strip()) or result.startswith(("ERR", "HTTP", "NO_API_KEY")):
         result = _call_llm(prompt, FALLBACK_MODEL)
         model = FALLBACK_MODEL
     return model, result
@@ -279,11 +294,23 @@ def _extract_yes_no(response: str, default: bool = True) -> bool:
     fail-opens to `default` instead of biasing toward reject."""
     import re
     text = str(response or "").strip().upper()
-    m = re.match(r"^\W*\b(YES|NO)\b", text)
-    if not m:
-        print(f"[WARN] ADV_JUDGE_AMBIGUOUS: {text[:80]!r} — fail-open")
+    if not text:
+        print("[WARN] ADV_JUDGE_AMBIGUOUS: '' (empty) — fail-open")
         return default
-    return m.group(1) == "YES"
+    # 1. Explicit verdict marker wins (VERDICT:/ANSWER:/DECISION:/FINAL: YES|NO)
+    m = re.search(r"\b(?:VERDICT|ANSWER|DECISION|FINAL)\s*[:\-]?\s*(YES|NO)\b", text)
+    if m:
+        return m.group(1) == "YES"
+    # 2. Verdict at the very start (clean models)
+    m = re.match(r"^\W*(YES|NO)\b", text)
+    if m:
+        return m.group(1) == "YES"
+    # 3. Reasoning models conclude at the END — take the LAST standalone YES/NO
+    tokens = re.findall(r"\b(YES|NO)\b", text)
+    if tokens:
+        return tokens[-1] == "YES"
+    print(f"[WARN] ADV_JUDGE_AMBIGUOUS: {text[:80]!r} — fail-open")
+    return default
 
 
 # ── Main pipeline ────────────────────────────────────────────────
@@ -483,10 +510,28 @@ def adversarial_check_v2(
         macro=scores.get("macro", 5),
         sent=scores.get("sentiment", 5),
     )
-    judge_resp = _call_llm(judge_prompt, JUDGE_MODEL)
+    import re as _re
+    def _has_verdict(txt: str) -> bool:
+        """True if txt contains a parseable YES/NO (not just reasoning preamble)."""
+        if not txt or not txt.strip():
+            return False
+        if txt.startswith(("ERR", "HTTP", "NO_API_KEY")):
+            return False
+        return bool(_re.search(r"\b(YES|NO)\b", txt.upper()))
+
+    # Judge needs a bigger token budget: reasoning models (cerebras/nemotron via
+    # Free-Tiers) burn ~500 tokens thinking before emitting the verdict. At 512
+    # they leak the reasoning preamble with no YES/NO -> ambiguous fail-open.
+    judge_model_used = JUDGE_MODEL
+    judge_resp = _call_llm(judge_prompt, JUDGE_MODEL, max_tokens=1024)
+    # Judge has no round-robin; retry once with the (non-reasoning) fallback if the
+    # primary gives no parseable verdict — otherwise it fail-opens to APPROVE.
+    if not _has_verdict(judge_resp):
+        judge_model_used = FALLBACK_MODEL
+        judge_resp = _call_llm(judge_prompt, FALLBACK_MODEL, max_tokens=1024)
     trade_ok = _extract_yes_no(judge_resp)
     journal["agents"]["judge"] = {
-        "model": JUDGE_MODEL, "response": judge_resp[:100],
+        "model": judge_model_used, "response": judge_resp[:100],
         "verdict": "YES" if trade_ok else "NO",
     }
 
