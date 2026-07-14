@@ -99,8 +99,11 @@ def _call_llm(prompt: str) -> str:
                     result = "".join(chunks).strip()
                 else:
                     # Gateway may append "data: [DONE]" or newlines after JSON.
-                    text = text.split("data: [DONE]")[0].strip()
-                    data = json.loads(text)
+                    # Use raw_decode to parse the FIRST JSON object only,
+                    # ignoring any trailing garbage (whitespace, "data: [DONE]", etc.).
+                    text = text.lstrip()
+                    decoder = json.JSONDecoder()
+                    data, _ = decoder.raw_decode(text)
                     result = data["choices"][0]["message"]["content"].strip()
                 # Success — promote back to primary if we were on fallback
                 if _fallback_active and model == LLM_MODEL_PRIMARY:
