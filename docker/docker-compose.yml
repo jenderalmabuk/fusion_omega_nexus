@@ -55,6 +55,12 @@ services:
       BINANCE_API_KEY: ${BINANCE_API_KEY}
       BINANCE_SECRET: ${BINANCE_SECRET}
       COLLECTOR_MODE: binance
+      # KLINE_LIMIT=50 (was code-default 500): 500-candle re-fetch per cycle
+      # UPSERTs ~1.2M rows/60s (9x bybit) -> TimescaleDB write amplification ->
+      # collector cycle degraded 178s->530s -> h1/m30 5m data STALE (lag>900s).
+      # 50 candles matches bybit's healthy write footprint (~350 rows/sym).
+      # DB retains full history via accumulative upsert; only fetch depth shrinks.
+      KLINE_LIMIT: "50"
     depends_on:
       timescaledb:
         condition: service_healthy
