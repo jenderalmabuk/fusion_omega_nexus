@@ -61,59 +61,80 @@ def _call_llm(prompt: str) -> str:
         if LLM_MODEL_PRIMARY != LLM_MODEL_FALLBACK
         else [LLM_MODEL_PRIMARY]
     )
-    for model in models_to_try:
-        try:
-            resp = requests.post(
-                f"{LLM_BASE}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {LLM_API_KEY}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": model,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 120,
-                    "temperature": 0.3,
-                },
-                timeout=LLM_TIMEOUT_SEC,
-            )
-            if resp.status_code == 200:
-                text = resp.text.strip()
-                if text.startswith("data:"):
-                    chunks = []
-                    for line in text.splitlines():
-                        line = line.strip()
-                        if not line.startswith("data:"):
-                            continue
-                        payload = line[5:].strip()
-                        if not payload or payload == "[DONE]":
-                            continue
-                        obj = json.loads(payload)
-                        choice = obj.get("choices", [{}])[0]
-                        delta = choice.get("delta") or {}
-                        msg = choice.get("message") or {}
-                        if "content" in delta:
-                            chunks.append(delta["content"])
-                        elif "content" in msg:
-                            chunks.append(msg["content"])
-                    result = "".join(chunks).strip()
-                else:
-                    # Gateway may append "data: [DONE]" or newlines after JSON.
-                    # Use raw_decode to parse the FIRST JSON object only,
-                    # ignoring any trailing garbage (whitespace, "data: [DONE]", etc.).
-                    text = text.lstrip()
-                    decoder = json.JSONDecoder()
-                    data, _ = decoder.raw_decode(text)
-                    result = data["choices"][0]["message"]["content"].strip()
-                # Success — promote back to primary if we were on fallback
-                if _fallback_active and model == LLM_MODEL_PRIMARY:
-                    _fallback_active = False
-                _current_model = model
-                return result
-            # Non-200: try next model
-        except Exception:
-            # Exception: try next model
-            pass
+    # Retry the whole model list once with a short backoff: the Free-Tiers alias
+    # round-robins across free providers and transiently rate-limits under burst
+    # (parallel bull+bear). A single 200-response call is ~0.5s, so one retry is
+    # cheap insurance against a transient failure silently fail-opening to APPROVE.
+    for attempt in range(2):
+        for model in models_to_try:
+            try:
+                resp = requests.post(
+                    f"{LLM_BASE}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {LLM_API_KEY}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": model,
+                        "messages": [{"role": "user", "content": prompt}],
+                        # 512 (not 120): Free-Tiers routes to reasoning models
+                        # (cerebras/nemotron) that spend the budget reasoning and emit
+                        # no content at 120 -> empty -> AMBIGUOUS fail-open (approve-all).
+                        "max_tokens": 512,
+                        "temperature": 0.3,
+                    },
+                    timeout=LLM_TIMEOUT_SEC,
+                )
+                if resp.status_code == 200:
+                    text = resp.text.strip()
+                    if text.startswith("data:"):
+                        chunks = []
+                        for line in text.splitlines():
+                            line = line.strip()
+                            if not line.startswith("data:"):
+                                continue
+                            payload = line[5:].strip()
+                            if not payload or payload == "[DONE]":
+                                continue
+                            obj = json.loads(payload)
+                            choice = obj.get("choices", [{}])[0]
+                            delta = choice.get("delta") or {}
+                            msg = choice.get("message") or {}
+                            # Reasoning models may omit `content`; fall back to
+                            # `reasoning_content` so the response is never silently empty.
+                            if delta.get("content"):
+                                chunks.append(delta["content"])
+                            elif msg.get("content"):
+                                chunks.append(msg["content"])
+                            elif delta.get("reasoning_content"):
+                                chunks.append(delta["reasoning_content"])
+                            elif msg.get("reasoning_content"):
+                                chunks.append(msg["reasoning_content"])
+                        result = "".join(chunks).strip()
+                    else:
+                        # Gateway may append "data: [DONE]" or newlines after JSON.
+                        # Use raw_decode to parse the FIRST JSON object only,
+                        # ignoring any trailing garbage (whitespace, "data: [DONE]").
+                        text = text.lstrip()
+                        decoder = json.JSONDecoder()
+                        data, _ = decoder.raw_decode(text)
+                        msg = data["choices"][0].get("message") or {}
+                        # Non-SSE reasoning models may also omit content.
+                        result = (msg.get("content")
+                                  or msg.get("reasoning_content") or "").strip()
+                    # Only accept a non-empty result; empty -> try next / retry
+                    if result:
+                        if _fallback_active and model == LLM_MODEL_PRIMARY:
+                            _fallback_active = False
+                        _current_model = model
+                        return result
+                # Non-200 or empty: try next model
+            except Exception:
+                # Exception: try next model
+                pass
+        # Whole list failed this pass — short backoff before one retry.
+        if attempt == 0:
+            time.sleep(1.0)
     # All models failed
     return "ERR:all_models_failed"
 
@@ -183,7 +204,18 @@ def _parse_judge(response: str) -> Tuple[bool, str]:
     at the START of the response (exact-prefix matching biased toward reject).
     Returns (ok, verdict) where verdict is YES | NO | AMBIGUOUS."""
     text = str(response or "").strip().upper()
-    m = re.match(r"^\W*\b(YES|NO)\b", text)
-    if not m:
+    if not text:
         return False, "AMBIGUOUS"
-    return m.group(1) == "YES", m.group(1)
+    # 1. Explicit verdict marker wins (VERDICT:/ANSWER:/DECISION:/FINAL: YES|NO)
+    m = re.search(r"\b(?:VERDICT|ANSWER|DECISION|FINAL)\s*[:\-]?\s*(YES|NO)\b", text)
+    if m:
+        return m.group(1) == "YES", m.group(1)
+    # 2. Verdict at the very start (clean models)
+    m = re.match(r"^\W*(YES|NO)\b", text)
+    if m:
+        return m.group(1) == "YES", m.group(1)
+    # 3. Reasoning models conclude at the END — take the LAST standalone YES/NO
+    toks = re.findall(r"\b(YES|NO)\b", text)
+    if toks:
+        return toks[-1] == "YES", toks[-1]
+    return False, "AMBIGUOUS"
