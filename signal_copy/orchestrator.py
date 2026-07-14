@@ -576,7 +576,7 @@ class SignalCopyOrchestrator:
             # Send execution outcome via Telegram trades bot (fallback to parser bot)
             from signal_copy.telegram_transport import send_trades_notification
             from signal_copy.telegram_formatter import build_execution_message
-            execution_msg = build_execution_message(exec_payload)
+            execution_msg = build_execution_message(outcome, pc.result.signal, pc.result)
             try:
                 await send_trades_notification(execution_msg)
             except Exception as exc:
@@ -670,5 +670,5 @@ class SignalCopyOrchestrator:
                         "quadrant": metrics.get("quadrant") or "UNKNOWN",
                     })
                     
-                    execution_msg = build_execution_message(exec_payload)
+                    execution_msg = build_execution_message(outcome, pc.signal, pc)
                     await self._notify_trades_channel(execution_msg)
