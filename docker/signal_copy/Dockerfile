@@ -36,6 +36,8 @@ COPY --chown=nexus:nexus notifications/ ./notifications/
 COPY --chown=nexus:nexus risk/ ./risk/
 COPY --chown=nexus:nexus execution/ ./execution/
 COPY --chown=nexus:nexus utils/ ./utils/
+# Copy gateway package (Execution Gateway client + adapters for live/testnet routing)
+COPY --chown=nexus:nexus gateway/ ./gateway/
 # Copy runtime whales for whale data
 COPY --chown=nexus:nexus runtime/whales/ ./runtime/whales/
 

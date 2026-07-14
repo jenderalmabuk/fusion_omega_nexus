@@ -200,7 +200,7 @@ services:
     environment:
       - FREQTRADE__CONFIG=/freqtrade/configs/config.bybit.paper.runtime.json
       - FREQTRADE__STRATEGY=RevoAdaptiveStrategy
-      - FREQTRADE__TELEGRAM__TOKEN=${SIGNAL_COPY_TRADES_NOTIFY_BOT_TOKEN}
+      - FREQTRADE__TELEGRAM__TOKEN=${REVO_TELEGRAM_BOT_TOKEN}
       - FREQTRADE__TELEGRAM__CHAT_ID=${TELEGRAM_CHAT_ID}
       # MIN_SCORE=7 live (real-flow) ≈ backtest proxy-9 profit zone.
       # Proxy backtest grants oi(+1)+funding(+2)=+3 free; live earns funding*2 only ~25%,
@@ -290,6 +290,9 @@ services:
       SIGNAL_COPY_RISK_PCT: ${SIGNAL_COPY_RISK_PCT:-0.01}
       SIGNAL_COPY_DRY_RUN: ${SIGNAL_COPY_DRY_RUN:-true}
       SIGNAL_COPY_AUTO_EXECUTE: ${SIGNAL_COPY_AUTO_EXECUTE:-false}
+      # Execution Gateway (live/testnet path): reach host gateway on :8787
+      GATEWAY_URL: ${GATEWAY_URL:-http://host.docker.internal:8787/gateway}
+      GATEWAY_TOKEN: ${GATEWAY_TOKEN}
       SIGNAL_COPY_ADVERSARIAL_ENABLED: ${SIGNAL_COPY_ADVERSARIAL_ENABLED:-true}
       SIGNAL_COPY_PARSE_REPORT: ${SIGNAL_COPY_PARSE_REPORT:-false}
       SIGNAL_COPY_NOTIFY_REJECTED: ${SIGNAL_COPY_NOTIFY_REJECTED:-true}

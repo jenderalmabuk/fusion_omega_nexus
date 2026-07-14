@@ -48,8 +48,9 @@ def _build_gateway() -> ExecutionGateway:
     risk_mgr = RiskManager(starting_balance=starting_balance)
 
     # Use environment variables for credentials (same as trader expects)
+    # Support both BINANCE_TESTNET_API_SECRET (legacy) and BINANCE_TESTNET_SECRET (current .env)
     api_key = os.getenv("BINANCE_TESTNET_API_KEY", "")
-    api_secret = os.getenv("BINANCE_TESTNET_API_SECRET", "")
+    api_secret = os.getenv("BINANCE_TESTNET_API_SECRET", "") or os.getenv("BINANCE_TESTNET_SECRET", "")
     if not api_key or not api_secret:
         raise RuntimeError("BINANCE_TESTNET_API_KEY and BINANCE_TESTNET_API_SECRET must be set")
 

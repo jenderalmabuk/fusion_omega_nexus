@@ -385,6 +385,50 @@ class BinanceTestnetTrader:
     def get_router_task(self):
         return self._router_task
 
+    # ─── Lifecycle (Execution Gateway contract) ───────────────────────────
+    # The gateway lifespan calls trader.start()/stop() generically. Wire the
+    # order router (executes queued opens), the reconciliation loop (detects
+    # server-side SL/TP fills -> close notification) and a position monitor
+    # (feeds mark prices to check_positions -> bot-side TP ladder scale-outs
+    # and their close notifications). Without this, submit_open() times out
+    # and no TP/exit notifications are ever sent.
+    async def start(self):
+        await self.start_order_router()
+        self._reconcile_task = asyncio.create_task(self.start_reconciliation_loop(interval_sec=15))
+        self._monitor_task = asyncio.create_task(self._position_monitor_loop(interval_sec=5))
+        logger.info("[BINANCE_TESTNET] start() — router + reconcile + position-monitor loops up")
+
+    async def stop(self):
+        for attr in ("_router_task", "_reconcile_task", "_monitor_task"):
+            t = getattr(self, attr, None)
+            if t is not None and not t.done():
+                t.cancel()
+        logger.info("[BINANCE_TESTNET] stop() — loops cancelled")
+
+    async def _position_monitor_loop(self, interval_sec: int = 5):
+        """Poll mark prices for open positions and drive check_positions so the
+        signal-copy TP ladder scales out (and fires close notifications)."""
+        while True:
+            try:
+                await asyncio.sleep(interval_sec)
+                if not self.positions:
+                    continue
+                price_map: Dict[str, float] = {}
+                for sym in list(self.positions.keys()):
+                    try:
+                        mp = await self._get_mark_price(sym)
+                        if mp and mp > 0:
+                            price_map[sym] = mp
+                    except Exception:
+                        continue
+                if price_map:
+                    await self.check_positions(price_map)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"[POSITION_MONITOR] error: {e}")
+                await asyncio.sleep(2)
+
     async def _order_router_loop(self):
         while True:
             try:
@@ -613,7 +657,6 @@ class BinanceTestnetTrader:
             "notification_sent": False,
         }
         self.positions[symbol] = pos
-        update_bybit_price(symbol, avg_price)
 
         # ─── Multi-target TP ladder (signal-copy) ──────────────────────────
         # If the signal provided multiple targets, scale out an equal slice at
@@ -952,8 +995,6 @@ class BinanceTestnetTrader:
                 pos["high_watermark"] = max(pos.get("high_watermark", price), price)
             else:
                 pos["low_watermark"] = min(pos.get("low_watermark", price), price)
-
-            update_bybit_price(sym, price)
             reason = None
             exit_price = price
 
@@ -1392,8 +1433,6 @@ class BinanceTestnetTrader:
                 sym = pos["symbol"]
                 exchange_positions[sym] = pos
                 mark = float(pos.get("markPrice", 0))
-                if mark > 0:
-                    update_bybit_price(sym, mark)
 
             # Remove local positions that no longer exist on exchange (SL/TP hit)
             for sym in list(self.positions.keys()):
