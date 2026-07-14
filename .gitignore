@@ -15,6 +15,18 @@ __v0_jsx-dev-runtime.ts
 # Credentials — NEVER commit (Telegram session = full account access)
 *.session
 *.session-journal
+# Telethon session bootstrap scripts (embed StringSession / api_id / api_hash)
+auth_session.py
+create_session.py
+test_signal.py
+
+# Scratch / planning notes (local only)
+FIX_PLAN.md
+compact.txt
+journal/
+
+# Backtest result artifacts (runtime output, regenerable)
+backtest_results/
 
 # Paper/live trading databases (runtime state)
 *.sqlite
