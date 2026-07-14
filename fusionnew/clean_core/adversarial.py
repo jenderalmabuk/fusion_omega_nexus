@@ -31,7 +31,8 @@ Setup:
 {symbol} {side} on {tier}
 Entry: {entry} | SL: {sl} | TP: {tp} | RR: 1:{rr}
 Imbalance: {imb_side} | Complete: {t_complete}
-Keep response under 80 words. Be specific about what confirms this trade."""
+Market data (deterministic validation): {data_block}
+Ground your case in the market data above. Keep response under 90 words. Be specific about what confirms this trade."""
 
 BEAR_PROMPT = """You are a bear analyst. Given this trading setup, argue why this is a BAD entry.
 Focus on: potential fakeout, resistance, low conviction, conflicting signals, bad timing.
@@ -39,14 +40,17 @@ Setup:
 {symbol} {side} on {tier}
 Entry: {entry} | SL: {sl} | TP: {tp} | RR: 1:{rr}
 Imbalance: {imb_side} | Complete: {t_complete}
-Keep response under 80 words. Be specific about what invalidates this trade."""
+Market data (deterministic validation): {data_block}
+Ground your case in the market data above. Keep response under 90 words. Be specific about what invalidates this trade."""
 
 JUDGE_PROMPT = """You are a trade judge. Two analysts debated this setup:
 
 BULL: {bull_arg}
 BEAR: {bear_arg}
 
-Decide: should we take this trade? Reply ONLY with YES or NO. No other text."""
+Market data (deterministic validation): {data_block}
+
+Weigh both arguments against the data. Decide: should we take this trade? Reply ONLY with YES or NO. No other text."""
 
 
 def _call_llm(prompt: str) -> str:
@@ -144,6 +148,38 @@ def adversarial_model_status() -> str:
     return f"{_current_model}{' (fallback)' if _fallback_active else ''}"
 
 
+def _num(v: Any, default: float = 0.0) -> float:
+    """Coerce to float, tolerating None/str/bad input."""
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return default
+
+
+def _build_data_block(s: Dict[str, Any]) -> str:
+    """Render the deterministic market data (already computed upstream) into a
+    compact one-line context string for the debate prompts. Only includes keys
+    that are actually present, so the engine.py caller (geometry-only) degrades
+    to 'geometry only' rather than a wall of n/a."""
+    parts = []
+    if "rsi" in s and s.get("rsi") is not None:
+        parts.append(f"RSI(14)={_num(s.get('rsi'), 50):.0f}")
+    if "cvd_zscore" in s and s.get("cvd_zscore") is not None:
+        parts.append(f"CVD z={_num(s.get('cvd_zscore')):.2f}")
+    # OI: accept several key spellings from validation_engine's snapshot.
+    _oi = s.get("oi_change_1h_pct", s.get("oi_change_15m_pct", s.get("oi_delta")))
+    if _oi is not None:
+        parts.append(f"OI Δ={_num(_oi):+.1f}%")
+    _funding = s.get("funding_rate", s.get("funding"))
+    if _funding is not None:
+        parts.append(f"funding={_num(_funding):+.4f}%")
+    if s.get("regime") or s.get("regime_label"):
+        parts.append(f"regime={s.get('regime') or s.get('regime_label')}")
+    if "validation_score" in s and s.get("validation_score") is not None:
+        parts.append(f"confluence={_num(s.get('validation_score')):.0f}/100")
+    return " | ".join(parts) if parts else "geometry only (no market metrics supplied)"
+
+
 def bull_bear_check(symbol: str, s: Dict[str, Any]) -> Tuple[bool, str]:
     """Run bull vs bear debate. Returns (ok, reason)."""
     global _current_model, _fallback_active
@@ -153,16 +189,26 @@ def bull_bear_check(symbol: str, s: Dict[str, Any]) -> Tuple[bool, str]:
 
     tier = s.get("tier", "M30")
     side = s.get("side", "BULL")
-    entry = s.get("entry", 0)
-    sl = s.get("sl", 0)
-    tp = s.get("tp", 0)
+    entry = _num(s.get("entry", 0))
+    # Accept both v1 keys (sl/tp) and orchestrator keys (stop_loss/take_profits).
+    sl = _num(s.get("sl", s.get("stop_loss", 0)))
+    _tp_raw = s.get("tp", s.get("take_profits", 0))
+    if isinstance(_tp_raw, (list, tuple)):
+        _tp_raw = _tp_raw[0] if _tp_raw else 0  # first TP target
+    tp = _num(_tp_raw)
     imb_side = s.get("imb_side", "?")
     t_complete = s.get("t_complete", "?")
+
+    # Deterministic market data already computed by validation_engine — feed it
+    # to the debate so bull/bear/judge reason on real OI/CVD/funding/RSI, not
+    # just geometry. Missing values render as 'n/a' (engine.py caller omits them).
+    data_block = _build_data_block(s)
 
     fmt = dict(
         symbol=symbol, side=side, tier=tier,
         entry=f"{entry:.6g}", sl=f"{sl:.6g}", tp=f"{tp:.6g}",
         rr=2, imb_side=imb_side, t_complete=str(t_complete)[:19],
+        data_block=data_block,
     )
 
     # Bull & bear run in PARALLEL (matches v2) — halves debate wall time.
@@ -190,7 +236,7 @@ def bull_bear_check(symbol: str, s: Dict[str, Any]) -> Tuple[bool, str]:
     if bear_arg.startswith("ERR") or bear_arg.startswith("HTTP"):
         return True, f"llm_err:{bear_arg}"
 
-    judge = _call_llm(JUDGE_PROMPT.format(bull_arg=bull_arg, bear_arg=bear_arg))
+    judge = _call_llm(JUDGE_PROMPT.format(bull_arg=bull_arg, bear_arg=bear_arg, data_block=data_block))
     ok, verdict = _parse_judge(judge)
     if verdict == "AMBIGUOUS":
         # Fail-open on unparsable judge output — never reject on formatting noise.

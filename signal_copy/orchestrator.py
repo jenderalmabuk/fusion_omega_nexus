@@ -450,6 +450,10 @@ class SignalCopyOrchestrator:
                     "rsi": metrics.get("rsi", 50),
                     "regime": metrics.get("regime_label", "UNKNOWN"),
                     "cvd_zscore": metrics.get("cvd_zscore", 0),
+                    # Feed the deterministic OI/funding the validation engine already
+                    # computed, so the debate reasons on real flow (not just geometry).
+                    "oi_change_1h_pct": metrics.get("oi_change_1h_pct", metrics.get("oi_change_15m_pct")),
+                    "funding_rate": metrics.get("funding_rate"),
                     "validation_score": result.score,
                 }
 
