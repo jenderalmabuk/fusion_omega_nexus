@@ -228,6 +228,7 @@ services:
       # held (+205). Blocks both EVAA entries (-9.1%, -11.2%) that motivated it.
       - REVO_ENTRY_DISCOUNT_MAX_PCT=9
       - REVO_MIN_QVOL_5M=200000
+      - REVO_LIQ_MODE=med48
       - REVO_ER_CHOP_MAX=0.15
       - REVO_ATR_PCT_MAX=4.0
       - REVO_FLOW_MAX_AGE_SEC=660
@@ -332,6 +333,69 @@ services:
       - ../runtime/logs:/logs
       - ../runtime/whales:/app/runtime/whales
       - ../signal_copy_session.session:/app/signal_copy_session.session
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      fastapi:
+        condition: service_started
+    restart: unless-stopped
+    profiles: ["bots"]
+    networks:
+      - nexus_net
+      - docker_default
+
+  # ============================================================
+  # FUSIONNEW forward-test bots — BEST STRATEGY (btc-regime+cvd+stoch70)
+  # Isolated: own token, own STATE_DIR (runtime/fusionnew), host config mounted RO.
+  # Zero-risk to live h1/m30 (they read baked config; these read mounted config).
+  # ============================================================
+  fusionnew_h1:
+    image: nexus-bot:latest
+    container_name: nexus_fusionnew_h1
+    environment:
+      BOT_NAME: h1_fusionnew
+      PYTHONUNBUFFERED: "1"
+      NEXUS_API_URL: http://fastapi:8000
+      STATE_DIR: /state
+      HEARTBEAT_DIR: /state
+      TELEGRAM_BOT_TOKEN: ${FUSIONNEW_TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      WHALE_RUNTIME_DIR: /app/runtime/whales
+      LOG_DIR: /tmp
+    volumes:
+      - ../runtime/fusionnew:/state
+      - ../runtime/logs:/logs
+      - ../runtime/whales:/app/runtime/whales
+      - ../bots/config.yaml:/app/bots/config.yaml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      fastapi:
+        condition: service_started
+    restart: unless-stopped
+    profiles: ["bots"]
+    networks:
+      - nexus_net
+      - docker_default
+
+  fusionnew_m30:
+    image: nexus-bot:latest
+    container_name: nexus_fusionnew_m30
+    environment:
+      BOT_NAME: m30_fusionnew
+      PYTHONUNBUFFERED: "1"
+      NEXUS_API_URL: http://fastapi:8000
+      STATE_DIR: /state
+      HEARTBEAT_DIR: /state
+      TELEGRAM_BOT_TOKEN: ${FUSIONNEW_TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      WHALE_RUNTIME_DIR: /app/runtime/whales
+      LOG_DIR: /tmp
+    volumes:
+      - ../runtime/fusionnew:/state
+      - ../runtime/logs:/logs
+      - ../runtime/whales:/app/runtime/whales
+      - ../bots/config.yaml:/app/bots/config.yaml:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

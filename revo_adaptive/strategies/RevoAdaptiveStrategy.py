@@ -88,6 +88,8 @@ class RevoAdaptiveStrategy(IStrategy):
             "min_qvol": float(os.environ.get("REVO_MIN_QVOL_5M", os.environ.get("SIG_MIN_QVOL_5M", "200000"))),
             "er_chop": float(os.environ.get("REVO_ER_CHOP_MAX", "0.15")),
             "atr_max": float(os.environ.get("REVO_ATR_PCT_MAX", "4.0")),
+            # liq_mode: "instant" (current candle qvol) or "med48" (rolling 48-candle median)
+            "liq_mode": os.environ.get("REVO_LIQ_MODE", "instant"),
         }
 
     @staticmethod
@@ -127,8 +129,9 @@ class RevoAdaptiveStrategy(IStrategy):
         df["atr_pct"] = (df["atr"] / close * 100).fillna(0)
         df["er48"] = self._er(close, 48)
 
-        # Proxy flow: momentum x volume impulse + qvol.
         df["qvol_5m"] = (close * volume).fillna(0)
+        # Rolling median qvol over 48 candles (4h) — checks PAIR liquidity, not candle
+        df["qvol_5m_med48"] = df["qvol_5m"].rolling(48, min_periods=12).median().fillna(0)
         vol_ma = volume.rolling(48).mean().replace(0, np.nan)
         df["vol_z_proxy"] = (volume / vol_ma).replace([np.inf, -np.inf], np.nan).fillna(1.0)
         df["cvd_proxy"] = ((close - close.shift(3)) / close.shift(3).replace(0, np.nan) * df["vol_z_proxy"]).fillna(0)
@@ -157,7 +160,7 @@ class RevoAdaptiveStrategy(IStrategy):
         # below EMA55. Deep dislocation = crash, not a healthy pullback (see _cfg note).
         df["not_falling_knife"] = (df["dist_ema55_pct"] >= -c["discount_max"]).astype(int)
         df["rsi_ok"] = (df["rsi"] <= c["rsi_max"]).astype(int)
-        df["liq_ok"] = (df["qvol_5m"] >= c["min_qvol"]).astype(int)
+        df["liq_ok"] = (df["qvol_5m_med48"] >= c["min_qvol"]).astype(int) if c.get("liq_mode") == "med48" else (df["qvol_5m"] >= c["min_qvol"]).astype(int)
         df["vol_ok"] = np.where(df["real_flow_available"] == 1, (df["real_vol_z"] >= -0.5).astype(int), (df["vol_z_proxy"] >= 0.8).astype(int))
 
         # FIX: cvd_ok threshold relaxed from >0 to >-0.5 (don't require net buying, just not aggressive selling)
