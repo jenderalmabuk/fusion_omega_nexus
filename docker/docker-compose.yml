@@ -208,10 +208,13 @@ services:
       - FREQTRADE__STRATEGY=RevoAdaptiveStrategy
       - FREQTRADE__TELEGRAM__TOKEN=${REVO_TELEGRAM_BOT_TOKEN}
       - FREQTRADE__TELEGRAM__CHAT_ID=${TELEGRAM_CHAT_ID}
-      # MIN_SCORE=7 live (real-flow) ≈ backtest proxy-9 profit zone.
-      # Proxy backtest grants oi(+1)+funding(+2)=+3 free; live earns funding*2 only ~25%,
-      # so live is ~2pts lower for same setup. disc/rsi are price-gates validated by backtest.
-      - REVO_ENTRY_MIN_SCORE=7
+      # MIN_SCORE=9: empirically validated (2026-07-14 sweep, 40d/93pair 20260601-20260710).
+      # STAGE-1 sweep: MS=9 is the profit inflection (PF 0.977@8 -> 1.257@9, net -27 -> +158,
+      # DD 14.8% -> 7.4%). MS<=8 all net-negative. Forward-live 53 trades confirmed: score
+      # 6/7 band = 6-14% WR bleeding (-22.86), score 8+ = breakeven-positive.
+      # OLD "live7≈bt9 (proxy +3)" assumption DISPROVEN: backtest-7 itself loses -175.
+      # STAGE-2 grid @ MS=9 confirmed disc=3.5/rsi=40 is best risk-adj (net/DD 31.4, PF 1.495, DD 5.5%).
+      - REVO_ENTRY_MIN_SCORE=9
       - REVO_ENTRY_DISCOUNT_MIN_PCT=3.5
       - REVO_ENTRY_RSI_MAX=40
       # Falling-knife floor: reject entries deeper than 9% below EMA55 (crash, not
