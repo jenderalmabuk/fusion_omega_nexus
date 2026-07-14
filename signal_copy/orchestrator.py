@@ -533,9 +533,19 @@ class SignalCopyOrchestrator:
                 ConfirmState.APPROVED,
                 note="pending_limit",
             )
-            return (f"⏳ Limit setup {sig.symbol} {sig.side.value} @ {entry:g}. "
-                    f"Harga sekarang {price:g} — menunggu harga menyentuh limit. "
-                    f"Akan dieksekusi otomatis saat tercapai (batas 24 jam).")
+            pending_msg = (
+                f"⏳ Limit setup {sig.symbol} {sig.side.value} @ {entry:g}. "
+                f"Harga sekarang {price:g} — menunggu harga menyentuh limit. "
+                f"Akan dieksekusi otomatis saat tercapai (batas 24 jam)."
+            )
+            # Entry notification for the pending-limit path: the orchestrator
+            # discards the returned string (auto_execute path), so send it here
+            # or the user gets no entry confirmation until the limit fills.
+            try:
+                await self._notify_trades_channel(pending_msg)
+            except Exception as exc:
+                logger.error("❌ Pending-limit notify failed: %s", exc)
+            return pending_msg
 
         outcome = await self.executor.execute(
             pc.result,
