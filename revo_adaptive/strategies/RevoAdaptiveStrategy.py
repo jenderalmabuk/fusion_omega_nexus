@@ -42,6 +42,35 @@ class RevoAdaptiveStrategy(IStrategy):
     process_only_new_candles = True
     _flow_cache = None
     _flow_cache_mtime = None
+    _blacklist_cache = None
+    _blacklist_cache_mtime = None
+
+    def _load_blacklist(self) -> dict:
+        path = Path(os.environ.get("REVO_PAIR_BLACKLIST_PATH", "/freqtrade/user_data/local/revo_pair_blacklist.json"))
+        try:
+            mtime = path.stat().st_mtime
+            if self._blacklist_cache is None or self._blacklist_cache_mtime != mtime:
+                self._blacklist_cache = json.loads(path.read_text())
+                self._blacklist_cache_mtime = mtime
+        except Exception:
+            self._blacklist_cache = {}
+            self._blacklist_cache_mtime = None
+        return self._blacklist_cache or {}
+
+    def _pair_blacklisted(self, pair: str) -> bool:
+        rec = self._load_blacklist().get(pair)
+        if not rec:
+            return False
+        if rec.get("mode") == "permanent":
+            return True
+        blocked_until = rec.get("blocked_until")
+        if not blocked_until:
+            return True
+        try:
+            until = datetime.fromisoformat(str(blocked_until).replace("Z", "+00:00")).astimezone(timezone.utc)
+            return datetime.now(timezone.utc) < until
+        except Exception:
+            return True
 
     def _load_flow_context(self) -> dict:
         path = os.environ.get(
@@ -90,6 +119,8 @@ class RevoAdaptiveStrategy(IStrategy):
             "atr_max": float(os.environ.get("REVO_ATR_PCT_MAX", "4.0")),
             # liq_mode: "instant" (current candle qvol) or "med48" (rolling 48-candle median)
             "liq_mode": os.environ.get("REVO_LIQ_MODE", "instant"),
+            "blacklist_bypass_score": float(os.environ.get("REVO_BLACKLIST_BYPASS_SCORE", "10")),
+            "blacklist_bypass_rsi": float(os.environ.get("REVO_BLACKLIST_BYPASS_RSI", "30")),
         }
 
     @staticmethod
@@ -251,6 +282,15 @@ class RevoAdaptiveStrategy(IStrategy):
             (dataframe["real_flow_available"] == 0) |  # no flow data = allow
             (dataframe["real_flow_long"] == 1)         # flow allows LONG
         )
+        blacklisted = self._pair_blacklisted(metadata.get("pair", ""))
+        blacklist_bypass = (
+            (dataframe["entry_score"] >= c["blacklist_bypass_score"]) &
+            (dataframe["rsi"] <= c["blacklist_bypass_rsi"]) &
+            (dataframe["liq_ok"] == 1) &
+            (dataframe["funding_ok"] == 1)
+        )
+        blacklist_guard = blacklist_bypass if blacklisted else True
+
         # Quality gates: liquidity + score + RSI + not explosive ATR + flow
         # Discount & trend are ADDITIVE in score, not hard requirements
         cond = (
@@ -259,7 +299,8 @@ class RevoAdaptiveStrategy(IStrategy):
             (dataframe["rsi_ok"] == 1) &
             (dataframe["atr_explosive"] == 0) &
             (dataframe["not_falling_knife"] == 1) &
-            flow_guard
+            flow_guard &
+            blacklist_guard
         )
 
         # --- NEAR-MISS LOGGING ---
