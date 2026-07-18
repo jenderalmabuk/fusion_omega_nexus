@@ -725,10 +725,10 @@ class Engine:
                     try:
                         ok, reason, journal = adversarial_check_v2(symbol, s, context)
                     except Exception as adv_exc:
-                        # LLM technical error: fail-open, do NOT consume the signal
-                        print(f"[WARN] ADV_ERROR {symbol}: {adv_exc} — fail-open")
+                        # LLM technical error: fail-CLOSED (was fail-open), do NOT consume the signal
+                        print(f"[WARN] ADV_ERROR {symbol}: {adv_exc} — fail-closed")
                         self._flog("ADV_ERROR", dict(symbol=symbol, error=str(adv_exc)))
-                        ok, reason, journal = True, f"ADV_ERROR (fail-open): {adv_exc}", {}
+                        ok, reason, journal = False, f"ADV_ERROR (fail-closed): {adv_exc}", {}
                     self._adv_spent_sec += time.time() - _adv_t0
                 print(f"🤖 [ADVv2] {symbol}: {'APPROVED' if ok else 'REJECTED'} — {reason}")
                 if not ok:
@@ -751,9 +751,9 @@ class Engine:
                     try:
                         ok, reason = bull_bear_check(symbol, s)
                     except Exception as adv_exc:
-                        print(f"[WARN] ADV_ERROR {symbol}: {adv_exc} — fail-open")
+                        print(f"[WARN] ADV_ERROR {symbol}: {adv_exc} — fail-closed")
                         self._flog("ADV_ERROR", dict(symbol=symbol, error=str(adv_exc)))
-                        ok, reason = True, f"ADV_ERROR (fail-open): {adv_exc}"
+                        ok, reason = False, f"ADV_ERROR (fail-closed): {adv_exc}"
                     self._adv_spent_sec += time.time() - _adv_t0
                 print(f"🤖 [ADV] {symbol}: {'BULL_WINS' if ok else 'BEAR_WINS'} — {reason}")
                 # Log EVERY decision (approve/reject/error) to the forward log (3.3)
@@ -1079,7 +1079,6 @@ class Engine:
             last_scan = self._symbol_last_scan.get(sym, 0)
             now = time.time()
             last_age_sec = now - last_scan
-            self._stats["min_age"] = min(self._stats["min_age"], nearest)
             if sym in active_symbols:
                 hot_set.append(sym)  # PENDING/OPEN is always HOT
             elif nearest <= 20:  # <= 20 bars = HOT (real-time)

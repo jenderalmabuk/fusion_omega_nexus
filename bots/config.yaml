@@ -46,3 +46,53 @@ h1_imbalance:
   cvd: false
   btc_regime: false
   symbols_file: universe.txt
+
+# ============================================================
+# FUSIONNEW forward-test bots — BEST STRATEGY (validated sweep 2026-07-14)
+# btc_regime+cvd ON (fix "short saat BTC up") + stoch_max 70 (freq recover, PF~3.9).
+# Isolated: separate STATE_DIR (runtime/fusionnew) + unique tag. dry/paper.
+# adversarial OFF = faithful to backtest (filter stack tested without LLM gate).
+# ============================================================
+h1_fusionnew:
+  tier: H1
+  direction: both
+  tag: _fusionnew_h1
+  ema_dist: 0
+  min_turn: 500000
+  stoch_max: 70
+  equity: 1000
+  risk_pct: 0.01
+  max_positions: 6
+  leverage: 5
+  daily_loss_pct: 0.05
+  max_dd_pct: 0.20
+  interval_sec: 600
+  warm_batch: 40
+  cold_batch: 347
+  soft_pending_cap: 20
+  adversarial: false
+  cvd: true
+  btc_regime: true
+  symbols_file: universe.txt
+
+m30_fusionnew:
+  tier: M30
+  direction: both
+  tag: _fusionnew_m30
+  ema_dist: 0
+  min_turn: 500000
+  stoch_max: 70
+  equity: 1000
+  risk_pct: 0.01
+  max_positions: 6
+  leverage: 5
+  daily_loss_pct: 0.05
+  max_dd_pct: 0.20
+  interval_sec: 300
+  warm_batch: 40
+  cold_batch: 347
+  soft_pending_cap: 20
+  adversarial: false
+  cvd: true
+  btc_regime: true
+  symbols_file: universe.txt

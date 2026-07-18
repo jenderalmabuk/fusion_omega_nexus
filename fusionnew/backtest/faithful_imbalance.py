@@ -412,7 +412,8 @@ def _simulate_side(symbol: str, tier: str, days: int, side: str,
                    zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: pd.DataFrame,
                    rr: float = RR, use_cvd: bool = False, use_funding: bool = False,
                    btc_trend: "pd.DataFrame | None" = None, use_discount: bool = False,
-                   exit_mode: str = "fixed", ema_dist: float = 0.0, min_turn: float = 0.0) -> List[Dict[str, Any]]:
+                   exit_mode: str = "fixed", ema_dist: float = 0.0, min_turn: float = 0.0,
+                   stoch_max: float = 0.0) -> List[Dict[str, Any]]:
     cfg = TIERS[tier]
     setups = generate_setups(zone_df, ltf, trend, side, rr)
     setups = _filter_flow(symbol, days, side, setups, ltf, use_cvd, use_funding)
@@ -422,6 +423,8 @@ def _simulate_side(symbol: str, tier: str, days: int, side: str,
         setups = [s for s in setups if _trend_ok(btc_trend, s["t_complete"], side)]
     setups = _filter_ema_dist(setups, zone_df, ema_dist)
     setups = _filter_liquidity(setups, ltf, min_turn)
+    if stoch_max > 0:   # faithful to live engine: avoid overbought/oversold entries
+        setups = _filter_stochastic(setups, ltf, side, stoch_max)
     if not setups:
         return []
     lt = ltf["open_time"].to_numpy()
@@ -451,7 +454,8 @@ def _simulate_side(symbol: str, tier: str, days: int, side: str,
 def _simulate_symbol(symbol: str, tier: str, days: int, direction: str, rr: float = RR,
                      use_cvd: bool = False, use_funding: bool = False,
                      use_btc: bool = False, use_discount: bool = False,
-                     exit_mode: str = "fixed", ema_dist: float = 0.0, min_turn: float = 0.0) -> List[Dict[str, Any]]:
+                     exit_mode: str = "fixed", ema_dist: float = 0.0, min_turn: float = 0.0,
+                     stoch_max: float = 0.0) -> List[Dict[str, Any]]:
     cfg = TIERS[tier]
     zone_df = fetch_klines(symbol, cfg["zone"], days)
     ltf = fetch_klines(symbol, cfg["ltf"], days)
@@ -461,9 +465,9 @@ def _simulate_symbol(symbol: str, tier: str, days: int, direction: str, rr: floa
     btc_trend = _trend(fetch_klines("BTCUSDT", cfg["zone"], days)) if use_btc else None
     out: List[Dict[str, Any]] = []
     if direction in ("both", "long"):
-        out += _simulate_side(symbol, tier, days, "BULL", zone_df, ltf, trend, rr, use_cvd, use_funding, btc_trend, use_discount, exit_mode, ema_dist, min_turn)
+        out += _simulate_side(symbol, tier, days, "BULL", zone_df, ltf, trend, rr, use_cvd, use_funding, btc_trend, use_discount, exit_mode, ema_dist, min_turn, stoch_max)
     if direction in ("both", "short"):
-        out += _simulate_side(symbol, tier, days, "BEAR", zone_df, ltf, trend, rr, use_cvd, use_funding, btc_trend, use_discount, exit_mode, ema_dist, min_turn)
+        out += _simulate_side(symbol, tier, days, "BEAR", zone_df, ltf, trend, rr, use_cvd, use_funding, btc_trend, use_discount, exit_mode, ema_dist, min_turn, stoch_max)
     return out
 
 

@@ -27,6 +27,9 @@ journal/
 
 # Backtest result artifacts (runtime output, regenerable)
 backtest_results/
+# Backtest kline cache (market data, regenerable via prefetch_data.py)
+fusionnew/backtest/cache/
+fusionnew/backtest/sweep_ablation_result.json
 
 # Paper/live trading databases (runtime state)
 *.sqlite
