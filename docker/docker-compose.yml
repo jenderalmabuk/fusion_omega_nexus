@@ -333,7 +333,13 @@ services:
       - ../runtime/whales/exchange_labels.json:/app/runtime/whales/exchange_labels.json
     restart: unless-stopped
     command: ["python", "-u", "bots/whalescanner.py"]
-    profiles: ["bots"]
+    # DISABLED 2026-07-20: superseded by HOST process (bots/whalescanner.py run
+    # manually on host, 7d uptime, actively producing). Container was OOM-killed
+    # (exit 137) 10d ago. Moved OFF the "bots" profile so `--profile bots up` will
+    # NOT auto-start it and clash with the running host process.
+    # To use the container version instead: stop the host process first, then run
+    #   docker compose --profile whalescanner-container up -d whalescanner
+    profiles: ["whalescanner-container"]
     networks:
       - docker_default
 
