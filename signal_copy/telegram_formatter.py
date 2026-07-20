@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import html
 from typing import Any, Dict
 
 from signal_copy.signal_copy_config import DRY_RUN
+
+_RAW_CAP = 700  # keep total report under Telegram's 4096 limit
 
 
 def format_price(price: float) -> str:
@@ -406,6 +409,16 @@ def build_parser_report(
     if calib and verdict == "VALID" and not adversarial_verdict:
         lines.append("")
         lines.append("✅ <b>VALID — kalibrasi mode, tidak ada eksekusi</b>")
+
+    # Section 6: original signal text (expandable, HTML-safe) for quick debug
+    raw = (getattr(sig, "raw_text", "") or "").strip()
+    if raw:
+        truncated = len(raw) > _RAW_CAP
+        safe = html.escape(raw[:_RAW_CAP])
+        if truncated:
+            safe += "\n…(dipotong)"
+        lines.append("")
+        lines.append(f"📄 <b>SINYAL ASLI</b>\n<blockquote expandable>{safe}</blockquote>")
 
     # Footer
     lines.append("━" * 20)
