@@ -268,6 +268,51 @@ services:
       - docker_default
 
   # ============================================================
+  # Revo Auditable Core — 2nd paper bot, ISOLATED (does NOT touch revo_adaptive)
+  # Small auditable decision core (auditable_core/core.py). Separate DB, port,
+  # logfile; telegram OFF. Backtest Jun1-Jul10 @50k/med48/MS9: +4.87% PF 1.06
+  # (vs RevoAdaptive med48 +3.88%). Deployed 2026-07-20 for live paper evidence.
+  # ============================================================
+  revo_auditable_core:
+    image: freqtradeorg/freqtrade:stable
+    container_name: revo_auditable_core_bybit_paper
+    user: ftuser
+    environment:
+      - FREQTRADE__CONFIG=/freqtrade/user_data/configs/config.bybit.auditable.paper.json
+      - FREQTRADE__STRATEGY=RevoAuditableCoreStrategy
+      - REVO_ENTRY_MIN_SCORE=9
+      - REVO_ENTRY_DISCOUNT_MIN_PCT=3.5
+      - REVO_ENTRY_RSI_MAX=40
+      - REVO_ENTRY_DISCOUNT_MAX_PCT=9
+      - REVO_MIN_QVOL_5M=50000
+      - REVO_LIQ_MODE=med48
+      - REVO_PAIR_BLACKLIST_PATH=/freqtrade/user_data/local/revo_pair_blacklist.json
+      - REVO_ER_CHOP_MAX=0.15
+      - REVO_ATR_PCT_MAX=4.0
+      - REVO_FLOW_MAX_AGE_SEC=660
+      - REVO_FLOW_CONTEXT_PATH=/freqtrade/user_data/local/revo_alpha/runtime/bybit/revo_flow_context.json
+      - REVO_ENTRY_AUDIT_PATH=/freqtrade/user_data/local/revo_auditable_entry_audit.jsonl
+    volumes:
+      - ../revo_adaptive/strategies:/freqtrade/user_data/strategies
+      - ../revo_adaptive/configs:/freqtrade/user_data/configs
+      - ../revo_adaptive/scripts:/freqtrade/user_data/scripts
+      - ../revo_adaptive/revo_core:/freqtrade/user_data/revo_core
+      - ../revo_adaptive/user_data:/freqtrade/user_data
+      - ../runtime/revo:/freqtrade/user_data/local/revo_alpha/runtime/bybit
+      - ../runtime/revo:/freqtrade/user_data/revo_alpha/runtime/bybit
+    ports:
+      - "127.0.0.1:8082:8080"
+    restart: unless-stopped
+    command: ["trade", "--config", "/freqtrade/user_data/configs/config.bybit.auditable.paper.json", "--strategy", "RevoAuditableCoreStrategy"]
+    depends_on:
+      fastapi:
+        condition: service_started
+    profiles: ["bots"]
+    networks:
+      - nexus_net
+      - docker_default
+
+  # ============================================================
   # Whale Scanner — on-chain large transfer monitor (async 24/7)
   # ============================================================
   whalescanner:
