@@ -373,12 +373,21 @@ class SignalCopyOrchestrator:
         if sig is None and image and getattr(scfg, "VISION_ENABLED", False):
             # Chart-only / image-only signal: no parseable text, so read the
             # chart with vision and build the signal from what it extracts.
-            sig = await self._signal_from_vision(
-                image, text=text, source=source,
-                source_name=source_name, source_chat_id=source_chat_id,
-            )
-            if sig is not None:
-                logger.info("[SIGNAL_COPY] vision-only signal built: %s", sig.summary())
+            # BUT skip the vision path entirely when the caption is
+            # marketing/promo spam (guaranteed profits, join-now, invite links).
+            from .classifier import looks_like_promo
+            if not looks_like_promo(text or ""):
+                sig = await self._signal_from_vision(
+                    image, text=text, source=source,
+                    source_name=source_name, source_chat_id=source_chat_id,
+                )
+                if sig is not None:
+                    logger.info("[SIGNAL_COPY] vision-only signal built: %s", sig.summary())
+            else:
+                logger.info(
+                    "[SIGNAL_COPY] promo/recruitment caption — vision path blocked: %s",
+                    (text or "").replace("\n", "  ")[:120],
+                )
         if sig is None:
             # Not a structured trade call — route by classification.
             if cls.type == MessageType.WHALE_ACCUM:

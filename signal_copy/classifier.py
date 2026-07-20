@@ -56,6 +56,29 @@ _NOISE_RE = re.compile(
 )
 _QUOTE_PREVIEW_RE = re.compile(r'\.\.\.\s*["”]|…\s*["”]')
 
+# Marketing / promo / recruitment posts (guaranteed profits, join-now funnels,
+# "N spots left", invite links). These often ship with a mock chart image, so
+# without this gate the vision path mistakes the picture for a real setup.
+_PROMO_RE = re.compile(
+    r"\b(guaranteed|guarantee)\b|"
+    r"\bprofits?\s+daily\b|\bdaily\s+profits?\b|"
+    r"\bjoin\s+(now|us|here|today|vip)\b|"
+    r"\blimited\s+(time|spots?|seats?)\b|"
+    r"\bhurry\b|"
+    r"\bonly\s+\d+\s+(spots?|people|seats?|places?)\b|"
+    r"\b\d+\s+spots?\b|"
+    r"\bpremium\s+signals?\b|\bprivate\s+signals?\b|"
+    r"t\.me/\+",
+    re.IGNORECASE,
+)
+
+
+def looks_like_promo(text: str) -> bool:
+    """True if the message reads like a marketing/recruitment post rather than
+    a trade call. Used to gate the vision path so mock-chart promos don't get
+    turned into fake signals."""
+    return bool(text and _PROMO_RE.search(text))
+
 # Structured trade-call cues (used as a hint; parse_signal is authoritative).
 _SIDE_RE = re.compile(r"\b(long|short|buy|sell)\b", re.IGNORECASE)
 _PAIR_RE = re.compile(r"\$[A-Za-z]{2,15}\b(?<!\d)(?!\d+[MKBT]\b)|\b[A-Z0-9]{2,15}\s*[\/\-]?\s*(?:USDT|USDC|BUSD|USD)\b")
