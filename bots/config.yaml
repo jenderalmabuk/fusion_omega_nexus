@@ -6,9 +6,9 @@ m30_imbalance:
   tier: M30
   direction: both
   tag: _medium
-  ema_dist: 0
-  min_turn: 500000
-  stoch_max: 50
+  ema_dist: 1.0
+  min_turn: 1000000
+  stoch_max: 70
   equity: 1000
   risk_pct: 0.01
   max_positions: 6
@@ -29,9 +29,9 @@ h1_imbalance:
   tier: H1
   direction: both
   tag: _h1_adversarial
-  ema_dist: 0
-  min_turn: 500000
-  stoch_max: 50
+  ema_dist: 1.0
+  min_turn: 1000000
+  stoch_max: 70
   equity: 1000
   risk_pct: 0.01
   max_positions: 6
@@ -57,8 +57,8 @@ h1_fusionnew:
   tier: H1
   direction: both
   tag: _fusionnew_h1
-  ema_dist: 0
-  min_turn: 500000
+  ema_dist: 1.0
+  min_turn: 1000000
   stoch_max: 70
   equity: 1000
   risk_pct: 0.01
@@ -79,8 +79,8 @@ m30_fusionnew:
   tier: M30
   direction: both
   tag: _fusionnew_m30
-  ema_dist: 0
-  min_turn: 500000
+  ema_dist: 1.0
+  min_turn: 1000000
   stoch_max: 70
   equity: 1000
   risk_pct: 0.01
