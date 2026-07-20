@@ -50,7 +50,12 @@ BEAR: {bear_arg}
 
 Market data (deterministic validation): {data_block}
 
-Weigh both arguments against the data. Decide: should we take this trade? Reply ONLY with YES or NO. No other text."""
+Weigh both arguments against the data. Decide: should we take this trade?
+Reply in exactly this format:
+YES - one short reason
+or
+NO - one short reason
+Keep the reason specific to the market data."""
 
 
 def _call_llm(prompt: str) -> str:
@@ -162,19 +167,39 @@ def _build_data_block(s: Dict[str, Any]) -> str:
     that are actually present, so the engine.py caller (geometry-only) degrades
     to 'geometry only' rather than a wall of n/a."""
     parts = []
+    if "price" in s and s.get("price") is not None:
+        parts.append(f"price={_num(s.get('price')):.6g}")
+    if "timeframe" in s and s.get("timeframe"):
+        parts.append(f"tf={s.get('timeframe')}")
+    if "leverage" in s and s.get("leverage") is not None:
+        parts.append(f"lev={_num(s.get('leverage')):.0f}x")
     if "rsi" in s and s.get("rsi") is not None:
         parts.append(f"RSI(14)={_num(s.get('rsi'), 50):.0f}")
     if "cvd_zscore" in s and s.get("cvd_zscore") is not None:
         parts.append(f"CVD z={_num(s.get('cvd_zscore')):.2f}")
-    # OI: accept several key spellings from validation_engine's snapshot.
-    _oi = s.get("oi_change_1h_pct", s.get("oi_change_15m_pct", s.get("oi_delta")))
-    if _oi is not None:
-        parts.append(f"OI Δ={_num(_oi):+.1f}%")
+    oi5 = s.get("oi_change_5m_pct")
+    oi15 = s.get("oi_change_15m_pct")
+    oi1h = s.get("oi_change_1h_pct", s.get("oi_delta"))
+    if oi5 is not None or oi15 is not None or oi1h is not None:
+        parts.append(
+            f"OI 5m/15m/1h={_num(oi5):+.2f}%/"
+            f"{_num(oi15):+.2f}%/{_num(oi1h):+.2f}%"
+        )
     _funding = s.get("funding_rate", s.get("funding"))
     if _funding is not None:
         parts.append(f"funding={_num(_funding):+.4f}%")
+    if s.get("flow_direction"):
+        parts.append(f"flow={s.get('flow_direction')}")
+    if s.get("qvol_5m") is not None:
+        parts.append(f"qVol5m=${_num(s.get('qvol_5m')):.0f}")
+    if s.get("data_quality"):
+        parts.append(f"data={s.get('data_quality')}")
     if s.get("regime") or s.get("regime_label"):
         parts.append(f"regime={s.get('regime') or s.get('regime_label')}")
+    if "mtf_score" in s and s.get("mtf_score") is not None:
+        parts.append(f"MTF={_num(s.get('mtf_score')):.0f}/100")
+    if "tv_score" in s and s.get("tv_score") is not None:
+        parts.append(f"TV={_num(s.get('tv_score')):.0f}/100")
     if "validation_score" in s and s.get("validation_score") is not None:
         parts.append(f"confluence={_num(s.get('validation_score')):.0f}/100")
     return " | ".join(parts) if parts else "geometry only (no market metrics supplied)"
@@ -242,7 +267,7 @@ def bull_bear_check(symbol: str, s: Dict[str, Any]) -> Tuple[bool, str]:
         # Fail-open on unparsable judge output — never reject on formatting noise.
         print(f"[WARN] ADV_JUDGE_AMBIGUOUS {symbol}: {judge[:80]!r} — fail-open")
         return True, f"ADV_JUDGE_AMBIGUOUS (fail-open): {judge[:80]}"
-    return ok, judge[:100]
+    return ok, judge[:300]
 
 
 def _parse_judge(response: str) -> Tuple[bool, str]:

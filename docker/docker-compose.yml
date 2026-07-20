@@ -190,7 +190,7 @@ services:
     environment:
       NEXUS_API_URL: http://fastapi:8000
       REVO_RUNTIME_DIR: /runtime/revo
-      REVO_TOP_N: "300"
+      REVO_TOP_N: "347"
       REVO_MIN_VOLUME: "600000"
       REVO_SCANNER_INTERVAL: "300"
     volumes:
@@ -227,8 +227,11 @@ services:
       # pullback). Backtest MS=9 (=live pop): PF 1.487->1.561, DD 5.85->5.52%, net
       # held (+205). Blocks both EVAA entries (-9.1%, -11.2%) that motivated it.
       - REVO_ENTRY_DISCOUNT_MAX_PCT=9
-      - REVO_MIN_QVOL_5M=200000
-      - REVO_LIQ_MODE=med48
+      # Bybit median qvol verified 2026-07-18: mid-cap altcoins ~15k-176k
+      # vs Binance ~167k-986k (esports 4x, 1000xec 21x). 200k calibrated to
+      # Binance backtest — too strict for Bybit universe. Lowered to 50k.
+      - REVO_MIN_QVOL_5M=50000
+      - REVO_LIQ_MODE=instant
       - REVO_PAIR_BLACKLIST_PATH=/freqtrade/user_data/local/revo_pair_blacklist.json
       - REVO_BLACKLIST_LOSS_STREAK=3
       - REVO_BLACKLIST_TOTAL_LOSSES=4
@@ -295,15 +298,16 @@ services:
     environment:
       PYTHONUNBUFFERED: "1"
       NEXUS_API_URL: http://fastapi:8000
-      # Non-root user can't write /app/logs — redirect logger to writable /tmp
-      # (same pattern as m30/h1 engine bots)
+      # Non-root user can't write /app/logs or /app/.config — redirect to writable /tmp
       LOG_DIR: /tmp
+      MPLCONFIGDIR: /tmp/matplotlib
       # Signal Copy specific
       SIGNAL_COPY_TG_API_ID: ${TELEGRAM_API_ID}
       SIGNAL_COPY_TG_API_HASH: ${TELEGRAM_API_HASH}
       SIGNAL_COPY_TG_SESSION: ${TELEGRAM_SESSION_NAME:-signal_copy_session}
       SIGNAL_COPY_TG_LISTENER_BOT_TOKEN: ${SIGNAL_COPY_TG_LISTENER_BOT_TOKEN}
       SIGNAL_COPY_TG_CHANNELS: ${SIGNAL_COPY_TG_CHANNELS}
+      SIGNAL_COPY_CALIBRATION_CHANNELS: ${SIGNAL_COPY_CALIBRATION_CHANNELS}
       # Dual channel notifications (new format)
       SIGNAL_COPY_PARSER_NOTIFY_BOT_TOKEN: ${SIGNAL_COPY_PARSER_NOTIFY_BOT_TOKEN}
       SIGNAL_COPY_PARSER_NOTIFY_CHAT_ID: ${SIGNAL_COPY_PARSER_NOTIFY_CHAT_ID}
@@ -334,14 +338,23 @@ services:
       SIGNAL_COPY_DISCORD_ENABLED: ${SIGNAL_COPY_DISCORD_ENABLED:-false}
       SIGNAL_COPY_DISCORD_BOT_TOKEN: ${SIGNAL_COPY_DISCORD_BOT_TOKEN}
       SIGNAL_COPY_DISCORD_CHANNELS: ${SIGNAL_COPY_DISCORD_CHANNELS}
-      # Vision (optional)
+      # Vision (optional) — OpenAI-compatible backend (local proxy / OpenRouter / Gemini)
       SIGNAL_COPY_VISION_ENABLED: ${SIGNAL_COPY_VISION_ENABLED:-false}
+      SIGNAL_COPY_VISION_BACKEND: ${SIGNAL_COPY_VISION_BACKEND:-openai}
+      # 127.0.0.1 inside a container is the container itself; reach the host proxy via host-gateway.
+      SIGNAL_COPY_VISION_OPENAI_BASE_URL: ${SIGNAL_COPY_VISION_OPENAI_BASE_URL:-http://host.docker.internal:20128/v1}
+      SIGNAL_COPY_VISION_OPENAI_API_KEY: ${SIGNAL_COPY_VISION_OPENAI_API_KEY}
+      SIGNAL_COPY_VISION_OPENAI_MODEL: ${SIGNAL_COPY_VISION_OPENAI_MODEL:-gc/gemini-2.5-pro}
+      SIGNAL_COPY_VISION_TIMEOUT_SEC: ${SIGNAL_COPY_VISION_TIMEOUT_SEC:-300}
+      # legacy ollama vars (kept for backward compat; unused by openai backend)
       SIGNAL_COPY_OLLAMA_URL: ${SIGNAL_COPY_OLLAMA_URL:-http://host.docker.internal:11434}
       SIGNAL_COPY_VISION_MODEL: ${SIGNAL_COPY_VISION_MODEL:-qwen2.5vl:3b}
     volumes:
       - ../runtime/state:/state
       - ../runtime/logs:/logs
       - ../runtime/whales:/app/runtime/whales
+      - ../runtime/revo:/app/runtime/revo:ro
+      - ../data:/app/data:ro
       - ../signal_copy_session.session:/app/signal_copy_session.session
     extra_hosts:
       - "host.docker.internal:host-gateway"

@@ -56,6 +56,106 @@ class NexusDataBridge:
 
         # Historical OI snapshots for delta calc (lazy-loaded)
         self._oi_history: Optional[Dict[str, Dict[int, float]]] = None
+        self._flow_cache: Optional[Dict[str, Dict[str, Any]]] = None
+        self._flow_cache_ts: float = 0.0
+        self._flow_cache_ttl: float = 30.0
+
+    def _load_revo_flow_context(self) -> Dict[str, Dict[str, Any]]:
+        """Load fresh Revo scanner flow context keyed by plain symbol."""
+        now = time.time()
+        if self._flow_cache and (now - self._flow_cache_ts) < self._flow_cache_ttl:
+            return self._flow_cache
+
+        candidates = [
+            Path("/app/runtime/revo/revo_flow_context.json"),
+            Path(__file__).parent.parent / "runtime" / "revo" / "revo_flow_context.json",
+        ]
+        for path in candidates:
+            if not path.exists():
+                continue
+            try:
+                raw = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            out: Dict[str, Dict[str, Any]] = {}
+            if isinstance(raw, dict):
+                for row in raw.values():
+                    if isinstance(row, dict) and row.get("symbol"):
+                        out[str(row["symbol"]).upper()] = row
+            self._flow_cache = out
+            self._flow_cache_ts = now
+            return out
+        self._flow_cache = {}
+        self._flow_cache_ts = now
+        return self._flow_cache
+
+    def _load_oi_5m_raw(self, symbol: str) -> Dict[str, Any]:
+        """Derive OI 5m/15m/1h from sidecar raw 5m Bybit snapshots when available."""
+        paths = [
+            Path("/app/runtime/revo/oi_5m_raw_bybit.jsonl"),
+            Path(__file__).parent.parent / "runtime" / "revo" / "oi_5m_raw_bybit.jsonl",
+        ]
+        for path in paths:
+            if not path.exists():
+                continue
+            try:
+                lines = path.read_text(encoding="utf-8").splitlines()[-20:]
+            except Exception:
+                continue
+            rows = []
+            for line in lines:
+                try:
+                    snap = json.loads(line)
+                    rec = (snap.get("records") or {}).get(symbol.upper())
+                    if rec and rec.get("oi_value"):
+                        rows.append((snap.get("ts"), float(rec["oi_value"])))
+                except Exception:
+                    continue
+            if not rows:
+                return {}
+            latest_ts, latest_val = rows[-1]
+            out: Dict[str, Any] = {"oi_now_5m_raw": latest_val, "oi_5m_raw_ts": latest_ts}
+            for key, back in (("oi_change_5m_pct", 1), ("oi_change_15m_pct", 3), ("oi_change_1h_pct", 12)):
+                if len(rows) > back:
+                    old_val = rows[-1 - back][1]
+                    if old_val > 0:
+                        out[key] = round(((latest_val - old_val) / old_val) * 100.0, 4)
+            if any(k in out for k in ("oi_change_5m_pct", "oi_change_15m_pct", "oi_change_1h_pct")):
+                out["oi_source"] = "bybit_raw_5m"
+            return out
+        return {}
+
+    async def _fetch_oi_15m_db(self, symbol: str, limit: int = 5) -> Dict[str, Any]:
+        """Fetch Bybit 15m OI rows from FastAPI; derive 1h when enough rows exist."""
+        try:
+            url = f"{self.api_url}/oi/bybit/{symbol}"
+            params = {"tf": "15m", "limit": limit}
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                    if resp.status != 200:
+                        return {}
+                    payload = await resp.json()
+        except Exception:
+            return {}
+
+        rows = payload.get("data") or []
+        if not rows:
+            return {}
+        latest = rows[-1]
+        out: Dict[str, Any] = {
+            "oi_now": latest.get("oi_value"),
+            "oi_change_15m_pct": latest.get("oi_delta_pct"),
+            "oi_15m_ts": latest.get("timestamp"),
+            "oi_source": "bybit_db_15m",
+        }
+        if len(rows) >= 5:
+            old = rows[-5]
+            old_val = float(old.get("oi_value") or 0.0)
+            now_val = float(latest.get("oi_value") or 0.0)
+            if old_val > 0:
+                out["oi_change_1h_pct"] = round(((now_val - old_val) / old_val) * 100.0, 4)
+                out["oi_1h_derived"] = True
+        return out
 
     def _load_latest_scan(self) -> Dict:
         """Load latest scanner run metadata (OI + timestamp)."""
@@ -179,8 +279,12 @@ class NexusDataBridge:
                     data = json.load(f)
                 oi_map = data.get("oi", {})
                 for sym, exchs in oi_map.items():
-                    # Use first exchange available (Bybit or Binance)
-                    total_oi = sum(float(v) for v in exchs.values() if v is not None)
+                    # Keep one exchange basis stable; summing Binance+Bybit when one
+                    # intermittently disappears creates fake OI jumps.
+                    total_oi = exchs.get("bybit") if exchs.get("bybit") is not None else exchs.get("binance")
+                    if total_oi is None:
+                        continue
+                    total_oi = float(total_oi)
                     if sym not in history:
                         history[sym] = {}
                     history[sym][ts] = total_oi
@@ -199,20 +303,20 @@ class NexusDataBridge:
         history = self._build_oi_history()
         sym_history = history.get(symbol, {})
         if len(sym_history) < 2:
-            return {"oi_change_15m_pct": 0.0, "oi_change_1h_pct": 0.0}
+            return {"oi_change_5m_pct": 0.0, "oi_change_15m_pct": 0.0, "oi_change_1h_pct": 0.0}
 
-        # Current OI from latest scan
-        oi_now = sum(
-            float(v) for v in scan_data.get("oi", {}).get(symbol, {}).values()
-            if v is not None
-        )
+        # Current OI from latest scan — same stable basis as history.
+        exchs = scan_data.get("oi", {}).get(symbol, {})
+        oi_now_raw = exchs.get("bybit") if exchs.get("bybit") is not None else exchs.get("binance")
+        oi_now = float(oi_now_raw or 0.0)
         if oi_now <= 0:
-            return {"oi_change_15m_pct": 0.0, "oi_change_1h_pct": 0.0}
+            return {"oi_change_5m_pct": 0.0, "oi_change_15m_pct": 0.0, "oi_change_1h_pct": 0.0}
 
         timestamps = sorted(sym_history.keys())
         latest_ts = timestamps[-1]
 
-        # Find closest snapshot to 15m ago (±2 min)
+        # Find closest snapshot to 5m/15m/1h ago (±2 min)
+        target_5m = latest_ts - 300
         target_15m = latest_ts - 900
         target_1h = latest_ts - 3600
 
@@ -226,25 +330,22 @@ class NexusDataBridge:
                     best = ts
             return best
 
+        ts_5m = _closest(target_5m)
         ts_15m = _closest(target_15m)
         ts_1h = _closest(target_1h)
 
-        oi_15m_pct = 0.0
-        oi_1h_pct = 0.0
-
-        if ts_15m:
-            oi_old = sym_history[ts_15m]
-            if oi_old > 0:
-                oi_15m_pct = ((oi_now - oi_old) / oi_old) * 100.0
-
-        if ts_1h:
-            oi_old = sym_history[ts_1h]
-            if oi_old > 0:
-                oi_1h_pct = ((oi_now - oi_old) / oi_old) * 100.0
+        def _pct(ts: Optional[int]) -> float:
+            if not ts:
+                return 0.0
+            oi_old = sym_history[ts]
+            if oi_old <= 0:
+                return 0.0
+            return ((oi_now - oi_old) / oi_old) * 100.0
 
         return {
-            "oi_change_15m_pct": round(oi_15m_pct, 4),
-            "oi_change_1h_pct": round(oi_1h_pct, 4),
+            "oi_change_5m_pct": round(_pct(ts_5m), 4),
+            "oi_change_15m_pct": round(_pct(ts_15m), 4),
+            "oi_change_1h_pct": round(_pct(ts_1h), 4),
         }
 
     async def get_advanced_metrics(self, symbol: str) -> Dict[str, Any]:
@@ -270,7 +371,20 @@ class NexusDataBridge:
         cvd_source = cvd_result["cvd_source"]
         imbalance = cvd_zscore / 3.0
 
-        oi_metrics = self._calc_oi_changes(symbol, scan_data)
+        # Prefer fresh Revo scanner flow/DB OI over stale legacy latest_scan_*.json.
+        flow_row = self._load_revo_flow_context().get(symbol.upper(), {})
+        oi_metrics = {
+            "oi_change_5m_pct": None,
+            "oi_change_15m_pct": flow_row.get("oi_delta_pct_15m"),
+            "oi_change_1h_pct": None,
+            "oi_source": "revo_flow_context_15m" if flow_row else "missing",
+        }
+        db_oi = await self._fetch_oi_15m_db(symbol.upper(), limit=5)
+        oi_metrics.update({k: v for k, v in db_oi.items() if v is not None})
+        raw_oi = self._load_oi_5m_raw(symbol.upper())
+        oi_metrics.update({k: v for k, v in raw_oi.items() if v is not None})
+        if oi_metrics.get("oi_change_15m_pct") is None:
+            oi_metrics.update(self._calc_oi_changes(symbol, scan_data))
 
         # Price change 15m
         if len(df_5m) >= 4:
@@ -301,17 +415,31 @@ class NexusDataBridge:
         scan_ts = scan_data.get("ts", 0.0)
         cache_age_sec = time.time() - scan_ts if scan_ts else 999.0
 
+        if flow_row:
+            cvd_zscore = float(flow_row.get("cvd_zscore_15m", cvd_zscore) or 0.0)
+            cvd_source = flow_row.get("cvd_source", "revo_flow_context")
+            funding_rate = float(flow_row.get("funding_rate", funding_rate) or 0.0)
+
         return {
             "symbol": symbol,
             "price": price,
             "rsi": rsi,
             "cvd_zscore": cvd_zscore,
             "cvd_source": cvd_source,
-            "imbalance": imbalance,
+            "imbalance": cvd_zscore / 3.0,
             "funding_rate": funding_rate,
+            "funding_zscore": flow_row.get("funding_zscore"),
             "price_change_15m_pct": price_change_15m_pct,
             "regime_label": regime,
-            "source": "nexus_cache",
+            "flow_direction": flow_row.get("flow_direction"),
+            "qvol_5m": flow_row.get("qvol_5m"),
+            "volume_zscore_15m": flow_row.get("volume_zscore_15m"),
+            "data_ready": flow_row.get("data_ready"),
+            "data_stale": flow_row.get("data_stale"),
+            "data_quality": flow_row.get("data_quality"),
+            "flow_source": flow_row.get("source"),
+            "flow_ts": flow_row.get("ts"),
+            "source": "revo_flow_context" if flow_row else "nexus_cache",
             "cache_age_sec": cache_age_sec,
             **oi_metrics,
         }

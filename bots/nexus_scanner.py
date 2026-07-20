@@ -240,6 +240,25 @@ def run_cycle(client: httpx.Client) -> dict:
             remaining = [k for k in revo_flow.keys() if k not in seen]
             ft_pairs = (ranked_covered + remaining)[:TOP_N]
             ft_out = {"pairs": ft_pairs}
+            # Keep every published universe artifact aligned with the real-flow
+            # pairlist. Step 2 may return fewer ranked movers than TOP_N, while
+            # /flow/all can still provide the full Bybit∩Binance flow universe.
+            remote = {"pairs": [
+                {
+                    "pair": pair,
+                    "symbol": revo_flow[pair].get("symbol", pair.replace("/USDT:USDT", "USDT").replace("/", "")),
+                    "quote_volume": revo_flow[pair].get("qvol_5m", 0),
+                    "price_change_pct": None,
+                }
+                for pair in ft_pairs
+            ]}
+            write_json(rt / "pair_universe_remote.json", remote)
+            write_json(rt / "pair_universe_top100.json", remote)
+            write_json(rt / "pair_universe_all.json", remote)
+            write_json(rt / "pair_universe_stage15.json", remote)
+            write_csv(rt / "pair_universe_all.csv", remote["pairs"])
+            write_csv(rt / "pair_universe_stage15.csv", remote["pairs"])
+            write_csv(rt / "pair_universe_top100.csv", remote["pairs"][:100])
             write_json(rt / "pair_universe_freqtrade.json", ft_out)
             write_json(rt / "freqtrade_pairlist.json", ft_out)
             print(f"[nexus-scanner] Pairlist flow-anchored: {len(ft_pairs)} pairs "
@@ -287,7 +306,7 @@ def run_cycle(client: httpx.Client) -> dict:
         "nexus_api": NEXUS_API,
         "last_rc": rc,
         "btc_regime": btc.get("btc_regime"),
-        "universe_count": len(pairs),
+        "universe_count": len(remote.get('pairs', [])),
         "flow_total": total,
         "flow_tradeable": tradeable,
     }
