@@ -40,21 +40,36 @@ _gateway: ExecutionGateway | None = None
 
 def _build_gateway() -> ExecutionGateway:
     """Wire the ONE RiskManager + ONE trader. Adjust imports/ctor args here
-    if your trader constructor differs — this is the single place to do it."""
+    if your trader constructor differs — this is the single place to do it.
+
+    GATEWAY_PAPER_MAINNET=true  -> PaperMainnetTrader (fills on REAL mainnet
+    prices, no orders placed — valid edge validation; DEFAULT).
+    GATEWAY_PAPER_MAINNET=false -> BinanceTestnetTrader (routes to Binance
+    testnet; its fake orderbook causes divergent fills / instant stop-outs).
+    """
     from risk.risk_engine import RiskManager
-    from execution.binance_testnet_trader import BinanceTestnetTrader  # adjust name if different
 
     starting_balance = float(os.getenv("STARTING_BALANCE", "1000"))
     risk_mgr = RiskManager(starting_balance=starting_balance)
 
-    # Use environment variables for credentials (same as trader expects)
-    # Support both BINANCE_TESTNET_API_SECRET (legacy) and BINANCE_TESTNET_SECRET (current .env)
-    api_key = os.getenv("BINANCE_TESTNET_API_KEY", "")
-    api_secret = os.getenv("BINANCE_TESTNET_API_SECRET", "") or os.getenv("BINANCE_TESTNET_SECRET", "")
-    if not api_key or not api_secret:
-        raise RuntimeError("BINANCE_TESTNET_API_KEY and BINANCE_TESTNET_API_SECRET must be set")
+    use_paper = os.getenv("GATEWAY_PAPER_MAINNET", "true").lower() in ("1", "true", "yes")
+    if use_paper:
+        from execution.paper_mainnet_trader import PaperMainnetTrader
+        # Gateway runs on the HOST (not inside docker), so the docker-internal
+        # DNS name `fastapi:8000` won't resolve — default to the published port.
+        # Override with PAPER_NEXUS_API if the gateway ever moves into a container.
+        nexus_api = os.getenv("PAPER_NEXUS_API", "http://localhost:8000")
+        trader = PaperMainnetTrader(nexus_api=nexus_api)
+        logger.info("[GATEWAY] trader = PaperMainnetTrader (mainnet-priced paper, nexus=%s)", nexus_api)
+    else:
+        from execution.binance_testnet_trader import BinanceTestnetTrader
+        api_key = os.getenv("BINANCE_TESTNET_API_KEY", "")
+        api_secret = os.getenv("BINANCE_TESTNET_API_SECRET", "") or os.getenv("BINANCE_TESTNET_SECRET", "")
+        if not api_key or not api_secret:
+            raise RuntimeError("BINANCE_TESTNET_API_KEY and BINANCE_TESTNET_API_SECRET must be set")
+        trader = BinanceTestnetTrader(api_key=api_key, api_secret=api_secret)
+        logger.info("[GATEWAY] trader = BinanceTestnetTrader (testnet)")
 
-    trader = BinanceTestnetTrader(api_key=api_key, api_secret=api_secret)  # uses env-based credentials
     # Let RiskManager see the trader's live positions for exposure/cluster math
     if hasattr(risk_mgr, "attach_trader"):
         risk_mgr.attach_trader(trader)
