@@ -231,7 +231,7 @@ services:
       # vs Binance ~167k-986k (esports 4x, 1000xec 21x). 200k calibrated to
       # Binance backtest — too strict for Bybit universe. Lowered to 50k.
       - REVO_MIN_QVOL_5M=50000
-      - REVO_LIQ_MODE=instant
+      - REVO_LIQ_MODE=med48
       - REVO_PAIR_BLACKLIST_PATH=/freqtrade/user_data/local/revo_pair_blacklist.json
       - REVO_BLACKLIST_LOSS_STREAK=3
       - REVO_BLACKLIST_TOTAL_LOSSES=4

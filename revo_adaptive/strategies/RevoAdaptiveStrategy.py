@@ -201,7 +201,12 @@ class RevoAdaptiveStrategy(IStrategy):
         df["oi_ok"] = np.where(df["real_flow_available"] == 1, (df["real_oi_delta"].abs() > 0).astype(int), 1)
 
         # Real funding when context is available; neutral fallback in pure OHLCV backtests.
-        df["funding_ok"] = np.where(df["real_flow_available"] == 1, ((df["real_funding_z"] <= -1.0) | (df["real_funding_rate"] <= 0)).astype(int), 1)
+        # funding_ok: tolerate small positive funding (<= +0.0003, aligned with the
+        # funding_crowded boundary below). Rejecting ALL positive funding blocked ~4/6
+        # high-score live setups (funding_z is None in flow ctx, so the old
+        # `funding_rate <= 0` clause rejected any positive rate). Only crowded-level
+        # positive funding is hostile; small positive is neutral.
+        df["funding_ok"] = np.where(df["real_flow_available"] == 1, ((df["real_funding_z"] <= -1.0) | (df["real_funding_rate"] <= 0.0003)).astype(int), 1)
         df["funding_crowded"] = np.where(df["real_flow_available"] == 1, ((df["real_funding_z"] >= 1.0) | (df["real_funding_rate"] >= 0.0003)).astype(int), 0)
 
         df["pair_uptrend_pullback"] = ((df["ema50"] > df["ema200"]) & (df["at_discount"] == 1)).astype(int)

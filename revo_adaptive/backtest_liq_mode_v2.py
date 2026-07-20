@@ -21,7 +21,7 @@ BASE_ENV = {
     "REVO_ENTRY_DISCOUNT_MIN_PCT": "3.5",
     "REVO_ENTRY_DISCOUNT_MAX_PCT": "9",
     "REVO_ENTRY_RSI_MAX": "40",
-    "REVO_MIN_QVOL_5M": "200000",
+    "REVO_MIN_QVOL_5M": "50000",
     "REVO_ER_CHOP_MAX": "0.15",
     "REVO_ATR_PCT_MAX": "4.0",
     "REVO_FLOW_MAX_AGE_SEC": "660",
@@ -47,8 +47,9 @@ def run_backtest(mode: str) -> dict:
         ghcr.io/freqtrade/freqtrade:develop \\
         backtesting \\
         --config /freqtrade/user_data/configs/config.bybit.backtest.json \\
-        --strategy RevoAdaptiveStrategy \\
+        --strategy RevoAdaptiveBacktest \\
         --timerange 20260601-20260710 \\
+        --cache none \\
         --export trades \\
         --breakdown day week month \\
         2>&1"""
