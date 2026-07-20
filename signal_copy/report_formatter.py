@@ -6,8 +6,28 @@ confluence report.
 
 from __future__ import annotations
 
+import html
+
 from .signal_schema import ParsedSignal
 from .validation_engine import ValidationResult, Verdict
+
+_RAW_CAP = 700  # keep total report under Telegram's 4096 limit
+
+
+def _raw_block(sig: ParsedSignal) -> list[str]:
+    """Render the original signal text as an expandable, HTML-safe quote.
+
+    Lets you eyeball parser output vs. source without leaving Telegram.
+    """
+    raw = (getattr(sig, "raw_text", "") or "").strip()
+    if not raw:
+        return []
+    truncated = len(raw) > _RAW_CAP
+    safe = html.escape(raw[:_RAW_CAP])
+    if truncated:
+        safe += "\n…(dipotong)"
+    # expandable blockquote collapses by default so the report stays compact
+    return ["", f"📄 <b>SINYAL ASLI</b>\n<blockquote expandable>{safe}</blockquote>"]
 
 
 def _g(v, fmt="{:g}", dash="-"):
@@ -85,6 +105,8 @@ def build_validation_report(result: ValidationResult) -> str:
         lines.append("⛔ <b>Hard blocks:</b>")
         for b in result.hard_blocks:
             lines.append(f"  • {b}")
+
+    lines.extend(_raw_block(sig))
 
     return "\n".join(lines)
 
