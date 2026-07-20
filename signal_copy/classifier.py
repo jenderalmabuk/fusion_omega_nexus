@@ -84,11 +84,20 @@ _NEWS_RE = re.compile(
 )
 
 
+_EMOJI_NOISE_RE = re.compile(r"[⚡️🔼📈⛔️🔥⚠️🚨✅❌🟢🔴🧪]+")
+
+
+def _classifier_text(text: str) -> str:
+    # Keep raw parser input intact; only classification gets a cleaned view.
+    return _EMOJI_NOISE_RE.sub(" ", text or "")
+
+
 def classify_message(text: str) -> ClassifyResult:
     """Classify a raw message into a routing label with reasons + confidence."""
     if not text or not text.strip():
         return ClassifyResult(MessageType.NOISE, 1.0, ["empty"])
 
+    text = _classifier_text(text)
     reasons: List[str] = []
 
     # 1) Noise / results / quoted previews first.

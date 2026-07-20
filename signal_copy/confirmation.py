@@ -37,7 +37,7 @@ class PendingConfirmation:
     result: ValidationResult
     created_at: float = field(default_factory=time.time)
     state: ConfirmState = ConfirmState.PENDING
-    expires_in: float = 600.0          # 10 minutes default
+    expires_in: float = 3600.0         # 1h scalping default
     decided_at: Optional[float] = None
     note: str = ""
 
@@ -51,7 +51,7 @@ class PendingConfirmation:
 
 
 class ConfirmationManager:
-    def __init__(self, default_expiry_sec: float = 600.0):
+    def __init__(self, default_expiry_sec: float = 3600.0):
         self._pending: Dict[str, PendingConfirmation] = {}
         self._lock = asyncio.Lock()
         self.default_expiry_sec = default_expiry_sec

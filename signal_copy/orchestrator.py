@@ -27,7 +27,7 @@ from typing import Any, Dict, Optional, Tuple
 from utils.logger import logger
 
 from .signal_parser import parse_signal
-from .signal_schema import SignalSource
+from .signal_schema import SignalSource, ParsedSignal, SignalSide
 from .validation_engine import validate_signal, Verdict
 from .confirmation import ConfirmationManager, ConfirmState
 from .executor import SignalExecutor, ExecutionOutcome
@@ -235,6 +235,58 @@ class SignalCopyOrchestrator:
 
         return filled
 
+    async def _signal_from_vision(self, image, *, text: str = "",
+                                  source: SignalSource = SignalSource.TELEGRAM,
+                                  source_name: str = "",
+                                  source_chat_id: Optional[int] = None):
+        """Build a ParsedSignal purely from a chart image when there is no
+        parseable text. Needs at least a pair + side; entry falls back to the
+        chart entry, else 0.0 (market) so the normalizer can fill from live price.
+        Returns None if vision can't extract an actionable pair+side."""
+        try:
+            from .vision import analyze_chart
+            v = await analyze_chart(image, symbol="", raw_text=text or "")
+        except Exception as exc:
+            logger.warning("[SIGNAL_COPY] vision-only analyze failed: %s", exc)
+            return None
+        if not v:
+            return None
+        pair = (v.get("pair") or "").upper().strip()
+        side_raw = (v.get("side") or "").upper().strip()
+        if not pair or side_raw not in ("LONG", "SHORT"):
+            return None
+        from .signal_parser import _normalize_symbol
+        symbol = _normalize_symbol(pair, None)
+        if not symbol:
+            return None
+
+        def _num(x):
+            try:
+                x = float(x)
+                return x if x > 0 else None
+            except (TypeError, ValueError):
+                return None
+
+        entry = _num(v.get("entry")) or 0.0
+        sl = _num(v.get("stop_loss"))
+        tps = [t for t in (_num(x) for x in (v.get("take_profits") or [])) if t]
+        sig = ParsedSignal(
+            symbol=symbol,
+            side=SignalSide(side_raw),
+            entry_low=entry,
+            entry_high=entry,
+            stop_loss=sl,
+            take_profits=tps,
+            timeframe=(str(v["timeframe"]) if v.get("timeframe") else None),
+            source=source,
+            source_name=source_name,
+            source_chat_id=source_chat_id,
+            raw_text=(text or "")[:2000],
+            tp_source="vision" if tps else "signal",
+            sl_source="vision" if sl else "signal",
+        )
+        return sig
+
     async def read_only_report(self, text: str, source_name: str = "",
                                image: Optional[bytes] = None,
                                source: SignalSource = SignalSource.TELEGRAM) -> str:
@@ -318,10 +370,27 @@ class SignalCopyOrchestrator:
         cls = classify_message(text)
 
         sig = parse_signal(text, source=source, source_name=source_name, source_chat_id=source_chat_id)
+        if sig is None and image and getattr(scfg, "VISION_ENABLED", False):
+            # Chart-only / image-only signal: no parseable text, so read the
+            # chart with vision and build the signal from what it extracts.
+            sig = await self._signal_from_vision(
+                image, text=text, source=source,
+                source_name=source_name, source_chat_id=source_chat_id,
+            )
+            if sig is not None:
+                logger.info("[SIGNAL_COPY] vision-only signal built: %s", sig.summary())
         if sig is None:
             # Not a structured trade call — route by classification.
             if cls.type == MessageType.WHALE_ACCUM:
                 await self._handle_accumulation(text, source_name, source_chat_id, cls)
+            elif calib and image:
+                # Calibration forward we couldn't read: still reply so the user
+                # knows it was received (avoids silent no-response).
+                await self._notify(
+                    "🖼️ Chart diterima di channel kalibrasi tapi tidak bisa dibaca "
+                    "(vision tidak mengembalikan pair/side/entry). Coba kirim chart "
+                    "dengan pair & level yang jelas."
+                )
             else:
                 logger.info("[SIGNAL_COPY] %s", build_read_report(text, cls, None))
             return  # nothing to execute from a non-signal message
@@ -329,7 +398,7 @@ class SignalCopyOrchestrator:
         # Structured trade call: emit a detailed read report (always logged;
         # optionally pushed to Telegram for calibration via SIGNAL_COPY_PARSE_REPORT).
         logger.info("[SIGNAL_COPY] %s", build_read_report(text, cls, sig))
-        if self._is_duplicate(sig):
+        if not calib and self._is_duplicate(sig):
             logger.info("[SIGNAL_COPY] duplicate signal ignored: %s", sig.summary())
             return
 
@@ -355,6 +424,8 @@ class SignalCopyOrchestrator:
                 learning_banner = (f"📡 Channel: {source_name or '-'} "
                                    f"(ID <code>{cid}</code>)\n")
 
+        if not getattr(sig, "timeframe", None):
+            sig.timeframe = "15m"
         metrics = await self._fetch_metrics(sig.symbol)
         # --- Multi-timeframe alignment: check 4h/daily trend structure ---
         try:
@@ -425,9 +496,10 @@ class SignalCopyOrchestrator:
                     sig.symbol, result.verdict.value, result.score,
                     sig.tp_source, sig.sl_source, sig.entry_type, sig.timeframe or "-")
 
-        # --- Consolidated report builder ---
+        # --- Build ONE consolidated report and send ---
         from .telegram_formatter import build_parser_report
         _adv_verdict = ""
+        chart_path = None
 
         # --- ADVERSARIAL CHECK (only for VALID signals) ---
         if result.verdict == Verdict.VALID and getattr(scfg, "ADVERSARIAL_ENABLED", True):
@@ -440,6 +512,8 @@ class SignalCopyOrchestrator:
                 
                 logger.info("[ADVERSARIAL] Running bull/bear debate for %s %s", sig.symbol, sig.side.value)
                 
+                mtf = metrics.get("mtf_alignment", {}) if isinstance(metrics.get("mtf_alignment"), dict) else {}
+                tv = metrics.get("tradingview", {}) if isinstance(metrics.get("tradingview"), dict) else {}
                 adv_context = {
                     "symbol": sig.symbol,
                     "side": sig.side.value,
@@ -447,13 +521,21 @@ class SignalCopyOrchestrator:
                     "stop_loss": sig.stop_loss,
                     "take_profits": sig.take_profits,
                     "price": metrics.get("price", 0),
+                    "timeframe": getattr(sig, "timeframe", None),
+                    "leverage": getattr(sig, "leverage", None),
                     "rsi": metrics.get("rsi", 50),
                     "regime": metrics.get("regime_label", "UNKNOWN"),
                     "cvd_zscore": metrics.get("cvd_zscore", 0),
-                    # Feed the deterministic OI/funding the validation engine already
-                    # computed, so the debate reasons on real flow (not just geometry).
-                    "oi_change_1h_pct": metrics.get("oi_change_1h_pct", metrics.get("oi_change_15m_pct")),
+                    # Feed deterministic flow data already computed upstream.
+                    "oi_change_5m_pct": metrics.get("oi_change_5m_pct"),
+                    "oi_change_15m_pct": metrics.get("oi_change_15m_pct"),
+                    "oi_change_1h_pct": metrics.get("oi_change_1h_pct"),
                     "funding_rate": metrics.get("funding_rate"),
+                    "flow_direction": metrics.get("flow_direction"),
+                    "qvol_5m": metrics.get("qvol_5m"),
+                    "data_quality": metrics.get("data_quality"),
+                    "mtf_score": mtf.get("score"),
+                    "tv_score": tv.get("score"),
                     "validation_score": result.score,
                 }
 
@@ -464,7 +546,7 @@ class SignalCopyOrchestrator:
                 if not approved:
                     logger.warning("[ADVERSARIAL] REJECTED by judge: %s", judge_verdict[:200])
                     result.verdict = Verdict.REJECT
-                    result.hard_blocks.append(f"Adversarial: {judge_verdict[:100]}")
+                    result.hard_blocks.append(f"Adversarial: {judge_verdict[:250]}")
                     _adv_verdict = judge_verdict
                 else:
                     logger.info("[ADVERSARIAL] APPROVED: %s", judge_verdict[:200])
@@ -479,10 +561,22 @@ class SignalCopyOrchestrator:
             adversarial_verdict=_adv_verdict,
         )
         try:
+            from .chart_generator import build_chart
+            chart_path = await build_chart(result)
+        except Exception as exc:
+            logger.warning("[SIGNAL_COPY] chart build failed: %s", exc)
+        try:
             from .telegram_transport import send_parser_notification
-            await send_parser_notification(consolidated)
+            await send_parser_notification(consolidated, chart_path=chart_path)
         except Exception as exc:
             logger.error("❌ Consolidated notify failed: %s", exc)
+        finally:
+            if chart_path:
+                try:
+                    import os
+                    os.remove(chart_path)
+                except Exception:
+                    pass
 
         # --- Stop processing for REJECT / WEAK ---
         if result.verdict == Verdict.REJECT or result.verdict == Verdict.WEAK:
@@ -525,7 +619,7 @@ class SignalCopyOrchestrator:
         # (avoid chasing) — execute automatically when the price touches the limit.
         sig = pc.result.signal
         price = _f(pc.result.metrics_snapshot.get("price"))
-        entry = sig.entry_mid
+        entry = getattr(sig, "active_entry", None) or sig.entry_mid
         if self._wait_for_limit(sig, price):
             self._pending_limits[signal_id] = {"result": pc.result, "created": time.time()}
             await self.confirmations.mark(
@@ -536,7 +630,7 @@ class SignalCopyOrchestrator:
             pending_msg = (
                 f"⏳ Limit setup {sig.symbol} {sig.side.value} @ {entry:g}. "
                 f"Harga sekarang {price:g} — menunggu harga menyentuh limit. "
-                f"Akan dieksekusi otomatis saat tercapai (batas 24 jam)."
+                f"Akan dieksekusi otomatis saat tercapai (batas 1 jam)."
             )
             # Entry notification for the pending-limit path: the orchestrator
             # discards the returned string (auto_execute path), so send it here
@@ -633,6 +727,10 @@ class SignalCopyOrchestrator:
         for token, data in list(self._pending_limits.items()):
             pc = data.get("result")
             if not pc:
+                continue
+            if time.time() - float(data.get("created", 0.0)) > scfg.CONFIRM_EXPIRY_SEC:
+                self._pending_limits.pop(token, None)
+                await self.confirmations.mark(token, ConfirmState.EXPIRED, note="limit_expired_1h")
                 continue
             sig = pc.signal
             metrics = await self._fetch_metrics(sig.symbol)

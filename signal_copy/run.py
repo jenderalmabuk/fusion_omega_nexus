@@ -204,6 +204,7 @@ async def main():
                 text=text,
                 source_name=source_name,
                 source_chat_id=source_chat_id,
+                image=image,
             )
         except Exception:
             logger.exception("on_message error")

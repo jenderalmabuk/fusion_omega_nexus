@@ -20,8 +20,8 @@ def format_price(price: float) -> str:
     return f"{price:.0f}"
 
 
-def get_tradingview_link(symbol: str) -> str:
-    """Generate TradingView link for symbol (e.g., BTCUSDT -> BINANCE:BTCUSDT.P)"""
+def get_tradingview_link(symbol: str, timeframe: str = "15m") -> str:
+    """Generate TradingView link for symbol, defaulting to 15m with MA study loaded."""
     clean_symbol = str(symbol).strip().upper()
     if clean_symbol.endswith(".P"):
         tv_symbol = clean_symbol
@@ -29,7 +29,8 @@ def get_tradingview_link(symbol: str) -> str:
         tv_symbol = f"{clean_symbol}.P"
     else:
         tv_symbol = f"{clean_symbol}USDT.P"
-    return f"https://www.tradingview.com/chart/?symbol=BINANCE:{tv_symbol}"
+    interval = "15" if str(timeframe or "15m").lower() in {"15m", "15"} else str(timeframe).lower().rstrip("m")
+    return f"https://www.tradingview.com/chart/?symbol=BINANCE:{tv_symbol}&interval={interval}&studies=MASimple@tv-basicstudies"
 
 
 def _mode_footer() -> str:
@@ -77,6 +78,15 @@ def _safe_bool(payload: Dict[str, Any], *keys: str, default: bool = False) -> bo
             if text in {"0", "false", "no", "off"}:
                 return False
     return default
+
+
+def _fmt_pct(value: Any) -> str:
+    if value is None:
+        return "N/A"
+    try:
+        return f"{float(value):+.2f}%"
+    except Exception:
+        return "N/A"
 
 
 def _priority_badge(payload: Dict[str, Any]) -> str:
@@ -241,7 +251,7 @@ def build_parser_report(
 
     entry_low = getattr(sig, "entry_low", 0.0)
     entry_high = getattr(sig, "entry_high", 0.0)
-    entry_mid = getattr(sig, "entry_mid", 0.0)
+    entry_mid = getattr(sig, "rr_entry", getattr(sig, "entry_mid", 0.0))
     stop_loss = getattr(sig, "stop_loss", 0.0)
     take_profits = getattr(sig, "take_profits", [])
     leverage = getattr(sig, "leverage", 0.0)
@@ -257,8 +267,16 @@ def build_parser_report(
     price = metrics.get("price", 0.0)
     rsi = metrics.get("rsi", 0.0)
     cvd = metrics.get("cvd", metrics.get("cvd_zscore", 0.0))
-    oi_15m = metrics.get("oi_change_15m_pct", 0.0)
-    oi_1h = metrics.get("oi_change_1h_pct", 0.0)
+    oi_5m = metrics.get("oi_change_5m_pct")
+    oi_15m = metrics.get("oi_change_15m_pct")
+    oi_1h = metrics.get("oi_change_1h_pct")
+    oi_source = metrics.get("oi_source")
+    oi_now = metrics.get("oi_now")
+    qvol_5m = metrics.get("qvol_5m")
+    flow_direction = metrics.get("flow_direction")
+    flow_source = metrics.get("flow_source")
+    data_quality = metrics.get("data_quality")
+    data_stale = metrics.get("data_stale")
     funding = metrics.get("funding_rate", 0.0)
     poc = metrics.get("poc", 0.0)
     vol_ratio = metrics.get("vol_ratio", 0.0)
@@ -306,7 +324,7 @@ def build_parser_report(
             rr_full = abs(tp_full - entry_mid) / risk if tp_full > 0 else 0
             rr_str = f"TP1: {rr1:.2f}R | Full: {rr_full:.2f}R"
 
-    tv_link = get_tradingview_link(symbol)
+    tv_link = get_tradingview_link(symbol, timeframe or "15m")
 
     # Hard blocks
     hard_blocks = getattr(result, "hard_blocks", []) or []
@@ -347,7 +365,28 @@ def build_parser_report(
     lines.append("📈 <b>DATA PASAR</b>")
     lines.append(f"   Harga: {format_price(price)} | RSI: {rsi:.1f} | Regime: {regime}")
     cvd_val = cvd if abs(cvd) > 0.001 else 0.0
-    lines.append(f"   CVD z: {cvd_val:+.2f} {'🟢' if cvd_val >= 0 else '🔴'} | OI: {oi_15m:+.2f}%/{oi_1h:+.2f}%")
+    lines.append(f"   CVD z: {cvd_val:+.2f} {'🟢' if cvd_val >= 0 else '🔴'}")
+    lines.append(f"   OI 5m/15m/1h: {_fmt_pct(oi_5m)}/{_fmt_pct(oi_15m)}/{_fmt_pct(oi_1h)}")
+    if oi_source or oi_now:
+        oi_bits = []
+        if oi_now:
+            oi_bits.append(f"now {float(oi_now):,.0f}")
+        if oi_source:
+            oi_bits.append(str(oi_source))
+        lines.append(f"   OI Source: {' | '.join(oi_bits)}")
+    if flow_direction or qvol_5m or flow_source:
+        flow_bits = []
+        if flow_direction:
+            flow_bits.append(str(flow_direction))
+        if qvol_5m:
+            flow_bits.append(f"qVol5m ${float(qvol_5m):,.0f}")
+        if flow_source:
+            flow_bits.append(str(flow_source))
+        if data_quality:
+            flow_bits.append(str(data_quality))
+        if data_stale is not None:
+            flow_bits.append("STALE" if data_stale else "fresh")
+        lines.append(f"   Flow: {' | '.join(flow_bits)}")
     if abs(funding) > 0:
         lines.append(f"   Funding: {funding:+.4f}%")
     if vol_ratio:
@@ -370,7 +409,7 @@ def build_parser_report(
 
     # Footer
     lines.append("━" * 20)
-    lines.append(f'🔗 <a href="{tv_link}">📊 Chart TradingView</a>')
+    lines.append(f'🔗 <a href="{tv_link}">📊 Chart TradingView 15m + SMA21</a>')
     lines.append(_mode_footer())
 
     return "\n".join(lines)
@@ -418,7 +457,7 @@ def build_execution_message(
 
     lines.extend([
         "────────────────────",
-        f'🔗 <a href="{tv_link}">📊 Lihat Chart TradingView</a>',
+        f'🔗 <a href="{tv_link}">📊 Lihat Chart TradingView 15m + SMA21</a>',
         "────────────────────",
         _mode_footer(),
     ])
@@ -482,7 +521,7 @@ def build_close_message(payload: Dict[str, Any]) -> str:
     tv_link = get_tradingview_link(symbol)
     lines.extend([
         "────────────────────",
-        f'🔗 <a href="{tv_link}">📊 Lihat Chart TradingView</a>',
+        f'🔗 <a href="{tv_link}">📊 Lihat Chart TradingView 15m + SMA21</a>',
         "────────────────────",
         _mode_footer(),
     ])
@@ -514,7 +553,7 @@ def build_whale_alert_message(payload: Dict[str, Any]) -> str:
         lines.append(message)
 
     lines.extend([
-        f'🔗 <a href="{tv_link}">📊 Lihat Chart TradingView</a>',
+        f'🔗 <a href="{tv_link}">📊 Lihat Chart TradingView 15m + SMA21</a>',
         "────────────────────",
         _mode_footer(),
     ])

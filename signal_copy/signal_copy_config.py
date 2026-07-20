@@ -113,7 +113,7 @@ def discord_token() -> str:
 
 # --- Behavior ---
 RISK_PCT = float(os.getenv("SIGNAL_COPY_RISK_PCT", "0.01"))   # 1% of equity per trade
-CONFIRM_EXPIRY_SEC = float(os.getenv("SIGNAL_COPY_CONFIRM_EXPIRY_SEC", "600"))  # 10 min
+CONFIRM_EXPIRY_SEC = float(os.getenv("SIGNAL_COPY_CONFIRM_EXPIRY_SEC", "3600"))  # 1h scalping limit expiry
 AUTO_EXECUTE_WITHOUT_CONFIRM = _bool("SIGNAL_COPY_AUTO_EXECUTE", False)  # if True, skip yes/no
 DRY_RUN = _bool("SIGNAL_COPY_DRY_RUN", False)   # validate + confirm but never place orders
 NOTIFY_REJECTED = _bool("SIGNAL_COPY_NOTIFY_REJECTED", True)  # tell user about rejects too

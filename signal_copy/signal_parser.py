@@ -14,6 +14,7 @@ Design goals:
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import List, Optional
 
 from .signal_schema import ParsedSignal, SignalSide, SignalSource
@@ -30,7 +31,7 @@ _PAIR_RE = re.compile(
 
 # Fallback pair detection anywhere: "ZEC/USDT", "$ZEC", or bare "ZECUSDT"
 _PAIR_INLINE_RE = re.compile(
-    r"\$?\b([A-Z0-9]{2,15})\s*[\/\-]\s*(USDT|USDC|BUSD|USD)\b",
+    r"[#\$]?\b([A-Z0-9]{1,15})\s*[\/\-]\s*(USDT|USDC|BUSD|USD)\b",
     re.IGNORECASE,
 )
 # Concatenated form: "ZECUSDT", "BTCUSDT PERPETUAL"
@@ -39,7 +40,7 @@ _PAIR_CONCAT_RE = re.compile(
     re.IGNORECASE,
 )
 # Cashtag form: "$ZETA", "$BEAT", "$MOCA" (no quote suffix) -> append USDT
-_PAIR_CASHTAG_RE = re.compile(r"\$([A-Za-z][A-Za-z0-9]{1,14})\b")
+_PAIR_CASHTAG_RE = re.compile(r"[#$]([A-Za-z][A-Za-z0-9]{1,14})\b")
 
 _SIDE_RE = re.compile(
     r"(?:position|side|direction|type|signal|setup(?:\s*utama)?)\s*[:\-]?\s*[*_`(]*\s*"
@@ -48,11 +49,18 @@ _SIDE_RE = re.compile(
 )
 _SIDE_INLINE_RE = re.compile(r"\b(LONG|SHORT)\b", re.IGNORECASE)
 
+_LEV_X = r"[xX×]"
 _LEVERAGE_RE = re.compile(
-    r"(?:leverage|lev|cross|isolated)\s*[:\-]?\s*[*_`]*\s*(\d{1,3}(?:\.\d+)?)\s*[xX]?",
+    r"(?:leverage|lev|cross|isolated)\s*[:\-]?\s*[*_`]*\s*(?:cross\s*)?(\d{1,3}(?:\.\d+)?)\s*" + _LEV_X
+    + r"(?:\s*[_/\-]\s*(\d{1,3}(?:\.\d+)?)\s*" + _LEV_X + r")?",
     re.IGNORECASE,
 )
-_LEVERAGE_INLINE_RE = re.compile(r"\b(\d{1,3}(?:\.\d+)?)\s*[xX]\b")
+_LEVERAGE_INLINE_RE = re.compile(r"\b(\d{1,3}(?:\.\d+)?)\s*" + _LEV_X + r"\b")
+_LEVERAGE_RANGE_RE = re.compile(
+    r"\b(\d{1,3}(?:\.\d+)?)\s*" + _LEV_X
+    + r"(?:\s*(?:[_/\-~]|to|till)\s*(\d{1,3}(?:\.\d+)?)\s*" + _LEV_X + r")?",
+    re.IGNORECASE,
+)
 
 # Entry zone: "Entry: 358 - 350", "Entry Zone:\n• 358-350", "ENTRY AREA (LONG) 376.0 - 378.5"
 # The filler between the label and the price must NOT cross a competing label
@@ -61,9 +69,9 @@ _LEVERAGE_INLINE_RE = re.compile(r"\b(\d{1,3}(?:\.\d+)?)\s*[xX]\b")
 _ENTRY_FILLER = (r"(?:(?!\b(?:stop\s*loss|stoploss|stop|sl|target|targets|tp|"
                  r"take\s*profit|take|profit|risk|lev|leverage)\b)[^\d]){0,40}?")
 _ENTRY_RE = re.compile(
-    r"(?:entry(?:\s*zone)?(?:\s*area)?|entry\s*price|buy\s*zone|enter)\s*[:\-@]?"
-    + _ENTRY_FILLER + r"\$?([\d.,]+)\s*(?:[-–~]+|\bto\b)\s*\$?([\d.,]+)"
-    r"|(?:entry(?:\s*zone)?(?:\s*area)?|entry\s*price|buy\s*zone|enter)\s*[:\-@]?"
+    r"(?:entr(?:y|ies)(?:\s*zone)?(?:\s*area)?|entry\s*price|buy\s*zone|enter)\s*[:\-@]?"
+    + _ENTRY_FILLER + r"\$?([\d.,]+)\s*(?:[-–—~]+|\bto\b)\s*\$?([\d.,]+)"
+    r"|(?:entr(?:y|ies)(?:\s*zone)?(?:\s*area)?|entry\s*price|buy\s*zone|enter)\s*[:\-@]?"
     + _ENTRY_FILLER + r"\$?([\d.,]+)",
     re.IGNORECASE,
 )
@@ -78,16 +86,25 @@ _ENTRY_ENUM_RE = re.compile(
 # Hybrid market/zone form: "Entry: now/388-376".
 _ENTRY_NOW_ZONE_RE = re.compile(
     r"\bentry\b[^\n\d]{0,24}?\b(?:now|market|cmp)\b\s*[\/|,]?\s*"
-    r"\$?([\d.,]+)\s*(?:[-–~]+|\bto\b)\s*\$?([\d.,]+)",
+    r"\$?([\d.,]+)\s*(?:[-–—~]+|\bto\b)\s*\$?([\d.,]+)",
+    re.IGNORECASE,
+)
+# "Entry Targets: 0.07100" — price on same line; the word "Targets" here labels
+# the entry itself, so the generic _ENTRY_RE (which rejects a following "target")
+# skips it. Handle explicitly.
+# Price must be on the SAME line as the label ([^\S\n] = horizontal ws only),
+# otherwise a numbered-list "Entry Targets:\n1) 0.0019" would grab the index "1".
+_ENTRY_TARGETS_INLINE_RE = re.compile(
+    r"entry[^\S\n]*targets?[^\S\n]*[:\-@]?[^\S\n]*\$?(\d[\d.,]*)",
     re.IGNORECASE,
 )
 # Numbered-list entry format like "Entry Targets:\n1) 2.24\n2) 2.30"
 # This format has no prices on the same line as the label.
 _ENTRY_LIST_LABEL_RE = re.compile(
-    r"(?:entry\s*targets?|entry\s*zone|entry\s*points?)\s*:\s*$",
+    r"(?:entry\s*targets?|entry\s*zone|entry\s*points?|entry\s*price|entries)\s*:\s*$",
     re.IGNORECASE | re.MULTILINE,
 )
-_ENTRY_LIST_NUMBER_RE = re.compile(r"\b\d{1,2}\s*[.)]\s*\$?([\d.,]+)\b", re.IGNORECASE)
+_ENTRY_LIST_NUMBER_RE = re.compile(r"\b\d{1,2}\s*[.)]\s*(?:[➡️🔼⛔️⚠️]*\s*)\$?(\d+(?:\.\d+)?)", re.IGNORECASE)
 # Market entry with NO explicit price: "Entry Long now", "Entry market", "CMP".
 _ENTRY_MARKET_RE = re.compile(
     r"\bentry\b[^\n\d]{0,18}?\b(now|market|market\s*price|cmp|sekarang)\b",
@@ -103,7 +120,7 @@ _SL_LIST_LABEL_RE = re.compile(
     r"(?:stop\s*target|stop\s*loss|sl)\s*:\s*$",
     re.IGNORECASE | re.MULTILINE,
 )
-_SL_LIST_NUMBER_RE = re.compile(r"\b\d{1,2}\s*[.)]\s*\$?([\d.,]+)\b", re.IGNORECASE)
+_SL_LIST_NUMBER_RE = re.compile(r"\b\d{1,2}\s*[.)]\s*(?:[➡️🔼⛔️⚠️]*\s*)\$?(\d+(?:\.\d+)?)", re.IGNORECASE)
 
 # Take profits: capture the whole targets block then extract numbers.
 _TP_BLOCK_RE = re.compile(
@@ -113,7 +130,26 @@ _TP_BLOCK_RE = re.compile(
 # A line that carries a take-profit value, e.g. "TP1 365", "TP 1 → 365",
 # "TP1: 386.0", "Target 2 - 415", "Take Profit 365".
 _TP_LINE_RE = re.compile(r"(?:take\s*profits?|targets?|\btp)\s*(\d{1,2})?\b", re.IGNORECASE)
+_TP_LIST_LABEL_RE = re.compile(r"(?:take\s*-?\s*profits?|tp)\s*targets?\s*:\s*$", re.IGNORECASE | re.MULTILINE)
+# "Take Profits👇" or "Take-Profit Targets👇" header with one price per
+# following line, prefixed by keycap-emoji (1️⃣) or "1)". NOT "Entry Targets".
+_TP_HEADER_RE = re.compile(r"(?:take|tp)\s*-?\s*profits?\s*(?!targets?)[:\-]?\s*[👇🎯💵]*\s*$", re.IGNORECASE | re.MULTILINE)
+# Keycap emoji price line: "1️⃣0.07300" or "2️⃣ 0.0755" or plain "1) 0.073".
+# Only a keycap emoji (1️⃣) or "1)" counts as an index — NOT "1." (that is a
+# decimal like 45.97, whose fractional digits must not be mistaken for a value).
+_TP_KEYCAP_RE = re.compile(r"(?:[\u0031-\u0039][\ufe0f]?[\u20e3]|\b\d{1,2}\s*\))\s*\$?([0-9]+(?:\.[0-9]+)?)", re.IGNORECASE)
+_TP_LIST_NUMBER_RE = re.compile(r"\b\d{1,2}\s*[.)]\s*(?:[🔼➡️⛔️⚠️]*\s*)\$?([0-9]+(?:\.[0-9]+)?)", re.IGNORECASE)
 _NUMBER_RE = re.compile(r"\$?([\d][\d.,]*\d|\d)")
+
+# Bare ticker at the start of a line: "ETH", "😀😀 ETH". Last-resort symbol
+# fallback used ONLY when the rest of the call is well-formed (entry + a level).
+_BARE_TICKER_RE = re.compile(r"^\s*(?:[^\w\s]+\s*)?([A-Z]{2,6})\b", re.MULTILINE)
+_BARE_TICKER_STOP = frozenset({
+    "LONG", "SHORT", "BUY", "SELL", "TP", "SL", "SETUP", "ENTRY", "TARGET",
+    "TARGETS", "STOP", "LOSS", "MARKET", "USDT", "USDC", "PAIR", "COIN", "NAME",
+    "POSITION", "LEVERAGE", "CROSS", "PROFIT", "PROFITS", "RISK", "VIP", "FREE",
+    "OPEN", "NOW", "PERP", "FUTURES", "FUTURE", "SIGNAL", "TRADE", "THE", "AND",
+})
 
 # Strong indicator that text is a trade call (need at least entry+side+pair).
 _SIGNAL_HINT_RE = re.compile(
@@ -173,22 +209,17 @@ def _to_float(raw: str) -> Optional[float]:
     s = raw.strip().replace(" ", "")
     if not s:
         return None
-    # Handle thousands separators vs decimal. Common cases:
-    #  "1,234.56" -> 1234.56 ; "0,358" (rare) -> treat comma as decimal if no dot
-    if "," in s and "." in s:
-        s = s.replace(",", "")
-    elif "," in s:
-        # crypto signal channels commonly use a decimal comma ("0,2388" -> 0.2388,
-        # "3,2" -> 3.2). A single comma = decimal; multiple commas = thousands.
-        if s.count(",") == 1:
+    # Decimal-first: signal texts usually mean literal prices, not scaled ints.
+    # Keep commas only when they clearly act as decimal separators.
+    if "," in s:
+        if "." in s:
+            s = s.replace(",", "")
+        elif s.count(",") == 1:
             left, right = s.split(",", 1)
-            # But values like ETH "1,718" are thousands, not decimal. Treat a
-            # single comma followed by exactly 3 digits as thousands unless the
-            # integer part is explicitly zero ("0,2388" remains decimal).
-            if left not in {"", "0"} and len(right) == 3 and right.isdigit():
+            if left and left != "0" and len(right) == 3:
                 s = left + right
             else:
-                s = s.replace(",", ".")
+                s = left + "." + right
         else:
             s = s.replace(",", "")
     try:
@@ -244,6 +275,31 @@ def _normalize_side(token: str) -> Optional[SignalSide]:
 def _extract_take_profits(text: str) -> List[float]:
     tps: List[float] = []
 
+    # "Take Profits👇" header followed by one price per line, prefixed by a
+    # keycap-emoji index (1️⃣ 2️⃣ …) or "1)". Consume until the SL line.
+    m_hdr = _TP_HEADER_RE.search(text)
+    if m_hdr:
+        block = text[m_hdr.end():]
+        block = re.split(r"\n\s*(?:stop\s*loss|stoploss|\bsl\b|🛑|⛔)", block, maxsplit=1, flags=re.IGNORECASE)[0]
+        for nm in _TP_KEYCAP_RE.finditer(block):
+            v = _to_float(nm.group(1))
+            if v is not None and v > 0:
+                tps.append(v)
+        if tps:
+            return tps
+
+    # Numbered-list TP format: "Take-Profit Targets:\n1) 0.116\n2) 0.120".
+    m_list = _TP_LIST_LABEL_RE.search(text)
+    if m_list:
+        block = text[m_list.end():]
+        block = re.split(r"\n\s*(?:stop\s*target|stop\s*loss|sl|trailing\s*configuration)\s*:\s*", block, maxsplit=1, flags=re.IGNORECASE)[0]
+        for nm in _TP_LIST_NUMBER_RE.finditer(block):
+            v = _to_float(nm.group(1))
+            if v is not None and v > 0:
+                tps.append(v)
+        if tps:
+            return tps
+
     # Line-based: each TP line contributes its price(s); drop a leading index
     # number that comes from the label itself (e.g. the "1" in "TP1 365").
     for line in text.splitlines():
@@ -281,6 +337,14 @@ def _extract_take_profits(text: str) -> List[float]:
     return tps
 
 
+def _clean_symbol_text(text: str) -> str:
+    t = re.sub(r"\b(?:below|above|only|cross|isolated|perp|future|futures)\b", " ", text, flags=re.IGNORECASE)
+    t = re.sub(r"\b(?:to|till|till\s+|till\s*$)\b", " ", t, flags=re.IGNORECASE)
+    t = re.sub(r"\b(?:entry\s*price|entry\s*zone|take\s*profits?|targets?|stop\s*loss|stoploss|stop\s*target|risk\s*management|disclaimer)\b", " ", t, flags=re.IGNORECASE)
+    t = re.sub(r"[\|•·~—–]+", " ", t)
+    return t
+
+
 def parse_signal(
     text: str,
     *,
@@ -291,6 +355,9 @@ def parse_signal(
     """Parse free-text into a ParsedSignal, or None if not a trade call."""
     if not text or not text.strip():
         return None
+    text = unicodedata.normalize("NFKC", text)
+    # Drop truncated zero tails like "0.000129, 0.000"; they are Telegram/OCR noise, not a second entry.
+    text = re.sub(r"(?<=\d),\s*0+(?:\.0+)?(?=\s*(?:\n|$))", "", text)
     if not _SIGNAL_HINT_RE.search(text):
         return None
     # Skip cancels/closes/results and truncated quote previews — not fresh entries.
@@ -306,13 +373,15 @@ def parse_signal(
         m = _SIDE_INLINE_RE.search(text)
         if m:
             side = _normalize_side(m.group(1))
-    if side is None:
-        return None
+    # Note: side may still be None here — inferred from SL/TP geometry after
+    # those are parsed (some channels post charts/tickers without a direction word).
+
+    clean_text = _clean_symbol_text(text)
 
     # --- pair ---
     base = quote = None
-    m = _PAIR_RE.search(text)
-    if m and m.group(1).upper() not in ("LONG", "SHORT", "BUY", "SELL", "TP", "SL"):
+    m = _PAIR_RE.search(clean_text)
+    if m and m.group(1).upper() not in ("LONG", "SHORT", "BUY", "SELL", "TP", "SL", "NAME", "POSITION", "PAIR", "COIN"):
         base, quote = m.group(1), m.group(2)
     if not base:
         m = _PAIR_INLINE_RE.search(text)
@@ -326,8 +395,15 @@ def parse_signal(
         m = _PAIR_CASHTAG_RE.search(text)
         if m and m.group(1).upper() not in ("LONG", "SHORT", "BUY", "SELL", "TP", "SL", "RR"):
             base, quote = m.group(1), None
+    # Last-resort: bare ticker at the start (e.g. "ETH") — only accepted below,
+    # after we confirm the call has an entry AND a stop/target (well-formed).
+    bare_candidate = None
+    if not base:
+        m = _BARE_TICKER_RE.search(text)
+        if m and m.group(1).upper() not in _BARE_TICKER_STOP:
+            bare_candidate = m.group(1)
     symbol = _normalize_symbol(base, quote) if base else ""
-    if not symbol:
+    if not symbol and not bare_candidate:
         return None
 
     # --- entry zone (or market entry when no explicit price is given) ---
@@ -348,6 +424,12 @@ def parse_signal(
                 entry_low = min(entry_a, entry_b)
                 entry_high = max(entry_a, entry_b)
     if entry_low is None:
+        m = _ENTRY_TARGETS_INLINE_RE.search(text)
+        if m:
+            v = _to_float(m.group(1))
+            if v is not None:
+                entry_low = entry_high = v
+    if entry_low is None:
         m = _ENTRY_RE.search(text)
     if m and entry_low is None:
         # Regex has two alternatives: groups (1,2) = range, group (3) = single.
@@ -362,20 +444,20 @@ def parse_signal(
             entry_high = entry_a if entry_b is None else max(entry_a, entry_b)
     if entry_low is None:
         # Numbered-list entry format: "Entry Targets:\n1) 2.24\n2) 2.30"
-        if _ENTRY_LIST_LABEL_RE.search(text):
-            m = _ENTRY_LIST_LABEL_RE.search(text)
-            if m:
-                remainder = text[m.end():]
-                entries = []
-                for nm in _ENTRY_LIST_NUMBER_RE.finditer(remainder):
-                    v = _to_float(nm.group(1))
-                    if v is not None:
-                        entries.append(v)
-                    if len(entries) >= 2:
-                        break
-                if entries:
-                    entry_low = min(entries)
-                    entry_high = max(entries)
+        m = _ENTRY_LIST_LABEL_RE.search(text)
+        if m:
+            remainder = text[m.end():]
+            remainder = re.split(r"\n\s*(?:take\s*-?\s*profit|tp|stop\s*target|stop\s*loss|sl|trailing\s*configuration)\s*:\s*", remainder, maxsplit=1, flags=re.IGNORECASE)[0]
+            entries = []
+            for nm in _ENTRY_LIST_NUMBER_RE.finditer(remainder):
+                v = _to_float(nm.group(1))
+                if v is not None:
+                    entries.append(v)
+                if len(entries) >= 2:
+                    break
+            if entries:
+                entry_low = min(entries)
+                entry_high = max(entries)
     if entry_low is None:
         # "Entry now/market" with no price -> market entry; the live price is
         # filled in later by the normalizer (needs metrics). Require a stop or
@@ -387,12 +469,17 @@ def parse_signal(
 
     # --- stop loss ---
     sl = None
-    m = _SL_RE.search(text)
+    m = re.search(r"(?:stop\s*loss|stoploss)\s*[:\-–—]*\s*\$?([\d.,]+)", text, re.IGNORECASE)
     if m:
-        candidate = _to_float(m.group(1))
-        # Reject if it's just a TP/SL index (1,2,3...) - likely a numbered list label
-        if candidate is not None and candidate > 10:
-            sl = candidate
+        sl = _to_float(m.group(1))
+    if sl is None:
+        m = _SL_RE.search(text)
+        if m:
+            candidate = _to_float(m.group(1))
+            # Reject bare list indices (1,2,3...), but keep decimal SLs like 1.888.
+            raw_sl = m.group(1).strip()
+            if candidate is not None and (candidate > 10 or "." in raw_sl or "," in raw_sl):
+                sl = candidate
     # Numbered-list SL format: "Stop Target:\n1) 2.37"
     if sl is None and _SL_LIST_LABEL_RE.search(text):
         m = _SL_LIST_LABEL_RE.search(text)
@@ -413,15 +500,47 @@ def parse_signal(
         hi_bound = entry_high * 10.0
         take_profits = [t for t in take_profits if lo_bound <= t <= hi_bound]
 
+    # --- adopt bare ticker only if the call is well-formed ---
+    # Requires a real entry price plus a stop or at least one target, so a stray
+    # capitalized word can't masquerade as a signal.
+    if not symbol and bare_candidate:
+        if entry_high and entry_high > 0 and (sl is not None or take_profits):
+            symbol = _normalize_symbol(bare_candidate, None)
+    if not symbol:
+        return None
+
+    # --- side inference (only when the channel omitted a direction word) ---
+    # Infer from geometry: entry vs stop-loss (primary) or entry vs targets.
+    # SL below entry => LONG; SL above entry => SHORT.
+    if side is None:
+        ref = entry_high if entry_high else (entry_low or 0.0)
+        if ref > 0 and sl is not None:
+            side = SignalSide.LONG if sl < ref else SignalSide.SHORT
+        elif ref > 0 and take_profits:
+            med = sorted(take_profits)[len(take_profits) // 2]
+            side = SignalSide.LONG if med > ref else SignalSide.SHORT
+    # Still no side => not enough evidence for a real trade call.
+    if side is None:
+        return None
+
     # --- leverage ---
     leverage = None
-    m = _LEVERAGE_RE.search(text)
+    m = _LEVERAGE_RANGE_RE.search(text)
     if m:
-        leverage = _to_float(m.group(1))
+        a = _to_float(m.group(1))
+        b = _to_float(m.group(2)) if m.group(2) else None
+        if a is not None:
+            leverage = max(a, b) if b is not None else a
+    if leverage is None:
+        m = _LEVERAGE_RE.search(text)
+        if m:
+            leverage = _to_float(m.group(1))
     if leverage is None:
         m = _LEVERAGE_INLINE_RE.search(text)
         if m:
             leverage = _to_float(m.group(1))
+
+    # A line like "Leverage: Cross (50X)" should not become 0 when extra text is present.
 
     # --- entry type (limit vs market) ---
     entry_type = "limit" if _LIMIT_RE.search(text) else "market"

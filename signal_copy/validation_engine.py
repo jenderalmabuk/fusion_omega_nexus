@@ -315,6 +315,16 @@ def _factor_tradingview(sig: ParsedSignal, m: Dict[str, Any]) -> Factor:
         return Factor("TradingView", mx * 0.6, mx, True, detail)
     return Factor("TradingView", mx * 0.2, mx, False, detail)
     
+def _set_active_entry(sig: ParsedSignal, price: float) -> None:
+    levels = [x for x in (sig.entry_low, sig.entry_high) if x and x > 0]
+    if not levels:
+        return
+    if price <= 0:
+        sig.active_entry = sig.entry_mid
+        return
+    sig.active_entry = min(levels, key=lambda x: abs(price - x))
+
+
 def validate_signal(sig: ParsedSignal, metrics: Optional[Dict[str, Any]]) -> ValidationResult:
     """Run all factors and compute a verdict.
     
@@ -329,6 +339,7 @@ def validate_signal(sig: ParsedSignal, metrics: Optional[Dict[str, Any]]) -> Val
         return _legacy_validate(sig, metrics)
     
     metrics = metrics or {}
+    _set_active_entry(sig, _f(metrics.get("price")))
     hard_blocks: List[str] = []
 
     # --- hard blocks (instant reject regardless of score) ---
@@ -402,6 +413,7 @@ def _legacy_validate(sig: ParsedSignal, metrics: Dict[str, Any]) -> ValidationRe
     factors = []
     
     price = _f(metrics.get("price"))
+    _set_active_entry(sig, price)
     
     # Hard block: no price data
     if price <= 0:

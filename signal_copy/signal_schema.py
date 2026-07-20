@@ -48,6 +48,7 @@ class ParsedSignal:
     stop_loss: Optional[float] = None
     take_profits: List[float] = field(default_factory=list)
     leverage: Optional[float] = None
+    active_entry: Optional[float] = None
 
     # "market" or "limit" (e.g. "Entry limit 0.0275")
     entry_type: str = "market"
@@ -91,6 +92,10 @@ class ParsedSignal:
         return (self.entry_low + self.entry_high) / 2.0
 
     @property
+    def rr_entry(self) -> float:
+        return float(self.active_entry or self.entry_mid)
+
+    @property
     def is_long(self) -> bool:
         return self.side == SignalSide.LONG
 
@@ -100,7 +105,7 @@ class ParsedSignal:
             return None
         if tp_index >= len(self.take_profits):
             tp_index = 0
-        entry = self.entry_mid
+        entry = self.rr_entry
         tp = self.take_profits[tp_index]
         risk = abs(entry - self.stop_loss)
         if risk <= 0:
@@ -112,7 +117,7 @@ class ParsedSignal:
         """Best reward:risk across all take-profits (final target with trailing)."""
         if self.stop_loss is None or not self.take_profits:
             return None
-        entry = self.entry_mid
+        entry = self.rr_entry
         risk = abs(entry - self.stop_loss)
         if risk <= 0:
             return None
@@ -121,7 +126,7 @@ class ParsedSignal:
     def sl_distance_pct(self) -> Optional[float]:
         if self.stop_loss is None:
             return None
-        entry = self.entry_mid
+        entry = self.rr_entry
         if entry <= 0:
             return None
         return abs(entry - self.stop_loss) / entry * 100.0

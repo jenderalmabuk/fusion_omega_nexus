@@ -12,4 +12,5 @@ python-magic==0.4.27
 ollama==0.5.1
 openai==1.68.2
 pillow==11.1.0
+matplotlib==3.10.0
 tradingview-ta==3.3.0

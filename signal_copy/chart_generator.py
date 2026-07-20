@@ -2,7 +2,7 @@
 Render an annotated analysis chart (PNG) for a validated signal.
 
 Produces an image similar to the analysis cards used in signal channels:
-- 15m candlesticks with MA9 / MA34
+- 15m candlesticks with SMA21
 - Entry zone band (green/red by side), Stop Loss line, Take-Profit lines
 - Current price marker
 - RSI sub-panel
@@ -121,8 +121,7 @@ async def build_chart(result: ValidationResult, *, out_dir: Optional[str] = None
     lows = [k[3] for k in klines]
     closes = [k[4] for k in klines]
 
-    ma9 = _ma(closes, 9)
-    ma34 = _ma(closes, 34)
+    sma21 = _ma(closes, 21)
     rsi = _rsi(closes, 14)
     xs = list(range(len(klines)))
 
@@ -147,8 +146,7 @@ async def build_chart(result: ValidationResult, *, out_dir: Optional[str] = None
         ax.add_patch(Rectangle((i - width / 2, lo), width, max(hi - lo, 1e-9),
                                facecolor=color, edgecolor=color, zorder=3))
 
-    ax.plot(xs, [m if m else float("nan") for m in ma9], color="#ffb74d", linewidth=1.1, label="MA9")
-    ax.plot(xs, [m if m else float("nan") for m in ma34], color=blue, linewidth=1.1, label="MA34")
+    ax.plot(xs, [m if m else float("nan") for m in sma21], color="#ffb74d", linewidth=1.2, label="SMA21")
 
     # --- entry zone band ---
     zone_color = green if is_long else red

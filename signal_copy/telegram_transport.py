@@ -44,13 +44,26 @@ async def _ensure_bot_ready():
             _trades_bot = None
 
 
-async def send_parser_notification(message: str) -> bool:
+async def send_parser_notification(message: str, chart_path: Optional[str] = None) -> bool:
     """Send validation report via parser bot."""
     if not BOT_AVAILABLE or not PARSER_BOT_TOKEN:
         logger.warning("⚠️ Parser bot not configured")
         return False
     await _ensure_bot_ready()
     try:
+        if chart_path:
+            try:
+                from telegram import InputFile
+                with open(chart_path, "rb") as fh:
+                    await _parser_bot.send_photo(
+                        chat_id=PARSER_CHAT_ID,
+                        photo=InputFile(fh, filename=chart_path.rsplit("/", 1)[-1]),
+                        caption=message[:1024],
+                        parse_mode="HTML",
+                    )
+                    return True
+            except Exception as exc:
+                logger.warning(f"⚠️ Parser chart send failed, fallback to text: {exc}")
         await _parser_bot.send_message(
             chat_id=PARSER_CHAT_ID,
             text=message,
