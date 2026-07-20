@@ -41,7 +41,7 @@
     "enabled": false
   },
   "telegram": {
-    "enabled": false,
+    "enabled": true,
     "token": "${TELEGRAM_TOKEN}",
     "chat_id": "${TELEGRAM_CHAT_ID}"
   },

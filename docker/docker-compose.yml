@@ -280,6 +280,11 @@ services:
     environment:
       - FREQTRADE__CONFIG=/freqtrade/user_data/configs/config.bybit.auditable.paper.json
       - FREQTRADE__STRATEGY=RevoAuditableCoreStrategy
+      # Telegram: dedicated @fusionwhale_bot (bot_id 8989348027), SEPARATE from
+      # revo_adaptive's bot (8905893834). No polling clash (whale_report is send-only).
+      - FREQTRADE__TELEGRAM__ENABLED=true
+      - FREQTRADE__TELEGRAM__TOKEN=${FUSIONWHALE_BOT_TOKEN}
+      - FREQTRADE__TELEGRAM__CHAT_ID=${FUSIONWHALE_CHAT_ID}
       - REVO_ENTRY_MIN_SCORE=9
       - REVO_ENTRY_DISCOUNT_MIN_PCT=3.5
       - REVO_ENTRY_RSI_MAX=40
