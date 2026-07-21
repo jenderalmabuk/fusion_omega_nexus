@@ -633,6 +633,50 @@ class SignalCopyOrchestrator:
             # Confirmation bot handles the interactive prompt
             pass
 
+    # ---------- max-position gate (parse-but-don't-execute) ----------
+    async def _at_max_positions(self) -> Tuple[bool, int, int]:
+        """Return (at_max, open_count, max_allowed) from the LIVE gateway book.
+
+        Fail-open: on any error / unknown count / no gateway (dry-run), returns
+        (False, -1, cap) so a transient hiccup never blocks a fill. The gateway
+        still enforces MAX_OPEN_POS_GLOBAL as a hard backstop regardless."""
+        from .execution_config import MAX_OPEN_POS_GLOBAL
+        cap = int(MAX_OPEN_POS_GLOBAL)
+        client = getattr(self.trader, "client", None)
+        if client is None or not hasattr(client, "portfolio"):
+            return (False, -1, cap)  # dry-run / no gateway -> gateway backstops
+        try:
+            snap = await client.portfolio()
+            raw = snap.get("open_position_count")
+            if raw is None:
+                return (False, -1, cap)  # unknown -> fail-open
+            cnt = int(raw)
+            return (cnt >= cap, cnt, cap)
+        except Exception as exc:
+            logger.warning("[MAX_POS] portfolio check failed (%s) — fail-open", exc)
+            return (False, -1, cap)
+
+    async def _gate_on_max_positions(self, sig) -> bool:
+        """True -> SKIP execution because the book is full. The signal has
+        already been parsed/validated/reported; only the EXECUTION is skipped
+        (the signal is never dropped). Sends a clear notice. Config-driven via
+        SIGNAL_COPY_GATE_ON_MAX_POS (default True); fail-open on any error."""
+        if not getattr(scfg, "GATE_EXEC_ON_MAX_POS", True):
+            return False
+        at_max, cnt, cap = await self._at_max_positions()
+        if not at_max:
+            return False
+        logger.info("[MAX_POS] %s parsed but NOT executed: book full (%d/%d)",
+                    sig.symbol, cnt, cap)
+        try:
+            await self._notify_trades_channel(
+                f"⏸️ {sig.symbol} {sig.side.value}: sinyal di-parse & valid, tapi "
+                f"TIDAK dieksekusi — posisi terbuka sudah maksimal ({cnt}/{cap}). "
+                f"Sinyal tetap tercatat; eksekusi dilewati.")
+        except Exception as exc:
+            logger.error("[MAX_POS] notify failed: %s", exc)
+        return True
+
     # ---------- execution path ----------
     async def _execute_token(self, signal_id: str) -> str:
         """Execute a confirmed signal (called by confirm bot or auto-exec)."""
@@ -645,9 +689,19 @@ class SignalCopyOrchestrator:
         if self.executor is None:
             return "Executor tidak tersedia."
 
+        sig = pc.result.signal
+
+        # Parse-but-don't-execute at max open positions: the signal is already
+        # parsed/validated/reported; skip only the EXECUTION when the book is
+        # full (config-driven, fail-open). Gateway is the hard backstop.
+        if await self._gate_on_max_positions(sig):
+            await self.confirmations.mark(
+                signal_id, ConfirmState.EXPIRED, note="skipped_max_positions")
+            return (f"⏸️ {sig.symbol} {sig.side.value}: sinyal tercatat, "
+                    f"eksekusi dilewati (posisi maksimal).")
+
         # Limit setup: if price hasn't reached the entry yet, wait for it
         # (avoid chasing) — execute automatically when the price touches the limit.
-        sig = pc.result.signal
         price = _f(pc.result.metrics_snapshot.get("price"))
         entry = getattr(sig, "active_entry", None) or sig.entry_mid
         _regime = (pc.result.metrics_snapshot or {}).get("regime_label", "")
@@ -755,6 +809,12 @@ class SignalCopyOrchestrator:
         if getattr(sig, "entry_type", "market") == "limit":
             return not self._limit_reached(sig, price)
 
+        # Drift-hold disabled (default) -> market signals fill NOW at market,
+        # matching original behavior. Prevents fast scalp signals from being
+        # parked as pending limits waiting for a pullback that never comes.
+        if not getattr(scfg, "ENTRY_DRIFT_HOLD_ENABLED", False):
+            return False
+
         # Market-typed: only consider waiting if price ran in the PROFIT
         # direction. At/better than entry -> fill now.
         drift_abs = (price - entry) if sig.is_long else (entry - price)
@@ -828,6 +888,13 @@ class SignalCopyOrchestrator:
                     except Exception as exc:
                         logger.warning("[PENDING] re-validation error for %s: %s "
                                        "(proceeding with entry)", sig.symbol, exc)
+                # Parse-but-don't-execute at max open positions (pending-limit
+                # fill path). The signal was parsed/validated/reported earlier;
+                # skip only the EXECUTION when the book is full.
+                if await self._gate_on_max_positions(sig):
+                    await self.confirmations.mark(
+                        token, ConfirmState.EXPIRED, note="skipped_max_positions")
+                    continue
                 await self.confirmations.mark(
                     token,
                     ConfirmState.APPROVED,

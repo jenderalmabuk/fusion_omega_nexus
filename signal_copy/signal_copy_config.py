@@ -160,6 +160,11 @@ ADVERSARIAL_SOFT_FLOOR = float(os.getenv("SIGNAL_COPY_ADVERSARIAL_SOFT_FLOOR", "
 # MARKET only in trending regimes. Too far: hold as pending limit, wait pullback.
 ENTRY_DRIFT_FRESH_R = float(os.getenv("SIGNAL_COPY_ENTRY_DRIFT_FRESH_R", "0.25"))
 ENTRY_DRIFT_MAX_R = float(os.getenv("SIGNAL_COPY_ENTRY_DRIFT_MAX_R", "0.50"))
+# Master switch for the drift-band pending-limit HOLD on MARKET-typed signals.
+# Default OFF = original behavior: market signals fill immediately at market
+# (no parking as a pending limit waiting for a pullback). Set
+# SIGNAL_COPY_ENTRY_DRIFT_HOLD=true to re-enable the regime-aware chase/wait.
+ENTRY_DRIFT_HOLD_ENABLED = _bool("SIGNAL_COPY_ENTRY_DRIFT_HOLD", False)
 # Regimes (comma list, upper) where a lagging entry may still chase at market.
 ENTRY_CHASE_REGIMES = {
     r.strip().upper()
@@ -169,6 +174,12 @@ ENTRY_CHASE_REGIMES = {
 # When a pending limit fills on pullback, re-run validation; skip entry if the
 # setup is no longer valid (price/flow moved against the thesis while waiting).
 ENTRY_REVALIDATE_ON_FILL = _bool("SIGNAL_COPY_ENTRY_REVALIDATE_ON_FILL", True)
+# Parse-but-don't-execute at max open positions. When True (default), a signal
+# is still parsed, validated, and reported even when the book is full, but the
+# EXECUTION is skipped with a clear notice (the signal is never dropped). The
+# gateway also enforces MAX_OPEN_POS_GLOBAL as a hard backstop. Set
+# SIGNAL_COPY_GATE_ON_MAX_POS=false to rely on the gateway backstop only.
+GATE_EXEC_ON_MAX_POS = _bool("SIGNAL_COPY_GATE_ON_MAX_POS", True)
 
 # --- VIP Fast Lane / Silent Accumulation (Tahap 4) ---
 VIP_FAST_LANE_ENABLED = _bool("SIGNAL_COPY_VIP_FAST_LANE_ENABLED", False)
