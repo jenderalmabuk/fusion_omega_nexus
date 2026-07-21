@@ -144,6 +144,31 @@ VISION_OPENAI_MODEL = os.getenv("SIGNAL_COPY_VISION_OPENAI_MODEL", "gc/gemini-2.
 
 # --- Adversarial gate (Tahap 3): bull/bear debate before entry ---
 ADVERSARIAL_ENABLED = _bool("SIGNAL_COPY_ADVERSARIAL_ENABLED", True)
+# Gate mode: how the LLM bull/bear verdict affects a VALID signal.
+#   "hard" = legacy: judge NO -> REJECT (blocks even high-conviction signals).
+#   "soft" = judge NO downgrades to WEAK only if score < SOFT_FLOOR; high-score
+#            signals ride through with the verdict attached as an advisory note.
+#   "off"  = advisory only: never changes the verdict, just annotates the report.
+# Default "soft": stop the LLM from vetoing strong deterministic setups (user ask).
+ADVERSARIAL_MODE = os.getenv("SIGNAL_COPY_ADVERSARIAL_MODE", "soft").strip().lower()
+# Deterministic validation score at/above which the LLM can NEVER block.
+ADVERSARIAL_SOFT_FLOOR = float(os.getenv("SIGNAL_COPY_ADVERSARIAL_SOFT_FLOOR", "75"))
+
+# --- Entry style: regime-aware market vs pending-limit (chase control) ---
+# Drift = how far current price sits from the signal entry, measured in R
+# (units of entry->SL distance). Fresh: fill at MARKET now. Lagging: chase at
+# MARKET only in trending regimes. Too far: hold as pending limit, wait pullback.
+ENTRY_DRIFT_FRESH_R = float(os.getenv("SIGNAL_COPY_ENTRY_DRIFT_FRESH_R", "0.25"))
+ENTRY_DRIFT_MAX_R = float(os.getenv("SIGNAL_COPY_ENTRY_DRIFT_MAX_R", "0.50"))
+# Regimes (comma list, upper) where a lagging entry may still chase at market.
+ENTRY_CHASE_REGIMES = {
+    r.strip().upper()
+    for r in os.getenv("SIGNAL_COPY_ENTRY_CHASE_REGIMES", "TRENDING,STRONG_TREND").split(",")
+    if r.strip()
+}
+# When a pending limit fills on pullback, re-run validation; skip entry if the
+# setup is no longer valid (price/flow moved against the thesis while waiting).
+ENTRY_REVALIDATE_ON_FILL = _bool("SIGNAL_COPY_ENTRY_REVALIDATE_ON_FILL", True)
 
 # --- VIP Fast Lane / Silent Accumulation (Tahap 4) ---
 VIP_FAST_LANE_ENABLED = _bool("SIGNAL_COPY_VIP_FAST_LANE_ENABLED", False)

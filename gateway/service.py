@@ -188,27 +188,36 @@ class ExecutionGateway:
         if sl_frac <= 0:
             return 0.0, 0.0, "SL distance is zero"
 
-        if intent.notional is not None:
-            notional = float(intent.notional)
-            return notional, notional * sl_frac, None
-
-        # size from risk_pct against the INTENT's own stop (like signal_copy does)
+        # Per-position notional cap: no single trade may consume more than
+        # max_notional_pct of equity. This is the fix for the exposure-lock bug
+        # where an explicit `notional` (from signal_copy sizing) bypassed the cap
+        # entirely and one BTC position ate 91% of the book. The cap now applies
+        # to BOTH the explicit-notional path and the risk_pct path.
+        # Config: MAX_NOTIONAL_PCT_OF_BALANCE. Value may be stored as a percent
+        # (e.g. 20.0) or a fraction (0.20) -> normalize both to a fraction.
         try:
             equity = float(self.risk_mgr.get_current_equity())
         except Exception as exc:
             return 0.0, 0.0, f"cannot read equity: {exc}"
+        _mnp = getattr(self.risk_mgr, "max_notional_pct", 0.20)
+        _frac = (_mnp / 100.0) if _mnp > 1 else _mnp
+        _frac = _frac if _frac > 0 else 0.20
+        cap = max(10.0, equity * _frac) if equity > 0 else None
+
+        if intent.notional is not None:
+            notional = float(intent.notional)
+            if cap is not None:
+                notional = min(notional, cap)
+            return notional, notional * sl_frac, None
+
+        # size from risk_pct against the INTENT's own stop (like signal_copy does)
         if equity <= 0:
             return 0.0, 0.0, "equity is zero"
 
         risk_budget = equity * float(intent.risk_pct)
         notional = risk_budget / sl_frac
-
-        # respect the RiskManager notional cap
-        try:
-            max_notional_pct = 0.30 if equity < 500 else getattr(self.risk_mgr, "max_notional_pct", 0.30)
-            notional = min(notional, max(10.0, equity * float(max_notional_pct)))
-        except Exception:
-            pass
+        if cap is not None:
+            notional = min(notional, cap)
         notional = max(10.0, notional)
         return notional, notional * sl_frac, None
 

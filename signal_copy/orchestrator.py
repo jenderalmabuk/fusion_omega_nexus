@@ -552,11 +552,32 @@ class SignalCopyOrchestrator:
                     bull_bear_check, sig.symbol, adv_context
                 )
 
+                _adv_mode = getattr(scfg, "ADVERSARIAL_MODE", "soft")
+                _adv_floor = getattr(scfg, "ADVERSARIAL_SOFT_FLOOR", 75.0)
                 if not approved:
-                    logger.warning("[ADVERSARIAL] REJECTED by judge: %s", judge_verdict[:200])
-                    result.verdict = Verdict.REJECT
-                    result.hard_blocks.append(f"Adversarial: {judge_verdict[:250]}")
                     _adv_verdict = judge_verdict
+                    if _adv_mode == "hard":
+                        # Legacy: judge NO hard-blocks the trade.
+                        logger.warning("[ADVERSARIAL] REJECTED (hard) by judge: %s", judge_verdict[:200])
+                        result.verdict = Verdict.REJECT
+                        result.hard_blocks.append(f"Adversarial: {judge_verdict[:250]}")
+                    elif _adv_mode == "off":
+                        # Advisory only: never changes the verdict, just annotate.
+                        logger.info("[ADVERSARIAL] NO (advisory, mode=off) — verdict kept: %s", judge_verdict[:200])
+                    else:
+                        # "soft" (default): high-conviction setups ride through; only
+                        # weak-but-VALID ones get downgraded (not rejected) to WEAK.
+                        if float(result.score) >= float(_adv_floor):
+                            logger.info(
+                                "[ADVERSARIAL] NO overridden — score=%.1f >= floor=%.1f, entry allowed: %s",
+                                result.score, _adv_floor, judge_verdict[:160])
+                        else:
+                            logger.warning(
+                                "[ADVERSARIAL] NO -> downgrade to WEAK (score=%.1f < floor=%.1f): %s",
+                                result.score, _adv_floor, judge_verdict[:160])
+                            result.verdict = Verdict.WEAK
+                            # _adv_verdict (set above) carries the note into the
+                            # consolidated report; no separate soft-flag field exists.
                 else:
                     logger.info("[ADVERSARIAL] APPROVED: %s", judge_verdict[:200])
                    
@@ -629,7 +650,8 @@ class SignalCopyOrchestrator:
         sig = pc.result.signal
         price = _f(pc.result.metrics_snapshot.get("price"))
         entry = getattr(sig, "active_entry", None) or sig.entry_mid
-        if self._wait_for_limit(sig, price):
+        _regime = (pc.result.metrics_snapshot or {}).get("regime_label", "")
+        if self._wait_for_limit(sig, price, regime=_regime):
             self._pending_limits[signal_id] = {"result": pc.result, "created": time.time()}
             await self.confirmations.mark(
                 signal_id,
@@ -704,31 +726,64 @@ class SignalCopyOrchestrator:
         # Failed execution
         return f"❌ Eksekusi gagal: {outcome.reason}"
 
-    def _wait_for_limit(self, sig, price: float) -> bool:
-        """Decide whether to hold the entry as a pending limit instead of
-        chasing at market. Returns True when:
-          - the signal is an explicit limit entry not yet reached, OR
-          - price has already run past the entry in the profit direction far
-            enough that a market fill would inflate the SL distance (and thus
-            real risk) beyond the safe cap. In that case we wait for a pullback
-            to the signal entry so risk stays ~1%."""
-        entry = getattr(sig, "entry_mid", 0.0) or 0.0
+    @staticmethod
+    def _entry_ref(sig) -> float:
+        """Reference entry price used for both the wait decision and the
+        limit-reached trigger. Prefers the active entry (closest to price)
+        over the zone midpoint so RR/validation stay consistent."""
+        return float(getattr(sig, "active_entry", None) or getattr(sig, "entry_mid", 0.0) or 0.0)
+
+    def _wait_for_limit(self, sig, price: float, regime: str = "") -> bool:
+        """Regime-aware entry-style decision. Returns True to HOLD as a pending
+        limit (wait for pullback), False to fill NOW at market.
+
+        Drift = how far price has run past the signal entry in the PROFIT
+        direction (the 'chasing' scenario), measured in R (entry->SL distance):
+          - Fresh   (<= ENTRY_DRIFT_FRESH_R): market now.
+          - Lagging (fresh..ENTRY_DRIFT_MAX_R): market ONLY in a chase regime
+            (trending); otherwise wait for a pullback.
+          - Too far (> ENTRY_DRIFT_MAX_R): always wait for a pullback.
+        Explicit limit-typed signals still wait until the entry is reached.
+        Note: the executor re-sizes notional from the ACTUAL fill, so chasing
+        keeps risk ~constant; the drift band protects R:R, not risk."""
+        entry = self._entry_ref(sig)
+        sl = float(getattr(sig, "stop_loss", 0.0) or 0.0)
         if price <= 0 or entry <= 0:
             return False
+
+        # Explicit limit entry: wait until the entry price is touched.
         if getattr(sig, "entry_type", "market") == "limit":
             return not self._limit_reached(sig, price)
-        # Market-typed signal: only wait if price moved in the PROFIT direction
-        if sig.is_long:
-            runaway = price >= entry * 1.002  # 0.2% past entry for longs
-        else:
-            runaway = price <= entry * 0.998
-        return runaway
+
+        # Market-typed: only consider waiting if price ran in the PROFIT
+        # direction. At/better than entry -> fill now.
+        drift_abs = (price - entry) if sig.is_long else (entry - price)
+        if drift_abs <= 0:
+            return False
+
+        # Drift in R units (fallback to 1% proxy if SL missing/degenerate).
+        r_dist = abs(entry - sl) if sl > 0 else entry * 0.01
+        if r_dist <= 0:
+            return False
+        drift_r = drift_abs / r_dist
+
+        fresh = float(getattr(scfg, "ENTRY_DRIFT_FRESH_R", 0.25))
+        far = float(getattr(scfg, "ENTRY_DRIFT_MAX_R", 0.50))
+        chase_regimes = getattr(scfg, "ENTRY_CHASE_REGIMES", {"TRENDING"})
+        reg = str(regime or "").upper()
+
+        if drift_r <= fresh:
+            return False                    # fresh — market now
+        if drift_r <= far:
+            return reg not in chase_regimes # lagging — chase only in trend
+        return True                         # too far — wait for pullback
 
     def _limit_reached(self, sig, price: float) -> bool:
+        ref = self._entry_ref(sig)
         if sig.is_long:
-            return price <= sig.entry_mid
+            return price <= ref
         else:
-            return price >= sig.entry_mid
+            return price >= ref
 
     # ---------- public: handle pending limits (call periodically) ----------
     async def check_pending_limits(self) -> None:
@@ -748,6 +803,31 @@ class SignalCopyOrchestrator:
                 continue
             if self._limit_reached(sig, price):
                 self._pending_limits.pop(token, None)
+                # Re-validate on pullback fill: the setup may have decayed while
+                # waiting (price/flow moved against the thesis). If it is no
+                # longer VALID, cancel the pending entry instead of chasing a
+                # stale signal. Toggle via SIGNAL_COPY_ENTRY_REVALIDATE_ON_FILL.
+                if getattr(scfg, "ENTRY_REVALIDATE_ON_FILL", True):
+                    try:
+                        revalid = validate_signal(sig, metrics)
+                        if revalid.verdict != Verdict.VALID:
+                            logger.warning(
+                                "[PENDING] %s pullback filled but re-validation=%s "
+                                "(score=%.1f) — cancel entry (stale setup)",
+                                sig.symbol, revalid.verdict.value, revalid.score)
+                            await self.confirmations.mark(
+                                token, ConfirmState.EXPIRED,
+                                note=f"revalidate_failed:{revalid.verdict.value}:{revalid.score:.0f}")
+                            await self._notify_trades_channel(
+                                f"🚫 Batal entry {sig.symbol} {sig.side.value}: harga kembali ke "
+                                f"limit tapi sinyal sudah tidak valid "
+                                f"({revalid.verdict.value}, score {revalid.score:.0f}).")
+                            continue
+                        # refresh snapshot so sizing/report use current metrics
+                        pc.metrics_snapshot = revalid.metrics_snapshot or metrics
+                    except Exception as exc:
+                        logger.warning("[PENDING] re-validation error for %s: %s "
+                                       "(proceeding with entry)", sig.symbol, exc)
                 await self.confirmations.mark(
                     token,
                     ConfirmState.APPROVED,
