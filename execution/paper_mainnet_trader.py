@@ -132,11 +132,20 @@ class PaperMainnetTrader:
             return None
 
         qty = notional / mark if mark > 0 else 0
+        # Observability: capture the signal-copy enrichment snapshot (metrics,
+        # score, confidence) at open so the trade journal isn't blank at close.
+        # This is the metrics dict the executor forwards as `adv_snapshot`
+        # (price/cvd/oi/funding/rsi/vol + mtf/tv/vision). It does NOT contain
+        # Nexus-scanner SMC structure fields — those stay UNKNOWN by design.
+        _adv_snapshot = params.get("adv_snapshot") or params.get("adv") or {}
         self.positions[symbol] = {
             "symbol": symbol, "side": side, "entry_price": mark,
             "sl_price": sl_price, "tp1_price": tp1, "tp2_price": tp2, "tp3_price": tp3,
             "qty": qty, "notional": notional, "leverage": leverage, "regime": regime,
             "opened_at": datetime.now(UTC), "status": "OPEN", "tp1_hit": False,
+            "adv_snapshot": dict(_adv_snapshot) if isinstance(_adv_snapshot, dict) else {},
+            "score": float(params.get("score", 0) or 0),
+            "confidence": float(params.get("confidence", 0) or 0),
         }
         logger.info("[PAPER] OPEN %s %s @ %.6g (mainnet mark) | SL %.6g TP1 %.6g | $%.0f",
                     side, symbol, mark, sl_price, tp1, notional)
@@ -189,6 +198,19 @@ class PaperMainnetTrader:
                 "normalized_reason": reason, "sl_original": pos["sl_price"],
                 "active_sl_at_exit": pos["sl_price"], "sl_kind_at_exit": "ORIGINAL",
                 "regime": "PAPER_MAINNET",
+                # Observability: forward the enrichment captured at open so the
+                # journal records WHY we entered (score/confidence + full metrics
+                # blob incl. mtf/tv/vision) instead of blank UNKNOWN columns.
+                "adv_snapshot": pos.get("adv_snapshot") or {},
+                "score": pos.get("score", 0.0),
+                "priority_score": pos.get("score", 0.0),
+                "confidence": pos.get("confidence", 0.0),
+                "cvd": (pos.get("adv_snapshot") or {}).get("cvd"),
+                "oi_15m_pct": (pos.get("adv_snapshot") or {}).get("oi_change_15m_pct"),
+                "oi_1h_pct": (pos.get("adv_snapshot") or {}).get("oi_change_1h_pct"),
+                "funding_pct": (pos.get("adv_snapshot") or {}).get("funding_rate"),
+                "vol_ratio": (pos.get("adv_snapshot") or {}).get("vol_ratio"),
+                "rsi": (pos.get("adv_snapshot") or {}).get("rsi"),
             })
 
         # Feed realized PnL back into the RiskManager so equity/daily_pnl reflect
