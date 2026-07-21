@@ -152,7 +152,7 @@ ADVERSARIAL_ENABLED = _bool("SIGNAL_COPY_ADVERSARIAL_ENABLED", True)
 # Default "soft": stop the LLM from vetoing strong deterministic setups (user ask).
 ADVERSARIAL_MODE = os.getenv("SIGNAL_COPY_ADVERSARIAL_MODE", "soft").strip().lower()
 # Deterministic validation score at/above which the LLM can NEVER block.
-ADVERSARIAL_SOFT_FLOOR = float(os.getenv("SIGNAL_COPY_ADVERSARIAL_SOFT_FLOOR", "75"))
+ADVERSARIAL_SOFT_FLOOR = float(os.getenv("SIGNAL_COPY_ADVERSARIAL_SOFT_FLOOR", "90"))
 
 # --- Entry style: regime-aware market vs pending-limit (chase control) ---
 # Drift = how far current price sits from the signal entry, measured in R
