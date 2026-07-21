@@ -121,6 +121,16 @@ class PaperMainnetTrader:
             logger.warning("[PAPER] %s SHORT SL %.6g <= mark %.6g — reject (instant-stop guard)", symbol, sl_price, mark)
             return None
 
+        # Stale-signal guard: reject if TP1 is already on the wrong side of the
+        # fill (price passed TP1 before we filled). Without this the mgmt loop's
+        # first poll instantly "hits" TP1 and closes at a LOSS mislabeled as TP1.
+        if side == "LONG" and tp1 and tp1 <= mark:
+            logger.warning("[PAPER] %s LONG TP1 %.6g <= mark %.6g — reject (stale-signal guard)", symbol, tp1, mark)
+            return None
+        if side == "SHORT" and tp1 and tp1 >= mark:
+            logger.warning("[PAPER] %s SHORT TP1 %.6g >= mark %.6g — reject (stale-signal guard)", symbol, tp1, mark)
+            return None
+
         qty = notional / mark if mark > 0 else 0
         self.positions[symbol] = {
             "symbol": symbol, "side": side, "entry_price": mark,
