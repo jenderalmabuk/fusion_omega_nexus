@@ -3,6 +3,30 @@ from nexus.data_bridge import NexusDataBridge
 from signal_copy.telegram_formatter import build_parser_report
 
 
+class _DummyResp:
+    def raise_for_status(self):
+        return None
+
+    def json(self):
+        return {
+            "result": {
+                "list": [
+                    {"timestamp": 1000, "openInterest": "100.0"},
+                    {"timestamp": 1300, "openInterest": "101.0"},
+                    {"timestamp": 1600, "openInterest": "102.0"},
+                    {"timestamp": 1900, "openInterest": "121.0"},
+                    {"timestamp": 2200, "openInterest": "133.1"},
+                ]
+            }
+        }
+
+
+class _DummyRequests:
+    @staticmethod
+    def get(*args, **kwargs):
+        return _DummyResp()
+
+
 class _Side:
     value = "LONG"
 
@@ -50,6 +74,34 @@ def test_calc_oi_changes_includes_5m_delta():
     assert out["oi_change_5m_pct"] == 10.0
     assert out["oi_change_15m_pct"] == 21.0
     assert out["oi_change_1h_pct"] == 33.1
+
+
+def test_load_oi_5m_raw_falls_back_for_universe_miss(monkeypatch):
+    import sys
+
+    bridge = NexusDataBridge.__new__(NexusDataBridge)
+    monkeypatch.setitem(sys.modules, "requests", _DummyRequests)
+    monkeypatch.setattr("nexus.data_bridge.Path.exists", lambda self: False)
+    monkeypatch.setattr("nexus.data_bridge._canonical_supported", lambda symbol: True)
+
+    out = bridge._load_oi_5m_raw("RIFUSDT")
+
+    assert out["oi_source"] == "bybit_direct_5m"
+    assert out["oi_change_5m_pct"] == 10.0
+    assert out["oi_change_15m_pct"] == 31.7822
+
+
+def test_signal_outside_canonical_is_hard_rejected(monkeypatch):
+    from signal_copy.signal_schema import ParsedSignal, SignalSide
+    from signal_copy.validation_engine import Verdict, validate_signal
+
+    monkeypatch.setenv("SIGNAL_COPY_LEGACY_VALIDATION", "0")
+    monkeypatch.setattr("signal_copy.validation_engine._canonical_supported", lambda symbol: False)
+    sig = ParsedSignal("RIFUSDT", SignalSide.LONG, 0.089, 0.0915, stop_loss=0.0865, take_profits=[0.0945])
+    out = validate_signal(sig, {"data_valid": True, "price": 0.1289})
+
+    assert out.verdict == Verdict.REJECT
+    assert "canonical" in out.hard_blocks[0]
 
 
 def test_parser_report_shows_oi_5m_15m_1h():

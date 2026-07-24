@@ -37,6 +37,7 @@ class PaperMainnetTrader:
         self._task: Optional[asyncio.Task] = None
         self._session: Optional[aiohttp.ClientSession] = None
         self._journal = None
+        self.risk_mgr: Any = None  # set by run_gateway wiring; enables realized-PnL equity sync
 
     # ── lifecycle ────────────────────────────────────────────────
     async def start(self):
@@ -120,12 +121,31 @@ class PaperMainnetTrader:
             logger.warning("[PAPER] %s SHORT SL %.6g <= mark %.6g — reject (instant-stop guard)", symbol, sl_price, mark)
             return None
 
+        # Stale-signal guard: reject if TP1 is already on the wrong side of the
+        # fill (price passed TP1 before we filled). Without this the mgmt loop's
+        # first poll instantly "hits" TP1 and closes at a LOSS mislabeled as TP1.
+        if side == "LONG" and tp1 and tp1 <= mark:
+            logger.warning("[PAPER] %s LONG TP1 %.6g <= mark %.6g — reject (stale-signal guard)", symbol, tp1, mark)
+            return None
+        if side == "SHORT" and tp1 and tp1 >= mark:
+            logger.warning("[PAPER] %s SHORT TP1 %.6g >= mark %.6g — reject (stale-signal guard)", symbol, tp1, mark)
+            return None
+
         qty = notional / mark if mark > 0 else 0
+        # Observability: capture the signal-copy enrichment snapshot (metrics,
+        # score, confidence) at open so the trade journal isn't blank at close.
+        # This is the metrics dict the executor forwards as `adv_snapshot`
+        # (price/cvd/oi/funding/rsi/vol + mtf/tv/vision). It does NOT contain
+        # Nexus-scanner SMC structure fields — those stay UNKNOWN by design.
+        _adv_snapshot = params.get("adv_snapshot") or params.get("adv") or {}
         self.positions[symbol] = {
             "symbol": symbol, "side": side, "entry_price": mark,
             "sl_price": sl_price, "tp1_price": tp1, "tp2_price": tp2, "tp3_price": tp3,
             "qty": qty, "notional": notional, "leverage": leverage, "regime": regime,
             "opened_at": datetime.now(UTC), "status": "OPEN", "tp1_hit": False,
+            "adv_snapshot": dict(_adv_snapshot) if isinstance(_adv_snapshot, dict) else {},
+            "score": float(params.get("score", 0) or 0),
+            "confidence": float(params.get("confidence", 0) or 0),
         }
         logger.info("[PAPER] OPEN %s %s @ %.6g (mainnet mark) | SL %.6g TP1 %.6g | $%.0f",
                     side, symbol, mark, sl_price, tp1, notional)
@@ -178,7 +198,58 @@ class PaperMainnetTrader:
                 "normalized_reason": reason, "sl_original": pos["sl_price"],
                 "active_sl_at_exit": pos["sl_price"], "sl_kind_at_exit": "ORIGINAL",
                 "regime": "PAPER_MAINNET",
+                # Observability: forward the enrichment captured at open so the
+                # journal records WHY we entered (score/confidence + full metrics
+                # blob incl. mtf/tv/vision) instead of blank UNKNOWN columns.
+                "adv_snapshot": pos.get("adv_snapshot") or {},
+                "score": pos.get("score", 0.0),
+                "priority_score": pos.get("score", 0.0),
+                "confidence": pos.get("confidence", 0.0),
+                "cvd": (pos.get("adv_snapshot") or {}).get("cvd"),
+                "oi_15m_pct": (pos.get("adv_snapshot") or {}).get("oi_change_15m_pct"),
+                "oi_1h_pct": (pos.get("adv_snapshot") or {}).get("oi_change_1h_pct"),
+                "funding_pct": (pos.get("adv_snapshot") or {}).get("funding_rate"),
+                "vol_ratio": (pos.get("adv_snapshot") or {}).get("vol_ratio"),
+                "rsi": (pos.get("adv_snapshot") or {}).get("rsi"),
             })
+
+        # Feed realized PnL back into the RiskManager so equity/daily_pnl reflect
+        # actual closed trades (was frozen at starting_balance before this).
+        equity_after = None
+        try:
+            rm = self.risk_mgr
+            if rm is not None and hasattr(rm, "sync_balance"):
+                equity_after = float(rm.get_current_equity()) + pnl_usd
+                rm.sync_balance(equity_after)
+                if pnl_usd > 0 and hasattr(rm, "wins"):
+                    rm.wins += 1
+                elif pnl_usd < 0 and hasattr(rm, "losses"):
+                    rm.losses += 1
+        except Exception as e:
+            logger.warning("[PAPER] equity sync failed for %s: %s", symbol, e)
+
+        # Fire-and-forget close notification to the trades channel (was never sent).
+        try:
+            asyncio.create_task(self._notify_close({
+                "symbol": symbol, "side": side, "reason": reason,
+                "normalized_reason": reason, "exit_price": exit_price,
+                "pnl_pct": pnl_pct, "pnl_usd": pnl_usd, "hold_minutes": hold_min,
+                "equity": equity_after if equity_after is not None else 0.0,
+                "sl_original": pos["sl_price"], "active_sl_at_exit": pos["sl_price"],
+                "sl_kind_at_exit": "ORIGINAL",
+            }))
+        except Exception as e:
+            logger.warning("[PAPER] close-notify dispatch failed for %s: %s", symbol, e)
+
+    async def _notify_close(self, payload: Dict[str, Any]) -> None:
+        """Build + send a CLOSE card to the trades channel. Never raises."""
+        try:
+            from signal_copy.telegram_formatter import build_close_message
+            from signal_copy.telegram_transport import send_trades_notification
+            msg = build_close_message(payload)
+            await send_trades_notification(msg)
+        except Exception as e:
+            logger.warning("[PAPER] close notification send failed: %s", e)
 
     # ── introspection (RiskManager may call these) ───────────────
     def position(self, symbol: str) -> float:

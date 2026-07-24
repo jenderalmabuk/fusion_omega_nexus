@@ -21,6 +21,7 @@ import httpx
 import pandas as pd
 
 _NEXUS_URL = os.environ.get("NEXUS_API_URL", "http://localhost:8000")
+_STALE_MULT = float(os.environ.get("NEXUS_STALE_MULT", "5"))
 
 COLUMNS = ["open_time", "open", "high", "low", "close", "volume", "taker_buy_base"]
 
@@ -52,31 +53,53 @@ def fetch_recent(symbol: str, interval: str = "1h", limit: int = 300) -> pd.Data
     tf = interval
 
     df = pd.DataFrame(columns=COLUMNS)
+    now = pd.Timestamp(_dt.datetime.now(_dt.timezone.utc)).tz_localize(None)
+    stale_limit = _STALE_MULT * TF_SEC.get(tf, 60)
+    # Prefer the freshest source. Binance is tried first, but if its newest
+    # candle is stale (e.g. symbol delisted from Binance futures -> the row
+    # freezes into a zombie), fall back to Bybit instead of trusting a frozen
+    # frame. The last source is kept as fallback if every source is stale.
     for exchange in ("binance", "bybit"):
         try:
             r = client.get(
-                f"{_NEXUS_URL}/klines/{exchange}/{symbol}",
+                f"{_NEXUS_URL}/klines/{exchange}/{query_symbol}",
                 params={"tf": tf, "limit": limit},
                 timeout=15,
             )
             if r.status_code == 200 and r.json().get("count", 0) > 0:
-                df = _to_df(r.json()["data"], symbol=symbol, tf=tf)
-                break
+                cand = _to_df(r.json()["data"], symbol=symbol, tf=tf)
+                if len(cand) == 0:
+                    continue
+                df = cand  # keep as fallback even if stale
+                last_open = pd.Timestamp(cand["open_time"].iloc[-1])
+                if float((now - last_open).total_seconds()) <= stale_limit:
+                    break  # fresh enough — stop here
         except Exception:
             continue
+
+    # If a multi-minute tf is empty/stale on every source, synthesize it from
+    # 1m (which may be live on a different exchange). Rescues symbols that lost
+    # native 3m when delisted from Binance but still trade on Bybit — Bybit does
+    # not store 3m for any symbol, so 3m is otherwise Binance-only.
+    _needs_synth = len(df) == 0
+    if not _needs_synth:
+        _lo = pd.Timestamp(df["open_time"].iloc[-1])
+        _needs_synth = float((now - _lo).total_seconds()) > stale_limit
+    if _needs_synth and TF_SEC.get(tf, 0) > 60:
+        synth = _resample_1m(symbol, tf, limit)
+        if len(synth) > 0:
+            df = synth
 
     # ── Stale-data guard: lag = now_utc - last open_time ──
     lag_sec = None
     stale = False
     if len(df) > 0:
         last_open = pd.Timestamp(df["open_time"].iloc[-1])
-        now = pd.Timestamp(_dt.datetime.now(_dt.timezone.utc)).tz_localize(None)
         lag_sec = float((now - last_open).total_seconds())
-        tf_dur = TF_SEC.get(tf, 60)
-        if lag_sec > 3 * tf_dur:
+        if lag_sec > stale_limit:
             stale = True
             print(f"[WARN] STALE DATA {symbol} {tf} lag={int(lag_sec)}s "
-                  f"(> {3 * tf_dur}s = 3x timeframe)")
+                  f"(> {int(stale_limit)}s = {_STALE_MULT:g}x timeframe)")
     df.attrs["lag_sec"] = lag_sec
     df.attrs["stale"] = stale
     return df
@@ -86,6 +109,31 @@ def _get_client() -> httpx.Client:
     if not hasattr(_get_client, "_client"):
         _get_client._client = httpx.Client(timeout=httpx.Timeout(15))
     return _get_client._client
+
+
+def _resample_1m(symbol: str, tf: str, limit: int) -> pd.DataFrame:
+    """Build `tf` bars from 1m klines (freshest source) when the native tf is
+    unavailable/stale on every exchange. Rescues Bybit-only symbols on 3m —
+    Bybit stores no 3m, and a delisted Binance symbol freezes its native 3m.
+    Returns COLUMNS schema, or an empty frame if 1m is also unusable."""
+    tf_sec = TF_SEC.get(tf, 0)
+    if tf_sec <= 60 or tf_sec % 60 != 0:
+        return pd.DataFrame(columns=COLUMNS)
+    step = tf_sec // 60  # 1m bars per synthesized bar
+    # fetch_recent on 1m won't recurse: TF_SEC["1m"]==60 fails the > 60 guard.
+    m1 = fetch_recent(symbol, "1m", limit * step)
+    if len(m1) == 0:
+        return pd.DataFrame(columns=COLUMNS)
+    g = m1.set_index(pd.to_datetime(m1["open_time"]))
+    agg = {"open": "first", "high": "max", "low": "min", "close": "last",
+           "volume": "sum", "taker_buy_base": "sum"}
+    if "quote_volume" in g.columns:
+        agg["quote_volume"] = "sum"
+    out = (g.resample(f"{step}min", label="left", closed="left")
+             .agg(agg).dropna(subset=["open"]).reset_index())
+    out = out.rename(columns={out.columns[0]: "open_time"})
+    keep = COLUMNS + (["quote_volume"] if "quote_volume" in out.columns else [])
+    return out[keep].reset_index(drop=True)
 
 
 def _to_df(rows: list[dict], symbol: str = "?", tf: str = "?") -> pd.DataFrame:

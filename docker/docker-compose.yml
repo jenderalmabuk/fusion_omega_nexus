@@ -55,12 +55,15 @@ services:
       BINANCE_API_KEY: ${BINANCE_API_KEY}
       BINANCE_SECRET: ${BINANCE_SECRET}
       COLLECTOR_MODE: binance
+      UNIVERSE_FILE: /app/runtime/revo/canonical_universe.txt
       # KLINE_LIMIT=50 (was code-default 500): 500-candle re-fetch per cycle
       # UPSERTs ~1.2M rows/60s (9x bybit) -> TimescaleDB write amplification ->
       # collector cycle degraded 178s->530s -> h1/m30 5m data STALE (lag>900s).
       # 50 candles matches bybit's healthy write footprint (~350 rows/sym).
       # DB retains full history via accumulative upsert; only fetch depth shrinks.
       KLINE_LIMIT: "50"
+    volumes:
+      - ../runtime/revo:/app/runtime/revo:ro
     depends_on:
       timescaledb:
         condition: service_healthy
@@ -79,6 +82,9 @@ services:
       BYBIT_API_KEY: ${BYBIT_API_KEY}
       BYBIT_SECRET: ${BYBIT_SECRET}
       COLLECTOR_MODE: bybit
+      UNIVERSE_FILE: /app/runtime/revo/canonical_universe.txt
+    volumes:
+      - ../runtime/revo:/app/runtime/revo:ro
     depends_on:
       timescaledb:
         condition: service_healthy
@@ -129,6 +135,8 @@ services:
       - ../runtime/state:/state
       - ../runtime/logs:/logs
       - ../runtime/whales:/app/runtime/whales
+      - ../runtime/revo:/app/runtime/revo:ro
+      - ../bots/config.yaml:/app/bots/config.yaml:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -168,6 +176,8 @@ services:
       - ../runtime/state:/state
       - ../runtime/logs:/logs
       - ../runtime/whales:/app/runtime/whales
+      - ../runtime/revo:/app/runtime/revo:ro
+      - ../bots/config.yaml:/app/bots/config.yaml:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -223,10 +233,16 @@ services:
       - REVO_ENTRY_MIN_SCORE=9
       - REVO_ENTRY_DISCOUNT_MIN_PCT=3.5
       - REVO_ENTRY_RSI_MAX=40
-      # Falling-knife floor: reject entries deeper than 9% below EMA55 (crash, not
-      # pullback). Backtest MS=9 (=live pop): PF 1.487->1.561, DD 5.85->5.52%, net
-      # held (+205). Blocks both EVAA entries (-9.1%, -11.2%) that motivated it.
-      - REVO_ENTRY_DISCOUNT_MAX_PCT=9
+      # Falling-knife floor: reject entries deeper than 6% below EMA55 (crash, not
+      # pullback). Tightened 9->6 on 2026-07-22 gate-rebalance backtest (Jun1-Jul10,
+      # 91 pairs): knife_only drops only ~5 entries (193->188) while PF stays 1.23
+      # and PnL stays positive -> near-free quality gain. Widening disc_MIN was
+      # REJECTED (PF 1.27->0.99, PnL negative). Funding-z gate REJECTED (would cut
+      # 31% of entries per audit, only 1% are truly crowded).
+      - REVO_ENTRY_DISCOUNT_MAX_PCT=6
+      # Same-pair LOSS cooldown: block re-entry on a pair that closed at a loss
+      # within 12h. Replaces the removed dynamic-blacklist cron. 0 disables.
+      - REVO_LOSS_COOLDOWN_HOURS=12
       # Bybit median qvol verified 2026-07-18: mid-cap altcoins ~15k-176k
       # vs Binance ~167k-986k (esports 4x, 1000xec 21x). 200k calibrated to
       # Binance backtest — too strict for Bybit universe. Lowered to 50k.
@@ -247,6 +263,11 @@ services:
       - REVO_FLOW_MAX_AGE_SEC=660
       - REVO_FLOW_CONTEXT_PATH=/freqtrade/user_data/local/revo_alpha/runtime/bybit/revo_flow_context.json
       - REVO_ENTRY_AUDIT_PATH=/freqtrade/user_data/local/revo_entry_audit.jsonl
+      # Flow-gate A/B (2026-07-23): adaptive runs SOFT scoring gate (flow dir = +/-2
+      # score, min_score+1, veto only heavy distribution). Backtest shows edge is
+      # reversion-based and independent of flow gate; this frees throughput while
+      # keeping a quality bar. Set to "hard" to revert to continuation-only control.
+      - REVO_FLOW_GATE_MODE=scoring
     volumes:
       - ../revo_adaptive/strategies:/freqtrade/user_data/strategies
       - ../revo_adaptive/configs:/freqtrade/user_data/configs
@@ -288,7 +309,10 @@ services:
       - REVO_ENTRY_MIN_SCORE=9
       - REVO_ENTRY_DISCOUNT_MIN_PCT=3.5
       - REVO_ENTRY_RSI_MAX=40
-      - REVO_ENTRY_DISCOUNT_MAX_PCT=9
+      # Falling-knife floor tightened 9->6 (see adaptive bot for backtest rationale).
+      - REVO_ENTRY_DISCOUNT_MAX_PCT=6
+      # Same-pair LOSS cooldown 12h (replaces removed blacklist cron). 0 disables.
+      - REVO_LOSS_COOLDOWN_HOURS=12
       - REVO_MIN_QVOL_5M=50000
       - REVO_LIQ_MODE=med48
       - REVO_PAIR_BLACKLIST_PATH=/freqtrade/user_data/local/revo_pair_blacklist.json
@@ -297,6 +321,10 @@ services:
       - REVO_FLOW_MAX_AGE_SEC=660
       - REVO_FLOW_CONTEXT_PATH=/freqtrade/user_data/local/revo_alpha/runtime/bybit/revo_flow_context.json
       - REVO_ENTRY_AUDIT_PATH=/freqtrade/user_data/local/revo_auditable_entry_audit.jsonl
+      # Flow-gate A/B (2026-07-23): auditable runs BLOCK-DANGER gate (Opsi A) - no
+      # continuation requirement, veto ONLY heavy distribution (cvd_z < -1.5).
+      # This bot is the treatment arm vs adaptive's scoring gate. Set "hard" to revert.
+      - REVO_FLOW_GATE_MODE=block_danger
     volumes:
       - ../revo_adaptive/strategies:/freqtrade/user_data/strategies
       - ../revo_adaptive/configs:/freqtrade/user_data/configs
@@ -364,6 +392,16 @@ services:
       SIGNAL_COPY_TG_LISTENER_BOT_TOKEN: ${SIGNAL_COPY_TG_LISTENER_BOT_TOKEN}
       SIGNAL_COPY_TG_CHANNELS: ${SIGNAL_COPY_TG_CHANNELS}
       SIGNAL_COPY_CALIBRATION_CHANNELS: ${SIGNAL_COPY_CALIBRATION_CHANNELS}
+      # Per-channel pending-limit expiry profiles (Opsi A)
+      SIGNAL_COPY_EXPIRY_SCALP: ${SIGNAL_COPY_EXPIRY_SCALP:-2700}
+      SIGNAL_COPY_EXPIRY_STANDARD: ${SIGNAL_COPY_EXPIRY_STANDARD:-10800}
+      SIGNAL_COPY_EXPIRY_SWING: ${SIGNAL_COPY_EXPIRY_SWING:-64800}
+      # Max concurrent open positions (GLOBAL shared book). Raised 5->20 (2026-07-23).
+      MAX_OPEN_POS_GLOBAL: ${MAX_OPEN_POS_GLOBAL:-20}
+      SIGNAL_COPY_CHANNELS_SCALP: ${SIGNAL_COPY_CHANNELS_SCALP}
+      SIGNAL_COPY_CHANNELS_SWING: ${SIGNAL_COPY_CHANNELS_SWING}
+      # Per-channel vision routing (parser-only channels excluded)
+      SIGNAL_COPY_CHANNELS_VISION: ${SIGNAL_COPY_CHANNELS_VISION}
       # Dual channel notifications (new format)
       SIGNAL_COPY_PARSER_NOTIFY_BOT_TOKEN: ${SIGNAL_COPY_PARSER_NOTIFY_BOT_TOKEN}
       SIGNAL_COPY_PARSER_NOTIFY_CHAT_ID: ${SIGNAL_COPY_PARSER_NOTIFY_CHAT_ID}
@@ -433,6 +471,10 @@ services:
     container_name: nexus_fusionnew_h1
     environment:
       BOT_NAME: h1_fusionnew
+      # #4: relax btc_regime — block counter-trend only when BTC regime is STRONG
+      # (|EMA50-EMA200|/EMA200 >= 0.75%). Was 0-trade for days under binary filter.
+      # Validated backtest OOS PF 3.68->4.10 (H1). Set "0" to restore old behavior.
+      BTC_REGIME_STRONG_PCT: "0.75"
       PYTHONUNBUFFERED: "1"
       NEXUS_API_URL: http://fastapi:8000
       STATE_DIR: /state
@@ -445,6 +487,7 @@ services:
       - ../runtime/fusionnew:/state
       - ../runtime/logs:/logs
       - ../runtime/whales:/app/runtime/whales
+      - ../runtime/revo:/app/runtime/revo:ro
       - ../bots/config.yaml:/app/bots/config.yaml:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -462,6 +505,12 @@ services:
     container_name: nexus_fusionnew_m30
     environment:
       BOT_NAME: m30_fusionnew
+      # #4: relax btc_regime (see fusionnew_h1). Validated OOS PF 3.58->3.66 (M30).
+      BTC_REGIME_STRONG_PCT: "0.75"
+      # #3: M30 uses 3m LTF to differentiate from H1 (both were 5m => identical
+      # signals). Validated OOS PF 3.58->5.14, DD 84.8->61.0. Only this bot; the
+      # imbalance M30 bot stays 5m (3m doubled its DD).
+      LTF_OVERRIDE: "3m"
       PYTHONUNBUFFERED: "1"
       NEXUS_API_URL: http://fastapi:8000
       STATE_DIR: /state
@@ -474,6 +523,7 @@ services:
       - ../runtime/fusionnew:/state
       - ../runtime/logs:/logs
       - ../runtime/whales:/app/runtime/whales
+      - ../runtime/revo:/app/runtime/revo:ro
       - ../bots/config.yaml:/app/bots/config.yaml:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"

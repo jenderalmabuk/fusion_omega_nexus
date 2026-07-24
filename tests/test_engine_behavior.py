@@ -50,6 +50,25 @@ def test_fresh_pending_not_expired(tmp_path, monkeypatch):
     assert engine.trades[0]["status"] == "PENDING"
 
 
+def test_pending_ignores_pre_order_bar(tmp_path, monkeypatch):
+    """F-02 — replayed candles before order creation must not fill a pending order."""
+    engine = make_engine(tmp_path, monkeypatch)
+    opened_at = time.time()
+    trade = {
+        "symbol": "TESTUSDT", "tier": "M30", "side": "BUY", "imb_side": "BULL",
+        "entry": 100.0, "sl": 99.0, "tp": 103.0, "qty": 1.0, "status": "PENDING",
+        "t_complete": "2026-01-01 00:00:00", "expiry_min": 60,
+        "opened_at": opened_at,
+    }
+    engine.trades.append(trade)
+
+    engine._manage_pending(trade, "TESTUSDT", hi=101.0, lo=99.0, bar_epoch=opened_at - 60)
+    assert trade["status"] == "PENDING"
+
+    engine._manage_pending(trade, "TESTUSDT", hi=101.0, lo=99.0, bar_epoch=opened_at + 60)
+    assert trade["status"] == "OPEN"
+
+
 def test_seen_not_consumed_on_open_pending_exception(tmp_path, monkeypatch):
     """5.2d — a technical failure in _open_pending must NOT mark the signal
     as seen; it must stay retryable next cycle."""

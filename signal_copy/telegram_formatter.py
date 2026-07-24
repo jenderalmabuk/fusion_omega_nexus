@@ -399,10 +399,21 @@ def build_parser_report(
     elif btc_corr:
         lines.append(f"   BTC Corr: {btc_corr:.2f}")
 
-    # Section 4: Adversarial (if any)
+    # Section 4: Adversarial (if any). The judge said NO; HOW that NO was
+    # applied is already encoded in the FINAL verdict, so the card must reflect
+    # the real outcome instead of always printing "REJECT":
+    #   VALID  -> soft-override (score >= floor): entry WAS opened anyway
+    #   WEAK   -> soft-downgrade (score < floor): NOT executed
+    #   REJECT -> hard block: NOT executed
     if adversarial_verdict:
         lines.append("")
-        lines.append(f"🚫 <b>ADVERSARIAL: REJECT</b>")
+        if verdict == "VALID":
+            lines.append("⚠️ <b>ADVERSARIAL: NO — DI-OVERRIDE, ENTRY TETAP DIBUKA</b>")
+            lines.append("   Skor ≥ floor (soft-mode): setup high-conviction, trade DIEKSEKUSI meski adversarial menolak.")
+        elif verdict == "WEAK":
+            lines.append("🚫 <b>ADVERSARIAL: NO → downgrade WEAK — TIDAK dieksekusi</b>")
+        else:
+            lines.append("🚫 <b>ADVERSARIAL: REJECT — entry DIBLOKIR</b>")
         lines.append(f"   {adversarial_verdict[:300]}")
 
     # Section 5: Calib note
@@ -452,7 +463,7 @@ def build_execution_message(
     if ok:
         header = f"✅ <b>EXECUTED</b> {icon} {side_str} {symbol}"
     else:
-        header = f"❌ <b>EXECUTION FAILED</b> {icon} {side_str} {symbol}"
+        header = f"✅ VALID tapi ❌ <b>NOT EXECUTED</b> {icon} {side_str} {symbol}"
 
     tv_link = get_tradingview_link(symbol)
 

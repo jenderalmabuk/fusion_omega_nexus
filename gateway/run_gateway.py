@@ -76,6 +76,10 @@ def _build_gateway() -> ExecutionGateway:
     elif hasattr(risk_mgr, "trader"):
         risk_mgr.trader = trader
 
+    # Back-reference so the trader can feed realized PnL into equity on close.
+    if hasattr(trader, "risk_mgr"):
+        trader.risk_mgr = risk_mgr
+
     return ExecutionGateway(trader=trader, risk_mgr=risk_mgr)
 
 
