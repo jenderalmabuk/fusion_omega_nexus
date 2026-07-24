@@ -463,7 +463,7 @@ def build_execution_message(
     if ok:
         header = f"✅ <b>EXECUTED</b> {icon} {side_str} {symbol}"
     else:
-        header = f"❌ <b>EXECUTION FAILED</b> {icon} {side_str} {symbol}"
+        header = f"✅ VALID tapi ❌ <b>NOT EXECUTED</b> {icon} {side_str} {symbol}"
 
     tv_link = get_tradingview_link(symbol)
 

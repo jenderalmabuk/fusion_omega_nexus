@@ -123,11 +123,42 @@ class SignalExecutor:
         tp_ladder = list(sig.take_profits) if sig.take_profits else []
         tp1 = tp_ladder[0] if tp_ladder else 0.0
         tp_full = tp_ladder[-1] if tp_ladder else 0.0
+
+        # ponytail: local mirror of the trader stale-signal guard; enough for
+        # user-facing NOT EXECUTED reasons. If the trader adds more guards,
+        # expose structured gateway reject reasons instead of duplicating them.
+        live_price = float(metrics.get("price", 0.0) or 0.0)
+        if live_price > 0 and tp1 > 0:
+            if sig.side == SignalSide.LONG and tp1 <= live_price:
+                return ExecutionOutcome(
+                    False, f"stale — price {live_price:g} already past TP1 {tp1:g}",
+                    sig.symbol, sig.side.value, entry_price, notional, sl_price, tp1, tp_full, risk_amount,
+                )
+            if sig.side == SignalSide.SHORT and tp1 >= live_price:
+                return ExecutionOutcome(
+                    False, f"stale — price {live_price:g} already past TP1 {tp1:g}",
+                    sig.symbol, sig.side.value, entry_price, notional, sl_price, tp1, tp_full, risk_amount,
+                )
         
         # Map TP levels to payload keys (tp1, tp2, tp3, ... tpN)
         tp_payload = {}
         for i, tp in enumerate(tp_ladder, start=1):
             tp_payload[f"tp{i}"] = tp
+
+        adv_snapshot = dict(metrics)
+        adv_snapshot.update({
+            "signal_source": sig.source_name or sig.source.value,
+            "source_chat_id": sig.source_chat_id,
+            "signal_id": sig.signal_id,
+            "signal_entry_low": sig.entry_low,
+            "signal_entry_high": sig.entry_high,
+            "signal_active_entry": getattr(sig, "active_entry", None),
+            "signal_entry_type": getattr(sig, "entry_type", ""),
+            "signal_timeframe": getattr(sig, "timeframe", ""),
+            "signal_leverage": sig.leverage,
+            "signal_tp_ladder": list(sig.take_profits),
+            "signal_raw_text": (sig.raw_text or "")[:1000],
+        })
 
         payload = {
             "symbol": sig.symbol,
@@ -152,8 +183,8 @@ class SignalExecutor:
             "signal_source": sig.source_name or sig.source.value,
             "signal_take_profits": list(sig.take_profits),
             "leverage": sig.leverage,
-            "adv": dict(metrics),
-            "adv_snapshot": dict(metrics),
+            "adv": adv_snapshot,
+            "adv_snapshot": adv_snapshot,
         }
 
         outcome = ExecutionOutcome(

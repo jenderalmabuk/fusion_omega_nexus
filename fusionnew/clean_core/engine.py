@@ -31,7 +31,7 @@ import requests
 from backtest.data import fetch_recent
 from backtest.faithful_imbalance import (
     FIB_EXPIRY, TIERS, _filter_ema_dist, _filter_flow, _filter_liquidity, _filter_stochastic,
-    _trend, _trend_ok, recent_setups, generate_setups,
+    _trend, _trend_ok, _trend_ok_strong, nearest_unmitigated_setups, recent_setups, generate_setups,
 )
 from clean_core.executor import FuturesTestnet
 
@@ -107,6 +107,55 @@ def _oi_snapshot(self, symbol: str) -> Dict[str, Any]:
 TF_SEC = {"1m": 60, "3m": 180, "5m": 300, "15m": 900, "30m": 1800,
           "1h": 3600, "4h": 14400, "1d": 86400}
 
+
+def _latest_oi_change(symbol: str, lookback: int = 3, max_stale_sec: int = 900) -> Dict[str, Any]:
+    """Read Bybit 5m OI snapshots from runtime/revo. Missing/stale = unknown, not block."""
+    path = Path(os.getenv("OI_5M_PATH", "/app/runtime/revo/oi_5m_raw_bybit.jsonl"))
+    try:
+        rows = path.read_text(encoding="utf-8", errors="ignore").splitlines()[-(lookback + 4):]
+        vals = []
+        now_ts = dt.datetime.now(dt.timezone.utc)
+        for line in rows:
+            d = json.loads(line)
+            rec = (d.get("records") or {}).get(symbol)
+            if not rec:
+                continue
+            ts = pd_to_datetime_safe(rec.get("ts") or d.get("ts"))
+            if ts is None:
+                continue
+            vals.append((ts.replace(tzinfo=dt.timezone.utc), float(rec.get("oi_value") or 0.0)))
+        if len(vals) <= lookback or vals[-1][1] <= 0 or vals[-1 - lookback][1] <= 0:
+            return {"ok": False, "reason": "missing"}
+        stale = (now_ts - vals[-1][0]).total_seconds()
+        if stale > max_stale_sec:
+            return {"ok": False, "reason": "stale", "stale_sec": stale}
+        prev = vals[-1 - lookback][1]
+        return {"ok": True, "chg": (vals[-1][1] - prev) / prev, "stale_sec": stale}
+    except Exception as exc:
+        return {"ok": False, "reason": f"err:{type(exc).__name__}"}
+
+
+def _pressure_against_setup(symbol: str, side: str, ltf) -> Dict[str, Any]:
+    """Block only when price + CVD + OI all support the opposite side.
+    ponytail: OI missing is allow+log; upgrade to exchange/API fallback if needed."""
+    if ltf is None or len(ltf) < 6 or "taker_buy_base" not in ltf.columns:
+        return {"block": False, "reason": "cvd_missing"}
+    close = ltf["close"].to_numpy()
+    vol = ltf["volume"].to_numpy()
+    tbb = ltf["taker_buy_base"].to_numpy()
+    cvd = np.cumsum(2 * tbb - vol)
+    w = 3 if len(ltf) >= 4 else 1
+    price_chg = (float(close[-1]) - float(close[-1 - w])) / max(float(close[-1 - w]), 1e-9)
+    cvd_delta = float(cvd[-1] - cvd[-1 - w])
+    oi = _latest_oi_change(symbol, lookback=3)
+    if not oi.get("ok"):
+        return {"block": False, "reason": "oi_" + str(oi.get("reason")), "oi_chg": None, "cvd_delta": cvd_delta, "price_chg": price_chg}
+    oi_chg = float(oi["chg"])
+    if side == "BULL" and price_chg < 0 and oi_chg > 0 and cvd_delta < 0:
+        return {"block": True, "reason": "bearish_pressure", "oi_chg": oi_chg, "cvd_delta": cvd_delta, "price_chg": price_chg}
+    if side == "BEAR" and price_chg > 0 and oi_chg > 0 and cvd_delta > 0:
+        return {"block": True, "reason": "bullish_pressure", "oi_chg": oi_chg, "cvd_delta": cvd_delta, "price_chg": price_chg}
+    return {"block": False, "reason": "ok", "oi_chg": oi_chg, "cvd_delta": cvd_delta, "price_chg": price_chg}
 
 def pd_to_datetime_safe(v):
     """Parse a timestamp-ish string to naive UTC datetime; None if unparsable."""
@@ -233,8 +282,18 @@ class Engine:
         self.dry = dry
         self.use_cvd = use_cvd
         self.use_btc = use_btc
+        # #4: relax btc_regime to STRONG-only. env BTC_REGIME_STRONG_PCT (%, default 0
+        # = original binary filter). e.g. 0.75 => only block counter-trend when
+        # |EMA50-EMA200|/EMA200 >= 0.75%. Weak/choppy regime allows both sides.
+        try:
+            self.btc_strong_pct = float(os.environ.get("BTC_REGIME_STRONG_PCT", "0") or 0)
+        except (TypeError, ValueError):
+            self.btc_strong_pct = 0.0
         self.use_adversarial = False  # off by default; enable via --adversarial
         self.tag = tag
+        # #2: human-readable bot label for Telegram (disambiguates which bot posted:
+        # e.g. fusionnew_h1 vs h1_imbalance both post "SETUP H1 ..."). From BOT_NAME.
+        self.bot_label = os.environ.get("BOT_NAME", "") or f"{tier}{tag}"
         self.ema_dist = ema_dist
         self.min_turn = min_turn
         self.sl_swing = sl_swing
@@ -245,7 +304,9 @@ class Engine:
         self.stoch_max = stoch_max
         self._btc_trend = None
         self._stats = {"cand": 0, "stale": 0, "fresh": 0, "blocked": 0,
-                       "blocked_max_open": 0, "blocked_pending_cap": 0, "min_age": 9999}
+                       "blocked_max_open": 0, "blocked_pending_cap": 0, "blocked_oi_pressure": 0,
+                       "min_age": 9999}
+        self._last_guard_audit: dict = {}
         self.trades: List[Dict[str, Any]] = []
         self.closed: List[Dict[str, Any]] = []
         self._seen: set = set()
@@ -393,48 +454,80 @@ class Engine:
         self._data_short.discard(symbol)
         self._stats["data_short"] = len(self._data_short)
         trend = _trend(zone_df)
-        # LIVE detector: recent_setups (anchored on NEWEST imbalance — stable on a
-        # rolling window). generate_setups is backtest-only (first-tap anchor whose
-        # identity shifts every cycle => unstable dedup keys). (2.1)
-        bull = recent_setups(zone_df, ltf, trend, "BULL", self.rr,
-                             max_age=self.MAX_SETUP_AGE, sl_swing=self.sl_swing) \
+        # LIVE detector: use nearest unmitigated imbalance for fusionnew-style
+        # structural retests. Age is soft; mitigation/invalidation kill setups.
+        # ponytail: legacy recent_setups remains for tests/old bots; remove after migration.
+        detector = nearest_unmitigated_setups if "fusionnew" in self.tag else recent_setups
+        age_arg = 0 if detector is nearest_unmitigated_setups else self.MAX_SETUP_AGE
+        bull = detector(zone_df, ltf, trend, "BULL", self.rr,
+                        max_age=age_arg, sl_swing=self.sl_swing) \
             if self.direction in ("both", "long") else []
-        bear = recent_setups(zone_df, ltf, trend, "BEAR", self.rr,
-                             max_age=self.MAX_SETUP_AGE, sl_swing=self.sl_swing) \
+        bear = detector(zone_df, ltf, trend, "BEAR", self.rr,
+                        max_age=age_arg, sl_swing=self.sl_swing) \
             if self.direction in ("both", "short") else []
         if self.use_cvd:
             bull = _filter_flow(symbol, 0, "BULL", bull, ltf, True, False)
             bear = _filter_flow(symbol, 0, "BEAR", bear, ltf, True, False)
         if self.use_btc and self._btc_trend is not None:
-            bull = [s for s in bull if _trend_ok(self._btc_trend, s["t_complete"], "BULL")]
-            bear = [s for s in bear if _trend_ok(self._btc_trend, s["t_complete"], "BEAR")]
+            _sp = self.btc_strong_pct
+            bull = [s for s in bull if _trend_ok_strong(self._btc_trend, s["t_complete"], "BULL", _sp)]
+            bear = [s for s in bear if _trend_ok_strong(self._btc_trend, s["t_complete"], "BEAR", _sp)]
         if self.ema_dist > 0:
             bull = _filter_ema_dist(bull, zone_df, self.ema_dist)
             bear = _filter_ema_dist(bear, zone_df, self.ema_dist)
         if self.min_turn > 0:
             bull = _filter_liquidity(bull, ltf, self.min_turn)
             bear = _filter_liquidity(bear, ltf, self.min_turn)
-        if self.stoch_max > 0:
+        assert ltf is not None
+        if detector is nearest_unmitigated_setups and self.stoch_max > 0:
+            # Hybrid quality gate: stochastic filters stretched entries; OI/CVD/price
+            # remains the final wrong-side veto below.
             bull = _filter_stochastic(bull, ltf, "BULL", self.stoch_max)
             bear = _filter_stochastic(bear, ltf, "BEAR", self.stoch_max)
-        alls = bull + bear
+        if detector is nearest_unmitigated_setups:
+            # OI+CVD+price is a secondary veto, not the primary quality selector.
+            guarded = []
+            for s in bull + bear:
+                p = _pressure_against_setup(symbol, s["side"], ltf)
+                audit_base = {"symbol": symbol, "side": s["side"], "entry": s.get("entry"), "sl": s.get("sl"), "tp": s.get("tp")}
+                self._flog("oi_pressure_check", audit_base, p)
+                if p.get("block"):
+                    self._stats["blocked"] = self._stats.get("blocked", 0) + 1
+                    self._stats["blocked_oi_pressure"] = self._stats.get("blocked_oi_pressure", 0) + 1
+                    self._last_guard_audit = {"symbol": symbol, "side": s["side"], **p}
+                    self._flog("oi_pressure_reject", audit_base, p)
+                    continue
+                guarded.append(s)
+            alls = guarded
+        else:
+            if self.stoch_max > 0:
+                bull = _filter_stochastic(bull, ltf, "BULL", self.stoch_max)
+                bear = _filter_stochastic(bear, ltf, "BEAR", self.stoch_max)
+            alls = bull + bear
         n = len(ltf)
         nearest_age = 9999
         for s in alls:
             age = n - 1 - int(s["ce"])
             nearest_age = min(nearest_age, age)
         self._stats["min_age"] = min(self._stats["min_age"], nearest_age)
-        # Fresh window == limit-order expiry (FIB_EXPIRY bars). A setup older than
-        # this can never fill within the backtest's fill search window. (2.2)
-        fresh = [s for s in alls if (n - 1 - int(s["ce"])) <= self.MAX_SETUP_AGE]
+        # Fusionnew uses structural setups: age is soft; mitigation/invalidation already kill stale zones.
+        # Legacy bots keep the old fresh-only expiry guard.
+        if detector is nearest_unmitigated_setups:
+            fresh = alls
+        else:
+            fresh = [s for s in alls if (n - 1 - int(s["ce"])) <= self.MAX_SETUP_AGE]
         self._stats["cand"] += len(fresh)
         # Update scan metadata
         self._symbol_last_scan[symbol] = time.time()
         self._symbol_nearest[symbol] = nearest_age
         if not fresh:
             return
-        fresh.sort(key=lambda s: s["t_complete"])
-        s = fresh[-1]
+        if detector is nearest_unmitigated_setups:
+            fresh.sort(key=lambda s: (s.get("dist_pct", 9999), s.get("age_bars", 9999)))
+            s = fresh[0]
+        else:
+            fresh.sort(key=lambda s: s["t_complete"])
+            s = fresh[-1]
         key = (symbol, s["side"], str(s["t_complete"]))
         if key in self._seen:
             return
@@ -878,7 +971,7 @@ class Engine:
         # TradingView symbol = {symbol}USDT.P or {symbol}USDTP (prefer {symbol}USDT.P)
         tv_symbol = symbol + "USDT.P" if not symbol.endswith("USDT") else symbol + ".P"
         msg = (
-            f"🆕 SETUP {self.tier} {side} {symbol}\n"
+            f"🆕 SETUP {self.tier} {side} {symbol} [{self.bot_label}]\n"
             f"Entry {entry:.6g} | SL {sl:.6g} | TP {tp:.6g} | qty {qty} | RR {self.rr}\n"
             f"{'[DRY] ' if self.dry else ''}LIMIT placed\n"
             f"☁️ TradingView: https://www.tradingview.com/chart/?symbol={tv_symbol}"
@@ -910,9 +1003,16 @@ class Engine:
             return True
         return False
 
-    def _manage_pending(self, t: Dict[str, Any], symbol: str, hi: float, lo: float) -> None:
+    def _manage_pending(self, t: Dict[str, Any], symbol: str, hi: float, lo: float,
+                        bar_epoch: float = 0.0) -> None:
         # Gateway-managed positions: skip local SL/TP placement
         if t.get("via_gateway"):
+            return
+        # F-02: never fill on a bar that OPENED before the order was placed. A frozen
+        # watermark (advances only for symbols with trades) replays historical bars
+        # against a just-created order -> phantom fill/exit at levels price never
+        # touched post-order. Gate on bar open_time >= opened_at (conservative).
+        if bar_epoch and bar_epoch < t.get("opened_at", 0.0):
             return
 
         if self._filled(t, symbol, hi, lo):
@@ -928,7 +1028,7 @@ class Engine:
                         tp_note = "HARDWARE SL+TP armed"
                 except Exception as exc:
                     print(f" algo SL/TP place err {symbol}: {exc}")
-            msg = (f"✅ FILLED {symbol} {t['side']} @~{t['entry']:.6g} → "
+            msg = (f"✅ FILLED {symbol} {t['side']} @~{t['entry']:.6g} [{self.bot_label}] → "
                    f"{tp_note} (SL {t['sl']:.6g} / TP {t['tp']:.6g})")
             print(msg)
             tg(msg)
@@ -971,7 +1071,7 @@ class Engine:
         self.closed.append(t)
         # COOLDOWN: prevent immediate re-entry after close
         self._add_cooldown(symbol, reason or "UNKNOWN")
-        msg = f"{'🟢' if pnl > 0 else '🔴'} CLOSED {symbol} {reason} pnl={pnl:+.4f}"
+        msg = f"{'🟢' if pnl > 0 else '🔴'} CLOSED {symbol} {reason} pnl={pnl:+.4f} [{self.bot_label}]"
         print(msg)
         tg(msg)
         self._flog("CLOSE", t)
@@ -1044,7 +1144,7 @@ class Engine:
             hi, lo, close = float(bar["high"]), float(bar["low"]), float(bar["close"])
             for t in my_trades:
                 if t["status"] == "PENDING":
-                    self._manage_pending(t, symbol, hi, lo)
+                    self._manage_pending(t, symbol, hi, lo, epoch)
                 elif t["status"] == "OPEN":
                     # Conservative same-bar ordering: SL before TP (matches the
                     # backtest _manage_exit assumption) — handled in _manage_open.
@@ -1156,6 +1256,7 @@ class Engine:
                 "pending_cap": st.get("blocked_pending_cap", 0),
                 "adversarial": st.get("blocked_adversarial", 0),
                 "entry_far": st.get("blocked_entry_far", 0),
+                "oi_pressure": st.get("blocked_oi_pressure", 0),
             },
             "stale": st.get("stale", 0),
             "data_short": st.get("data_short", 0),
@@ -1201,9 +1302,11 @@ class Engine:
             f"today={self.risk.realized_today:+.4f} | "
             f"cand={st['cand']} fresh={st['fresh']} blk={st['blocked']}"
             f"(O:{st.get('blocked_max_open',0)},P:{st.get('blocked_pending_cap',0)},"
-            f"ADV:{st.get('blocked_adversarial',0)},FAR:{st.get('blocked_entry_far',0)}) "
+            f"ADV:{st.get('blocked_adversarial',0)},FAR:{st.get('blocked_entry_far',0)},"
+            f"OI:{st.get('blocked_oi_pressure',0)}) "
             f"stale={st.get('stale',0)} data_short={st.get('data_short',0)} "
             f"nearest={st['min_age'] if st['min_age'] < 9999 else '-'}bars{flag}"
+            + (f" | guard={self._last_guard_audit}" if self._last_guard_audit else "")
         )
 
 def main() -> None:
@@ -1237,7 +1340,18 @@ def main() -> None:
     ap.add_argument("--direction", choices=["both", "long", "short"], default="both", 
                    help="only trade long, short, or both (default: both)")
     a = ap.parse_args()
-    
+
+    # #3: optional LTF override so M30 can differentiate from H1 (both default 5m
+    # => byte-identical signals). env LTF_OVERRIDE=3m. Process-local (one bot per
+    # container) => in-place TIERS mutation is safe and applies to all cfg["ltf"] reads.
+    _ltf_override = os.environ.get("LTF_OVERRIDE", "").strip()
+    if _ltf_override:
+        if _ltf_override in LTF_MIN:
+            TIERS[a.tier]["ltf"] = _ltf_override
+            print(f"[ENGINE] LTF_OVERRIDE applied: tier {a.tier} ltf -> {_ltf_override}")
+        else:
+            print(f"[ENGINE] WARNING: LTF_OVERRIDE={_ltf_override} not in {list(LTF_MIN)}; ignored")
+
     dry = not (a.live and a.arm)
     ex = FuturesTestnet(dry=dry)
     risk = RiskGuard(a.equity, a.risk_pct, a.max_positions, a.max_notional_mult,

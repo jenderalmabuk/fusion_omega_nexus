@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -121,13 +121,6 @@ class RevoAdaptiveStrategy(IStrategy):
             "liq_mode": os.environ.get("REVO_LIQ_MODE", "instant"),
             "blacklist_bypass_score": float(os.environ.get("REVO_BLACKLIST_BYPASS_SCORE", "10")),
             "blacklist_bypass_rsi": float(os.environ.get("REVO_BLACKLIST_BYPASS_RSI", "30")),
-            # Flow-gate mode (per-bot via env, shared base class):
-            #   "hard"         -> current control: require LONG_ONLY/BOTH flow direction
-            #   "scoring"      -> soft: flow direction becomes +/-2 score, min_score+1,
-            #                     only heavy-distribution + falling-knife vetoed
-            #   "block_danger" -> Opsi A: no continuation requirement; veto ONLY
-            #                     heavy distribution (cvd_z < -1.5)
-            "flow_gate_mode": os.environ.get("REVO_FLOW_GATE_MODE", "hard").strip().lower(),
         }
 
     @staticmethod
@@ -208,12 +201,7 @@ class RevoAdaptiveStrategy(IStrategy):
         df["oi_ok"] = np.where(df["real_flow_available"] == 1, (df["real_oi_delta"].abs() > 0).astype(int), 1)
 
         # Real funding when context is available; neutral fallback in pure OHLCV backtests.
-        # funding_ok: tolerate small positive funding (<= +0.0003, aligned with the
-        # funding_crowded boundary below). Rejecting ALL positive funding blocked ~4/6
-        # high-score live setups (funding_z is None in flow ctx, so the old
-        # `funding_rate <= 0` clause rejected any positive rate). Only crowded-level
-        # positive funding is hostile; small positive is neutral.
-        df["funding_ok"] = np.where(df["real_flow_available"] == 1, ((df["real_funding_z"] <= -1.0) | (df["real_funding_rate"] <= 0.0003)).astype(int), 1)
+        df["funding_ok"] = np.where(df["real_flow_available"] == 1, ((df["real_funding_z"] <= -1.0) | (df["real_funding_rate"] <= 0)).astype(int), 1)
         df["funding_crowded"] = np.where(df["real_flow_available"] == 1, ((df["real_funding_z"] >= 1.0) | (df["real_funding_rate"] >= 0.0003)).astype(int), 0)
 
         df["pair_uptrend_pullback"] = ((df["ema50"] > df["ema200"]) & (df["at_discount"] == 1)).astype(int)
@@ -288,36 +276,12 @@ class RevoAdaptiveStrategy(IStrategy):
         c = self._cfg()
         dataframe["enter_long"] = 0
 
-        # Pullback identity: require uptrend context (additive bonus in score).
-        # Flow-gate behaviour is mode-dependent (REVO_FLOW_GATE_MODE, per-bot env):
-        #   hard         -> control: require LONG_ONLY/BOTH continuation flow
-        #   scoring      -> flow direction becomes +/-2 score term, min_score+1,
-        #                   veto only heavy distribution (cvd_z < -1.5)
-        #   block_danger -> Opsi A: veto only heavy distribution, no score change
-        mode = c["flow_gate_mode"]
-        min_score = c["min_score"]
-        eff_score = dataframe["entry_score"]
-        if mode == "scoring":
-            # Soft gate: hostile flow no longer hard-blocks; it costs score, so a
-            # flow-hostile pair must have a stronger reversion setup to compensate.
-            eff_score = (
-                dataframe["entry_score"]
-                + dataframe["real_flow_long"] * 2
-                - dataframe["real_flow_hostile"] * 2
-            )
-            min_score = c["min_score"] + 1
-        if mode in ("scoring", "block_danger"):
-            # No momentum-continuation requirement. Veto ONLY heavy distribution
-            # (very negative CVD = aggressive selling into the dip).
-            flow_guard = (
-                (dataframe["real_flow_available"] == 0)
-                | (dataframe["real_cvd_z"] >= -1.5)
-            )
-        else:  # "hard" (default / control)
-            flow_guard = (
-                (dataframe["real_flow_available"] == 0)  # no flow data = allow
-                | (dataframe["real_flow_long"] == 1)     # flow allows LONG
-            )
+        # Pullback identity: require uptrend context (additive bonus in score)
+        # and flow alignment when real data available
+        flow_guard = (
+            (dataframe["real_flow_available"] == 0) |  # no flow data = allow
+            (dataframe["real_flow_long"] == 1)         # flow allows LONG
+        )
         blacklisted = self._pair_blacklisted(metadata.get("pair", ""))
         blacklist_bypass = (
             (dataframe["entry_score"] >= c["blacklist_bypass_score"]) &
@@ -331,7 +295,7 @@ class RevoAdaptiveStrategy(IStrategy):
         # Discount & trend are ADDITIVE in score, not hard requirements
         cond = (
             (dataframe["liq_ok"] == 1) &
-            (eff_score >= min_score) &
+            (dataframe["entry_score"] >= c["min_score"]) &
             (dataframe["rsi_ok"] == 1) &
             (dataframe["atr_explosive"] == 0) &
             (dataframe["not_falling_knife"] == 1) &
@@ -400,41 +364,6 @@ class RevoAdaptiveStrategy(IStrategy):
 
         self._audit_entry_signal(dataframe, metadata, cond)
         return dataframe
-
-    def confirm_trade_entry(self, pair: str, order_type: str, amount: float, rate: float,
-                            time_in_force: str, current_time: datetime,
-                            entry_tag: Optional[str] = None, side: str = "long", **kwargs) -> bool:
-        """Hard same-pair LOSS cooldown gate (replaces the dynamic-blacklist cron).
-
-        Blocks a new entry on `pair` if that pair had a LOSING close within the
-        cooldown window. Kills the repeated-stopout pattern (e.g. AKE/DEXE
-        re-entered and stopped out 5+ times in hours). Inherited by both bots.
-
-        Configurable via REVO_LOSS_COOLDOWN_HOURS (default 12; 0 disables).
-        """
-        cooldown_hours = float(os.environ.get("REVO_LOSS_COOLDOWN_HOURS", "12"))
-        if cooldown_hours <= 0:
-            return True
-        try:
-            cutoff = current_time - timedelta(hours=cooldown_hours)
-            for t in Trade.get_trades_proxy(pair=pair, is_open=False):
-                close_dt = getattr(t, "close_date_utc", None) or getattr(t, "close_date", None)
-                if close_dt is None:
-                    continue
-                if close_dt.tzinfo is None:
-                    close_dt = close_dt.replace(tzinfo=timezone.utc)
-                if close_dt < cutoff:
-                    continue
-                profit = t.close_profit if t.close_profit is not None else 0.0
-                if profit <= 0:
-                    logger.info(
-                        f"[COOLDOWN] BLOCK {pair}: prior loss {profit*100:.2f}%% "
-                        f"closed {close_dt:%m-%d %H:%M} within {cooldown_hours:.0f}h window"
-                    )
-                    return False
-        except Exception as e:  # never let the gate crash entries
-            logger.warning(f"[COOLDOWN] check failed for {pair}: {e}")
-        return True
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe["exit_long"] = 0

@@ -49,9 +49,13 @@ def _ema(s: pd.Series, n: int) -> pd.Series:
 def _trend(zone_df: pd.DataFrame) -> pd.DataFrame:
     ema50 = _ema(zone_df["close"], 50)
     ema200 = _ema(zone_df["close"], 200)
+    # sep = |EMA50-EMA200|/EMA200*100 (%). Regime-strength magnitude.
+    # Backward-compatible extra column; existing readers use only up/down.
+    sep = ((ema50 - ema200) / ema200.replace(0, np.nan) * 100.0).abs().fillna(0.0)
     return pd.DataFrame({"open_time": zone_df["open_time"],
                          "up": (ema50 > ema200).fillna(False),
-                         "down": (ema50 < ema200).fillna(False)})
+                         "down": (ema50 < ema200).fillna(False),
+                         "sep": sep})
 
 
 def _valid_obs(df: pd.DataFrame, side: str) -> List[Dict[str, Any]]:
@@ -96,6 +100,20 @@ def _trend_ok(trend_df: pd.DataFrame, ts: np.datetime64, side: str) -> bool:
     idx = trend_df["open_time"].values.searchsorted(ts, side="right") - 1
     if idx < 0:
         return False
+    return bool(trend_df["up"].iloc[idx]) if side == "BULL" else bool(trend_df["down"].iloc[idx])
+
+
+def _trend_ok_strong(trend_df: pd.DataFrame, ts: np.datetime64, side: str,
+                     strong_pct: float = 0.0) -> bool:
+    """Like _trend_ok, but only enforces BTC-regime alignment when the regime is
+    STRONG (|EMA50-EMA200|/EMA200*100 >= strong_pct). Weak/choppy regime => allow
+    both directions. strong_pct<=0 reproduces _trend_ok exactly (binary filter)."""
+    idx = trend_df["open_time"].values.searchsorted(ts, side="right") - 1
+    if idx < 0:
+        return strong_pct > 0  # no data: binary=block, strong=allow
+    if strong_pct > 0 and "sep" in trend_df.columns:
+        if float(trend_df["sep"].iloc[idx]) < strong_pct:
+            return True  # weak regime => do not block counter-trend
     return bool(trend_df["up"].iloc[idx]) if side == "BULL" else bool(trend_df["down"].iloc[idx])
 
 
@@ -157,19 +175,7 @@ def generate_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: pd.DataFram
     return setups
 
 
-def recent_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: pd.DataFrame,
-                  side: str, rr: float = RR, max_age: int = FIB_EXPIRY, sl_swing: int = 0) -> List[Dict[str, Any]]:
-    """LIVE detector: setups whose imbalance JUST completed (within last `max_age` LTF bars)
-    inside a valid, not-yet-invalidated OB zone in trend direction. Mirrors backtest entry math
-    but anchored on the NEWEST imbalance (not first-tap-per-OB), so live triggers when a fresh
-    imbalance forms."""
-    obs = _valid_obs(zone_df, side)
-    imbs = _imbalances(ltf, side)
-    if not obs or not imbs:
-        return []
-    n = len(ltf)
-    lt = ltf["open_time"].to_numpy()
-    latr = _atr(ltf)
+def _annotate_ob_invalidation(obs: List[Dict[str, Any]], zone_df: pd.DataFrame, side: str) -> None:
     z_close = zone_df["close"].to_numpy()
     z_time = zone_df["open_time"].to_numpy()
     for ob in obs:
@@ -180,14 +186,90 @@ def recent_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: pd.DataFrame,
                 t_inv = z_time[k]
                 break
         ob["t_inv"] = t_inv
+
+
+def nearest_unmitigated_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: pd.DataFrame,
+                               side: str, rr: float = RR, max_age: int = 0,
+                               sl_swing: int = 0) -> List[Dict[str, Any]]:
+    """Live detector: choose nearest valid imbalance that is still unmitigated/uninvalidated.
+    Age is a soft preference only; max_age<=0 disables hard expiry."""
+    obs = _valid_obs(zone_df, side)
+    imbs = _imbalances(ltf, side)
+    if not obs or not imbs:
+        return []
+    lt = ltf["open_time"].to_numpy()
+    latr = _atr(ltf)
+    _annotate_ob_invalidation(obs, zone_df, side)
+    current_idx = len(ltf) - 1
+    setups: List[Dict[str, Any]] = []
+    for ob in obs:
+        best = None
+        for im in imbs:
+            if im["t"] <= ob["t"]:
+                continue
+            if ob["t_inv"] is not None and ob["t_inv"] <= im["t"]:
+                continue
+            if im["leg_low"] > ob["zhigh"] or im["leg_high"] < ob["zlow"]:
+                continue
+            ce = int(im["ce"])
+            if not _trend_ok(trend, im["t"], side):
+                continue
+            if max_age > 0 and ce < current_idx - max_age:
+                continue
+            if side == "BULL":
+                entry = compute_fibonacci_entry(pd.Series({"open": im["leg_low"], "high": im["leg_high"], "low": im["leg_low"], "close": im["leg_high"]}), fib_level=0.618)
+                if ce + 1 < len(ltf) and (ltf["low"].iloc[ce + 1:] <= entry).any():
+                    continue
+                sl = (ltf["low"].to_numpy()[max(0, ce - sl_swing):ce].min() - 0.25 * latr[ce]) if sl_swing > 0 else (im["leg_low"] - 0.5 * latr[ce])
+                if not (sl < entry):
+                    continue
+                risk = entry - sl
+                tp = entry + rr * risk
+                cur = float(ltf["close"].iloc[-1])
+                dist = abs(cur - entry) / max(cur, 1e-9) * 100.0
+            else:
+                entry = compute_fibonacci_entry(pd.Series({"open": im["leg_low"], "high": im["leg_high"], "low": im["leg_low"], "close": im["leg_low"]}), fib_level=0.618)
+                if ce + 1 < len(ltf) and (ltf["high"].iloc[ce + 1:] >= entry).any():
+                    continue
+                sl = (ltf["high"].to_numpy()[max(0, ce - sl_swing):ce].max() + 0.25 * latr[ce]) if sl_swing > 0 else (im["leg_high"] + 0.5 * latr[ce])
+                if not (sl > entry):
+                    continue
+                risk = sl - entry
+                tp = entry - rr * risk
+                cur = float(ltf["close"].iloc[-1])
+                dist = abs(cur - entry) / max(cur, 1e-9) * 100.0
+            candidate = {"side": side, "ce": ce, "t_complete": lt[ce], "entry": float(entry), "sl": float(sl), "tp": float(tp),
+                         "risk": float(risk), "zlow": ob["zlow"], "zhigh": ob["zhigh"], "dist_pct": dist,
+                         "age_bars": current_idx - ce}
+            if best is None or candidate["dist_pct"] < best["dist_pct"] or (
+                candidate["dist_pct"] == best["dist_pct"] and candidate["age_bars"] < best["age_bars"]
+            ):
+                best = candidate
+        if best is not None:
+            setups.append(best)
+    setups.sort(key=lambda s: (s["dist_pct"], s["age_bars"]))
+    return setups
+
+
+def recent_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: pd.DataFrame,
+                  side: str, rr: float = RR, max_age: int = FIB_EXPIRY, sl_swing: int = 0) -> List[Dict[str, Any]]:
+    """Backward-compatible wrapper: retain fresh-only behavior for legacy callers/tests."""
+    obs = _valid_obs(zone_df, side)
+    imbs = _imbalances(ltf, side)
+    if not obs or not imbs:
+        return []
+    n = len(ltf)
+    lt = ltf["open_time"].to_numpy()
+    latr = _atr(ltf)
+    _annotate_ob_invalidation(obs, zone_df, side)
     setups: List[Dict[str, Any]] = []
     for im in imbs:
-        if im["ce"] < n - 1 - max_age:          # only freshly-completed imbalances
+        if im["ce"] < n - 1 - max_age:
             continue
         if not _trend_ok(trend, im["t"], side):
             continue
         match = None
-        for ob in reversed(obs):                # nearest OB formed before the imbalance
+        for ob in reversed(obs):
             if ob["t"] >= im["t"]:
                 continue
             if ob["t_inv"] is not None and ob["t_inv"] <= im["t"]:
@@ -197,7 +279,6 @@ def recent_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: pd.DataFrame,
                 break
         if match is None:
             continue
-        # require this to be the OB's FIRST qualifying in-zone tap (match generate_setups edge)
         first_tap = True
         for p in imbs:
             if p["t"] <= match["t"]:

@@ -114,6 +114,31 @@ def discord_token() -> str:
 # --- Behavior ---
 RISK_PCT = float(os.getenv("SIGNAL_COPY_RISK_PCT", "0.01"))   # 1% of equity per trade
 CONFIRM_EXPIRY_SEC = float(os.getenv("SIGNAL_COPY_CONFIRM_EXPIRY_SEC", "3600"))  # 1h scalping limit expiry
+
+# --- Per-channel pending-limit expiry profiles (Opsi A) ---
+# Watcher (limit handling) stays global; only the HOLD duration varies by the
+# source channel's trade style. Unmapped channels fall back to STANDARD.
+EXPIRY_SCALP_SEC = float(os.getenv("SIGNAL_COPY_EXPIRY_SCALP", "2700"))        # 45m
+EXPIRY_STANDARD_SEC = float(os.getenv("SIGNAL_COPY_EXPIRY_STANDARD", "10800")) # 3h
+EXPIRY_SWING_SEC = float(os.getenv("SIGNAL_COPY_EXPIRY_SWING", "64800"))       # 18h
+CHANNELS_SCALP = set(_ids("SIGNAL_COPY_CHANNELS_SCALP"))
+CHANNELS_SWING = set(_ids("SIGNAL_COPY_CHANNELS_SWING"))
+
+
+def expiry_for_channel(chat_id) -> float:
+    """Resolve pending-limit expiry (seconds) for a source channel.
+
+    scalp -> EXPIRY_SCALP_SEC, swing -> EXPIRY_SWING_SEC, else STANDARD.
+    """
+    try:
+        cid = int(chat_id) if chat_id is not None else 0
+    except (TypeError, ValueError):
+        cid = 0
+    if cid in CHANNELS_SCALP:
+        return EXPIRY_SCALP_SEC
+    if cid in CHANNELS_SWING:
+        return EXPIRY_SWING_SEC
+    return EXPIRY_STANDARD_SEC
 AUTO_EXECUTE_WITHOUT_CONFIRM = _bool("SIGNAL_COPY_AUTO_EXECUTE", False)  # if True, skip yes/no
 DRY_RUN = _bool("SIGNAL_COPY_DRY_RUN", False)   # validate + confirm but never place orders
 NOTIFY_REJECTED = _bool("SIGNAL_COPY_NOTIFY_REJECTED", True)  # tell user about rejects too
@@ -131,6 +156,28 @@ DEDUP_WINDOW_SEC = float(os.getenv("SIGNAL_COPY_DEDUP_WINDOW_SEC", "1800"))
 
 # --- Vision (Tahap 2): read the chart/outlook image attached to a signal ---
 VISION_ENABLED = _bool("SIGNAL_COPY_VISION_ENABLED", False)
+# Per-channel vision routing: only these channels use the chart-vision path
+# (build a signal from an image, or enrich a parsed signal with chart data).
+# Empty set = legacy behavior (vision on ALL image-bearing channels when the
+# global flag is on). Parser-only channels must be EXCLUDED here.
+CHANNELS_VISION = set(_ids("SIGNAL_COPY_CHANNELS_VISION"))
+
+
+def vision_enabled_for_channel(chat_id) -> bool:
+    """Whether the chart-vision path is allowed for a given source channel.
+
+    Global flag off -> always False. Global flag on + empty allowlist ->
+    legacy (all channels). Global flag on + non-empty allowlist -> only listed.
+    """
+    if not VISION_ENABLED:
+        return False
+    if not CHANNELS_VISION:
+        return True
+    try:
+        cid = int(chat_id) if chat_id is not None else 0
+    except (TypeError, ValueError):
+        cid = 0
+    return cid in CHANNELS_VISION
 # "openai" (OpenAI-compatible: local proxy / OpenRouter / Google Gemini openai-endpoint / OpenAI / similar)
 # or "n8n" (webhook to your n8n flow).
 VISION_BACKEND = os.getenv("SIGNAL_COPY_VISION_BACKEND", "openai").strip().lower()

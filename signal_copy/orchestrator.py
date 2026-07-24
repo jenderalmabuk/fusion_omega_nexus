@@ -370,7 +370,7 @@ class SignalCopyOrchestrator:
         cls = classify_message(text)
 
         sig = parse_signal(text, source=source, source_name=source_name, source_chat_id=source_chat_id)
-        if sig is None and image and getattr(scfg, "VISION_ENABLED", False):
+        if sig is None and image and scfg.vision_enabled_for_channel(source_chat_id):
             # Chart-only / image-only signal: no parseable text, so read the
             # chart with vision and build the signal from what it extracts.
             # BUT skip the vision path entirely when the caption is
@@ -474,7 +474,7 @@ class SignalCopyOrchestrator:
         # --- Tahap 2.5: read the chart image (vision) for EVERY image-bearing
         # signal: (a) fill missing TP/SL/timeframe, and (b) feed a chart
         # confluence factor into validation (agreement strengthens the score). ---
-        if image and getattr(scfg, "VISION_ENABLED", False):
+        if image and scfg.vision_enabled_for_channel(source_chat_id):
             try:
                 from .vision import analyze_chart
                 vdata = await analyze_chart(image, symbol=sig.symbol, raw_text=text)
@@ -607,6 +607,22 @@ class SignalCopyOrchestrator:
                     os.remove(chart_path)
                 except Exception:
                     pass
+
+        # --- Snapshot for channel-quality learning (ALL verdicts w/ usable data) ---
+        # Fire-and-forget execution means exits are never reported back, so we
+        # track the channel's OWN entry/tp/sl call virtually — executed or not —
+        # to build a fair per-channel track record. Ghosts (entry<=0 / no tp/sl /
+        # already-past price) are filtered inside track().
+        try:
+            from .outcome_tracker import get_outcome_tracker
+            _executed = (result.verdict == Verdict.VALID and not calib
+                         and self.executor is not None and self.auto_execute)
+            get_outcome_tracker().track(
+                result.signal, metrics,
+                verdict=result.verdict.value, was_executed=bool(_executed),
+            )
+        except Exception as exc:
+            logger.debug("[OUTCOME] snapshot skipped: %s", exc)
 
         # --- Stop processing for REJECT / WEAK ---
         if result.verdict == Verdict.REJECT or result.verdict == Verdict.WEAK:
@@ -777,8 +793,16 @@ class SignalCopyOrchestrator:
             
             return execution_msg
         
-        # Failed execution
-        return f"❌ Eksekusi gagal: {outcome.reason}"
+        # Failed execution: the parser card already said VALID; send the final
+        # execution verdict too so users can see why no position opened.
+        from signal_copy.telegram_transport import send_trades_notification
+        from signal_copy.telegram_formatter import build_execution_message
+        execution_msg = build_execution_message(outcome, pc.result.signal, pc.result)
+        try:
+            await send_trades_notification(execution_msg)
+        except Exception as exc:
+            logger.error(f"❌ Telegram failed-exec notify failed: {exc}")
+        return execution_msg
 
     @staticmethod
     def _entry_ref(sig) -> float:
@@ -852,11 +876,15 @@ class SignalCopyOrchestrator:
             pc = data.get("result")
             if not pc:
                 continue
-            if time.time() - float(data.get("created", 0.0)) > scfg.CONFIRM_EXPIRY_SEC:
-                self._pending_limits.pop(token, None)
-                await self.confirmations.mark(token, ConfirmState.EXPIRED, note="limit_expired_1h")
-                continue
             sig = pc.signal
+            # Per-channel expiry (Opsi A): scalp/standard/swing by source channel.
+            _expiry = scfg.expiry_for_channel(getattr(sig, "source_chat_id", None))
+            if time.time() - float(data.get("created", 0.0)) > _expiry:
+                self._pending_limits.pop(token, None)
+                await self.confirmations.mark(
+                    token, ConfirmState.EXPIRED,
+                    note=f"limit_expired:{int(_expiry)}s")
+                continue
             metrics = await self._fetch_metrics(sig.symbol)
             price = _f(metrics.get("price"))
             if price <= 0:

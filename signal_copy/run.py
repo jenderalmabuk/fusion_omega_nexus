@@ -179,6 +179,35 @@ async def main():
     print("[SIGNAL COPY] Pending limits polling started (15s interval)")
 
     # ------------------------------------------------------------------
+    # Outcome Resolution — virtual TP1/SL/expiry tracking for channel learning
+    # Feeds ChannelPerformanceTracker so EVERY channel (executed or not) builds
+    # a fair track record. Fire-and-forget execution never reports exits back,
+    # so we resolve the channel's own entry/tp/sl call against live price.
+    # ------------------------------------------------------------------
+    async def _price_fn(symbol: str) -> float:
+        try:
+            m = await bridge.get_advanced_metrics(symbol)
+            return float((m or {}).get("price") or 0.0)
+        except Exception:
+            return 0.0
+
+    async def _poll_outcomes():
+        from signal_copy.outcome_tracker import get_outcome_tracker
+        tracker = get_outcome_tracker()
+        while True:
+            await asyncio.sleep(60)  # outcomes resolve over hours; 60s is plenty
+            try:
+                n = await tracker.resolve_open(_price_fn)
+                if n:
+                    logger.info("[OUTCOME] resolved %d signal(s); %d still open",
+                                n, tracker.open_count())
+            except Exception as e:
+                logger.exception("Outcome poll error: %s", e)
+
+    asyncio.create_task(_poll_outcomes())
+    print("[SIGNAL COPY] Outcome resolution polling started (60s interval)")
+
+    # ------------------------------------------------------------------
     # Telegram Listener — Telethon + aiogram fallback
     # ------------------------------------------------------------------
     listener_api_id = int(os.getenv("SIGNAL_COPY_TG_API_ID", os.getenv("TELEGRAM_API_ID", "0")))

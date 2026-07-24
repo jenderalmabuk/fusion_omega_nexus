@@ -124,7 +124,12 @@ class ExecutionGateway:
         except Exception as exc:
             logger.warning("[GATEWAY] risk reserve error %s: %s", symbol, exc)
         if not reserved:
-            res.reason = "risk reservation blocked (parallel open-risk budget)"
+            if symbol.upper() in self.risk_mgr._position_symbols():
+                res.reason = f"position already open for {symbol}"
+            elif self.risk_mgr.get_reserved_risk_total() + risk_amount > self.risk_mgr.get_parallel_open_risk_budget():
+                res.reason = "parallel open-risk budget exhausted"
+            else:
+                res.reason = "open-risk reservation blocked"
             return self._record(intent, res)
 
         try:
@@ -177,6 +182,15 @@ class ExecutionGateway:
             out["exposure_limit_exceeded"] = bool(rm.is_exposure_limit_exceeded())
         except Exception:
             pass
+        try:
+            positions = getattr(rm.trader, "positions", {}) or {}
+            out["open_positions"] = [dict(pos) for pos in positions.values()]
+            for pos in out["open_positions"]:
+                for key, value in list(pos.items()):
+                    if hasattr(value, "isoformat"):
+                        pos[key] = value.isoformat()
+        except Exception:
+            out["open_positions"] = []
         out["recent_intents"] = self.history[-20:]
         return out
 
