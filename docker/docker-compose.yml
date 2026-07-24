@@ -414,8 +414,9 @@ services:
       SIGNAL_COPY_RISK_PCT: ${SIGNAL_COPY_RISK_PCT:-0.01}
       SIGNAL_COPY_DRY_RUN: ${SIGNAL_COPY_DRY_RUN:-true}
       SIGNAL_COPY_AUTO_EXECUTE: ${SIGNAL_COPY_AUTO_EXECUTE:-false}
-      # Execution Gateway (live/testnet path): reach host gateway on :8787
-      GATEWAY_URL: ${GATEWAY_URL:-http://host.docker.internal:8787/gateway}
+      # Execution Gateway: direct compose DNS avoids host loopback/publish path.
+      # Override GATEWAY_URL only when using an external/legacy gateway.
+      GATEWAY_URL: ${GATEWAY_URL:-http://gateway:8787/gateway}
       GATEWAY_TOKEN: ${GATEWAY_TOKEN}
       SIGNAL_COPY_ADVERSARIAL_ENABLED: ${SIGNAL_COPY_ADVERSARIAL_ENABLED:-true}
       # Adversarial bull/bear LLM gate — reach host proxy via host.docker.internal
@@ -452,6 +453,44 @@ services:
       - ../signal_copy_session.session:/app/signal_copy_session.session
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      fastapi:
+        condition: service_started
+    restart: unless-stopped
+    profiles: ["bots"]
+    networks:
+      - nexus_net
+      - docker_default
+
+  # ============================================================
+  # Execution Gateway — single exchange/paper execution point (:8787)
+  # Containerized replacement for the host systemd unit (fusion-gateway.service).
+  # Same image as the bots (gateway code is baked in); just a different command.
+  #  - user 1000:1000  -> journal/ is host-owned by uid 1000 (image nexus=999)
+  #  - PYTHONPATH=/app  -> avoid /app/fusionnew/utils shadowing /app/utils
+  #  - PAPER_NEXUS_API=fastapi:8000 -> host default localhost:8000 is wrong here
+  #  - publish 127.0.0.1:8787 -> bots keep reaching host.docker.internal:8787
+  # ============================================================
+  gateway:
+    image: nexus-bot:latest
+    container_name: nexus_gateway
+    command: ["python", "-u", "-m", "uvicorn", "gateway.run_gateway:app", "--host", "0.0.0.0", "--port", "8787"]
+    user: "1000:1000"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: /app
+      GATEWAY_TOKEN: ${GATEWAY_TOKEN}
+      GATEWAY_PAPER_MAINNET: ${GATEWAY_PAPER_MAINNET:-true}
+      STARTING_BALANCE: ${STARTING_BALANCE:-1000}
+      MAX_OPEN_POS_GLOBAL: ${MAX_OPEN_POS_GLOBAL:-20}
+      PAPER_NEXUS_API: http://fastapi:8000
+      BOT_JOURNAL_DIR: /app/journal
+      BINANCE_TESTNET_API_KEY: ${BINANCE_TESTNET_API_KEY:-}
+      BINANCE_TESTNET_SECRET: ${BINANCE_TESTNET_SECRET:-}
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - ../journal:/app/journal
     depends_on:
       fastapi:
         condition: service_started
