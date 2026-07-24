@@ -208,6 +208,17 @@ CSV_COLUMNS = [
     "time_to_final_exit_seconds",
     "ultra_fast_audit_flag",
     "ultra_fast_peer_bucket",
+    "signal_source",
+    "source_chat_id",
+    "signal_id",
+    "signal_entry_low",
+    "signal_entry_high",
+    "signal_active_entry",
+    "signal_entry_type",
+    "signal_timeframe",
+    "signal_leverage",
+    "signal_tp_ladder",
+    "signal_raw_text",
     "h1_location_map_json",
     "phase1_profile_json",
     "market_context_json",
@@ -1081,6 +1092,17 @@ def _flatten_trade_for_csv(normalized: Dict[str, Any]) -> Dict[str, Any]:
     flat["thesis_penalty_notes"] = "|".join(_safe_list_str(normalized.get("thesis_penalty_notes")))
     flat["smc_stack_reasons"] = "|".join(_safe_list_str(normalized.get("smc_stack_reasons")))
     flat["h1_location_map_json"] = _json_dumps_safe(_safe_dict(normalized.get("h1_location_map"))) if normalized.get("h1_location_map") else ""
+
+    # Signal-copy audit fields live inside adv_snapshot — surface them as
+    # first-class columns so channel-attribution/audit doesn't need JSON parsing.
+    _sig_cols = (
+        "signal_source", "source_chat_id", "signal_id", "signal_entry_low",
+        "signal_entry_high", "signal_active_entry", "signal_entry_type",
+        "signal_timeframe", "signal_leverage", "signal_tp_ladder", "signal_raw_text",
+    )
+    for _sc in _sig_cols:
+        if not flat.get(_sc) and adv_snapshot.get(_sc) is not None:
+            flat[_sc] = adv_snapshot.get(_sc)
 
     flat["phase1_profile_json"] = _json_dumps_safe(phase1_profile)
     flat["market_context_json"] = _json_dumps_safe(market_context)

@@ -64,6 +64,27 @@ EXCHANGES = {
 async def fetch_symbols(exchange: ExchangeConfig) -> List[str]:
     """Fetch all USDⓈ-M perpetual pairs from exchange."""
     async with httpx.AsyncClient(timeout=15.0) as client:
+        rows = []
+        if exchange.name == "bybit":
+            cursor = ""
+            while True:
+                params = {"category": "linear", "limit": "1000"}
+                if cursor:
+                    params["cursor"] = cursor
+                resp = await client.get("https://api.bybit.com/v5/market/instruments-info", params=params)
+                resp.raise_for_status()
+                result = resp.json().get("result", {})
+                rows.extend(result.get("list", []))
+                cursor = result.get("nextPageCursor") or ""
+                if not cursor:
+                    break
+            return [
+                s["symbol"] for s in rows
+                if s.get("contractType") == "LinearPerpetual"
+                and s.get("quoteCoin") == "USDT"
+                and s.get("status") == "Trading"
+            ]
+
         resp = await client.get(exchange.symbols_url)
         resp.raise_for_status()
         data = resp.json()
@@ -74,11 +95,6 @@ async def fetch_symbols(exchange: ExchangeConfig) -> List[str]:
             if (s.get("contractType") == "PERPETUAL" and 
                 s.get("quoteAsset") == "USDT" and
                 s.get("status") == "TRADING"):
-                pairs.append(s["symbol"])
-    
-    elif exchange.name == "bybit":
-        for s in data.get("result", {}).get("list", []):
-            if s["symbol"].endswith("USDT") and s.get("status") == "Trading":
                 pairs.append(s["symbol"])
     
     elif exchange.name == "okx":

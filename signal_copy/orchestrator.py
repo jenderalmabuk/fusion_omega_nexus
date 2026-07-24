@@ -370,7 +370,7 @@ class SignalCopyOrchestrator:
         cls = classify_message(text)
 
         sig = parse_signal(text, source=source, source_name=source_name, source_chat_id=source_chat_id)
-        if sig is None and image and getattr(scfg, "VISION_ENABLED", False):
+        if sig is None and image and scfg.vision_enabled_for_channel(source_chat_id):
             # Chart-only / image-only signal: no parseable text, so read the
             # chart with vision and build the signal from what it extracts.
             # BUT skip the vision path entirely when the caption is
@@ -474,7 +474,7 @@ class SignalCopyOrchestrator:
         # --- Tahap 2.5: read the chart image (vision) for EVERY image-bearing
         # signal: (a) fill missing TP/SL/timeframe, and (b) feed a chart
         # confluence factor into validation (agreement strengthens the score). ---
-        if image and getattr(scfg, "VISION_ENABLED", False):
+        if image and scfg.vision_enabled_for_channel(source_chat_id):
             try:
                 from .vision import analyze_chart
                 vdata = await analyze_chart(image, symbol=sig.symbol, raw_text=text)
@@ -552,11 +552,32 @@ class SignalCopyOrchestrator:
                     bull_bear_check, sig.symbol, adv_context
                 )
 
+                _adv_mode = getattr(scfg, "ADVERSARIAL_MODE", "soft")
+                _adv_floor = getattr(scfg, "ADVERSARIAL_SOFT_FLOOR", 75.0)
                 if not approved:
-                    logger.warning("[ADVERSARIAL] REJECTED by judge: %s", judge_verdict[:200])
-                    result.verdict = Verdict.REJECT
-                    result.hard_blocks.append(f"Adversarial: {judge_verdict[:250]}")
                     _adv_verdict = judge_verdict
+                    if _adv_mode == "hard":
+                        # Legacy: judge NO hard-blocks the trade.
+                        logger.warning("[ADVERSARIAL] REJECTED (hard) by judge: %s", judge_verdict[:200])
+                        result.verdict = Verdict.REJECT
+                        result.hard_blocks.append(f"Adversarial: {judge_verdict[:250]}")
+                    elif _adv_mode == "off":
+                        # Advisory only: never changes the verdict, just annotate.
+                        logger.info("[ADVERSARIAL] NO (advisory, mode=off) — verdict kept: %s", judge_verdict[:200])
+                    else:
+                        # "soft" (default): high-conviction setups ride through; only
+                        # weak-but-VALID ones get downgraded (not rejected) to WEAK.
+                        if float(result.score) >= float(_adv_floor):
+                            logger.info(
+                                "[ADVERSARIAL] NO overridden — score=%.1f >= floor=%.1f, entry allowed: %s",
+                                result.score, _adv_floor, judge_verdict[:160])
+                        else:
+                            logger.warning(
+                                "[ADVERSARIAL] NO -> downgrade to WEAK (score=%.1f < floor=%.1f): %s",
+                                result.score, _adv_floor, judge_verdict[:160])
+                            result.verdict = Verdict.WEAK
+                            # _adv_verdict (set above) carries the note into the
+                            # consolidated report; no separate soft-flag field exists.
                 else:
                     logger.info("[ADVERSARIAL] APPROVED: %s", judge_verdict[:200])
                    
@@ -587,6 +608,22 @@ class SignalCopyOrchestrator:
                 except Exception:
                     pass
 
+        # --- Snapshot for channel-quality learning (ALL verdicts w/ usable data) ---
+        # Fire-and-forget execution means exits are never reported back, so we
+        # track the channel's OWN entry/tp/sl call virtually — executed or not —
+        # to build a fair per-channel track record. Ghosts (entry<=0 / no tp/sl /
+        # already-past price) are filtered inside track().
+        try:
+            from .outcome_tracker import get_outcome_tracker
+            _executed = (result.verdict == Verdict.VALID and not calib
+                         and self.executor is not None and self.auto_execute)
+            get_outcome_tracker().track(
+                result.signal, metrics,
+                verdict=result.verdict.value, was_executed=bool(_executed),
+            )
+        except Exception as exc:
+            logger.debug("[OUTCOME] snapshot skipped: %s", exc)
+
         # --- Stop processing for REJECT / WEAK ---
         if result.verdict == Verdict.REJECT or result.verdict == Verdict.WEAK:
             return
@@ -612,6 +649,50 @@ class SignalCopyOrchestrator:
             # Confirmation bot handles the interactive prompt
             pass
 
+    # ---------- max-position gate (parse-but-don't-execute) ----------
+    async def _at_max_positions(self) -> Tuple[bool, int, int]:
+        """Return (at_max, open_count, max_allowed) from the LIVE gateway book.
+
+        Fail-open: on any error / unknown count / no gateway (dry-run), returns
+        (False, -1, cap) so a transient hiccup never blocks a fill. The gateway
+        still enforces MAX_OPEN_POS_GLOBAL as a hard backstop regardless."""
+        from .execution_config import MAX_OPEN_POS_GLOBAL
+        cap = int(MAX_OPEN_POS_GLOBAL)
+        client = getattr(self.trader, "client", None)
+        if client is None or not hasattr(client, "portfolio"):
+            return (False, -1, cap)  # dry-run / no gateway -> gateway backstops
+        try:
+            snap = await client.portfolio()
+            raw = snap.get("open_position_count")
+            if raw is None:
+                return (False, -1, cap)  # unknown -> fail-open
+            cnt = int(raw)
+            return (cnt >= cap, cnt, cap)
+        except Exception as exc:
+            logger.warning("[MAX_POS] portfolio check failed (%s) — fail-open", exc)
+            return (False, -1, cap)
+
+    async def _gate_on_max_positions(self, sig) -> bool:
+        """True -> SKIP execution because the book is full. The signal has
+        already been parsed/validated/reported; only the EXECUTION is skipped
+        (the signal is never dropped). Sends a clear notice. Config-driven via
+        SIGNAL_COPY_GATE_ON_MAX_POS (default True); fail-open on any error."""
+        if not getattr(scfg, "GATE_EXEC_ON_MAX_POS", True):
+            return False
+        at_max, cnt, cap = await self._at_max_positions()
+        if not at_max:
+            return False
+        logger.info("[MAX_POS] %s parsed but NOT executed: book full (%d/%d)",
+                    sig.symbol, cnt, cap)
+        try:
+            await self._notify_trades_channel(
+                f"⏸️ {sig.symbol} {sig.side.value}: sinyal di-parse & valid, tapi "
+                f"TIDAK dieksekusi — posisi terbuka sudah maksimal ({cnt}/{cap}). "
+                f"Sinyal tetap tercatat; eksekusi dilewati.")
+        except Exception as exc:
+            logger.error("[MAX_POS] notify failed: %s", exc)
+        return True
+
     # ---------- execution path ----------
     async def _execute_token(self, signal_id: str) -> str:
         """Execute a confirmed signal (called by confirm bot or auto-exec)."""
@@ -624,12 +705,23 @@ class SignalCopyOrchestrator:
         if self.executor is None:
             return "Executor tidak tersedia."
 
+        sig = pc.result.signal
+
+        # Parse-but-don't-execute at max open positions: the signal is already
+        # parsed/validated/reported; skip only the EXECUTION when the book is
+        # full (config-driven, fail-open). Gateway is the hard backstop.
+        if await self._gate_on_max_positions(sig):
+            await self.confirmations.mark(
+                signal_id, ConfirmState.EXPIRED, note="skipped_max_positions")
+            return (f"⏸️ {sig.symbol} {sig.side.value}: sinyal tercatat, "
+                    f"eksekusi dilewati (posisi maksimal).")
+
         # Limit setup: if price hasn't reached the entry yet, wait for it
         # (avoid chasing) — execute automatically when the price touches the limit.
-        sig = pc.result.signal
         price = _f(pc.result.metrics_snapshot.get("price"))
         entry = getattr(sig, "active_entry", None) or sig.entry_mid
-        if self._wait_for_limit(sig, price):
+        _regime = (pc.result.metrics_snapshot or {}).get("regime_label", "")
+        if self._wait_for_limit(sig, price, regime=_regime):
             self._pending_limits[signal_id] = {"result": pc.result, "created": time.time()}
             await self.confirmations.mark(
                 signal_id,
@@ -701,34 +793,81 @@ class SignalCopyOrchestrator:
             
             return execution_msg
         
-        # Failed execution
-        return f"❌ Eksekusi gagal: {outcome.reason}"
+        # Failed execution: the parser card already said VALID; send the final
+        # execution verdict too so users can see why no position opened.
+        from signal_copy.telegram_transport import send_trades_notification
+        from signal_copy.telegram_formatter import build_execution_message
+        execution_msg = build_execution_message(outcome, pc.result.signal, pc.result)
+        try:
+            await send_trades_notification(execution_msg)
+        except Exception as exc:
+            logger.error(f"❌ Telegram failed-exec notify failed: {exc}")
+        return execution_msg
 
-    def _wait_for_limit(self, sig, price: float) -> bool:
-        """Decide whether to hold the entry as a pending limit instead of
-        chasing at market. Returns True when:
-          - the signal is an explicit limit entry not yet reached, OR
-          - price has already run past the entry in the profit direction far
-            enough that a market fill would inflate the SL distance (and thus
-            real risk) beyond the safe cap. In that case we wait for a pullback
-            to the signal entry so risk stays ~1%."""
-        entry = getattr(sig, "entry_mid", 0.0) or 0.0
+    @staticmethod
+    def _entry_ref(sig) -> float:
+        """Reference entry price used for both the wait decision and the
+        limit-reached trigger. Prefers the active entry (closest to price)
+        over the zone midpoint so RR/validation stay consistent."""
+        return float(getattr(sig, "active_entry", None) or getattr(sig, "entry_mid", 0.0) or 0.0)
+
+    def _wait_for_limit(self, sig, price: float, regime: str = "") -> bool:
+        """Regime-aware entry-style decision. Returns True to HOLD as a pending
+        limit (wait for pullback), False to fill NOW at market.
+
+        Drift = how far price has run past the signal entry in the PROFIT
+        direction (the 'chasing' scenario), measured in R (entry->SL distance):
+          - Fresh   (<= ENTRY_DRIFT_FRESH_R): market now.
+          - Lagging (fresh..ENTRY_DRIFT_MAX_R): market ONLY in a chase regime
+            (trending); otherwise wait for a pullback.
+          - Too far (> ENTRY_DRIFT_MAX_R): always wait for a pullback.
+        Explicit limit-typed signals still wait until the entry is reached.
+        Note: the executor re-sizes notional from the ACTUAL fill, so chasing
+        keeps risk ~constant; the drift band protects R:R, not risk."""
+        entry = self._entry_ref(sig)
+        sl = float(getattr(sig, "stop_loss", 0.0) or 0.0)
         if price <= 0 or entry <= 0:
             return False
+
+        # Explicit limit entry: wait until the entry price is touched.
         if getattr(sig, "entry_type", "market") == "limit":
             return not self._limit_reached(sig, price)
-        # Market-typed signal: only wait if price moved in the PROFIT direction
-        if sig.is_long:
-            runaway = price >= entry * 1.002  # 0.2% past entry for longs
-        else:
-            runaway = price <= entry * 0.998
-        return runaway
+
+        # Drift-hold disabled (default) -> market signals fill NOW at market,
+        # matching original behavior. Prevents fast scalp signals from being
+        # parked as pending limits waiting for a pullback that never comes.
+        if not getattr(scfg, "ENTRY_DRIFT_HOLD_ENABLED", False):
+            return False
+
+        # Market-typed: only consider waiting if price ran in the PROFIT
+        # direction. At/better than entry -> fill now.
+        drift_abs = (price - entry) if sig.is_long else (entry - price)
+        if drift_abs <= 0:
+            return False
+
+        # Drift in R units (fallback to 1% proxy if SL missing/degenerate).
+        r_dist = abs(entry - sl) if sl > 0 else entry * 0.01
+        if r_dist <= 0:
+            return False
+        drift_r = drift_abs / r_dist
+
+        fresh = float(getattr(scfg, "ENTRY_DRIFT_FRESH_R", 0.25))
+        far = float(getattr(scfg, "ENTRY_DRIFT_MAX_R", 0.50))
+        chase_regimes = getattr(scfg, "ENTRY_CHASE_REGIMES", {"TRENDING"})
+        reg = str(regime or "").upper()
+
+        if drift_r <= fresh:
+            return False                    # fresh — market now
+        if drift_r <= far:
+            return reg not in chase_regimes # lagging — chase only in trend
+        return True                         # too far — wait for pullback
 
     def _limit_reached(self, sig, price: float) -> bool:
+        ref = self._entry_ref(sig)
         if sig.is_long:
-            return price <= sig.entry_mid
+            return price <= ref
         else:
-            return price >= sig.entry_mid
+            return price >= ref
 
     # ---------- public: handle pending limits (call periodically) ----------
     async def check_pending_limits(self) -> None:
@@ -737,17 +876,53 @@ class SignalCopyOrchestrator:
             pc = data.get("result")
             if not pc:
                 continue
-            if time.time() - float(data.get("created", 0.0)) > scfg.CONFIRM_EXPIRY_SEC:
-                self._pending_limits.pop(token, None)
-                await self.confirmations.mark(token, ConfirmState.EXPIRED, note="limit_expired_1h")
-                continue
             sig = pc.signal
+            # Per-channel expiry (Opsi A): scalp/standard/swing by source channel.
+            _expiry = scfg.expiry_for_channel(getattr(sig, "source_chat_id", None))
+            if time.time() - float(data.get("created", 0.0)) > _expiry:
+                self._pending_limits.pop(token, None)
+                await self.confirmations.mark(
+                    token, ConfirmState.EXPIRED,
+                    note=f"limit_expired:{int(_expiry)}s")
+                continue
             metrics = await self._fetch_metrics(sig.symbol)
             price = _f(metrics.get("price"))
             if price <= 0:
                 continue
             if self._limit_reached(sig, price):
                 self._pending_limits.pop(token, None)
+                # Re-validate on pullback fill: the setup may have decayed while
+                # waiting (price/flow moved against the thesis). If it is no
+                # longer VALID, cancel the pending entry instead of chasing a
+                # stale signal. Toggle via SIGNAL_COPY_ENTRY_REVALIDATE_ON_FILL.
+                if getattr(scfg, "ENTRY_REVALIDATE_ON_FILL", True):
+                    try:
+                        revalid = validate_signal(sig, metrics)
+                        if revalid.verdict != Verdict.VALID:
+                            logger.warning(
+                                "[PENDING] %s pullback filled but re-validation=%s "
+                                "(score=%.1f) — cancel entry (stale setup)",
+                                sig.symbol, revalid.verdict.value, revalid.score)
+                            await self.confirmations.mark(
+                                token, ConfirmState.EXPIRED,
+                                note=f"revalidate_failed:{revalid.verdict.value}:{revalid.score:.0f}")
+                            await self._notify_trades_channel(
+                                f"🚫 Batal entry {sig.symbol} {sig.side.value}: harga kembali ke "
+                                f"limit tapi sinyal sudah tidak valid "
+                                f"({revalid.verdict.value}, score {revalid.score:.0f}).")
+                            continue
+                        # refresh snapshot so sizing/report use current metrics
+                        pc.metrics_snapshot = revalid.metrics_snapshot or metrics
+                    except Exception as exc:
+                        logger.warning("[PENDING] re-validation error for %s: %s "
+                                       "(proceeding with entry)", sig.symbol, exc)
+                # Parse-but-don't-execute at max open positions (pending-limit
+                # fill path). The signal was parsed/validated/reported earlier;
+                # skip only the EXECUTION when the book is full.
+                if await self._gate_on_max_positions(sig):
+                    await self.confirmations.mark(
+                        token, ConfirmState.EXPIRED, note="skipped_max_positions")
+                    continue
                 await self.confirmations.mark(
                     token,
                     ConfirmState.APPROVED,

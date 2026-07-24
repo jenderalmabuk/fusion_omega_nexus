@@ -23,6 +23,23 @@ import numpy as np
 _HISTORY_SCAN_COUNT = 90  # 90 scans = ~90 min at 60s intervals
 
 
+def _canonical_supported(symbol: str) -> bool:
+    paths = [
+        Path("/app/runtime/revo/canonical_universe.json"),
+        Path(__file__).resolve().parents[1] / "runtime" / "revo" / "canonical_universe.json",
+    ]
+    for path in paths:
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text())
+            pairs = data.get("pairs", data)
+            return symbol.upper() in {str(p).upper() for p in pairs}
+        except Exception:
+            continue
+    return True
+
+
 class NexusDataBridge:
     """
     Lightweight data adapter: reads scanner cache, computes derived metrics.
@@ -90,7 +107,13 @@ class NexusDataBridge:
         return self._flow_cache
 
     def _load_oi_5m_raw(self, symbol: str) -> Dict[str, Any]:
-        """Derive OI 5m/15m/1h from sidecar raw 5m Bybit snapshots when available."""
+        """Derive OI 5m/15m/1h from sidecar raw 5m Bybit snapshots when available.
+
+        If the shared snapshot universe does not cover the symbol, fall back to a
+        direct Bybit public fetch for this one symbol so signal-copy can still
+        classify the trade.
+        """
+        symbol = symbol.upper()
         paths = [
             Path("/app/runtime/revo/oi_5m_raw_bybit.jsonl"),
             Path(__file__).parent.parent / "runtime" / "revo" / "oi_5m_raw_bybit.jsonl",
@@ -106,24 +129,56 @@ class NexusDataBridge:
             for line in lines:
                 try:
                     snap = json.loads(line)
-                    rec = (snap.get("records") or {}).get(symbol.upper())
+                    rec = (snap.get("records") or {}).get(symbol)
                     if rec and rec.get("oi_value"):
                         rows.append((snap.get("ts"), float(rec["oi_value"])))
                 except Exception:
                     continue
-            if not rows:
+            if rows:
+                latest_ts, latest_val = rows[-1]
+                out: Dict[str, Any] = {"oi_now_5m_raw": latest_val, "oi_5m_raw_ts": latest_ts}
+                for key, back in (("oi_change_5m_pct", 1), ("oi_change_15m_pct", 3), ("oi_change_1h_pct", 12)):
+                    if len(rows) > back:
+                        old_val = rows[-1 - back][1]
+                        if old_val > 0:
+                            out[key] = round(((latest_val - old_val) / old_val) * 100.0, 4)
+                if any(k in out for k in ("oi_change_5m_pct", "oi_change_15m_pct", "oi_change_1h_pct")):
+                    out["oi_source"] = "bybit_raw_5m"
+                return out
+
+        if not _canonical_supported(symbol):
+            return {"oi_source": "unsupported_canonical"}
+
+        try:
+            import requests
+            url = "https://api.bybit.com/v5/market/open-interest"
+            params = {"category": "linear", "symbol": symbol, "intervalTime": "5min", "limit": 4}
+            resp = requests.get(url, params=params, timeout=8)
+            resp.raise_for_status()
+            data = resp.json()
+            rows = (data.get("result", {}) or {}).get("list", []) or []
+            vals = []
+            for row in rows:
+                ts = row.get("timestamp") or row.get("time") or row.get("ts")
+                oi = row.get("openInterest") or row.get("oi")
+                if oi is None:
+                    continue
+                try:
+                    vals.append((str(ts), float(oi)))
+                except Exception:
+                    continue
+            if not vals:
                 return {}
-            latest_ts, latest_val = rows[-1]
-            out: Dict[str, Any] = {"oi_now_5m_raw": latest_val, "oi_5m_raw_ts": latest_ts}
+            latest_ts, latest_val = vals[-1]
+            out = {"oi_now_5m_raw": latest_val, "oi_5m_raw_ts": latest_ts, "oi_source": "bybit_direct_5m"}
             for key, back in (("oi_change_5m_pct", 1), ("oi_change_15m_pct", 3), ("oi_change_1h_pct", 12)):
-                if len(rows) > back:
-                    old_val = rows[-1 - back][1]
+                if len(vals) > back:
+                    old_val = vals[-1 - back][1]
                     if old_val > 0:
                         out[key] = round(((latest_val - old_val) / old_val) * 100.0, 4)
-            if any(k in out for k in ("oi_change_5m_pct", "oi_change_15m_pct", "oi_change_1h_pct")):
-                out["oi_source"] = "bybit_raw_5m"
             return out
-        return {}
+        except Exception:
+            return {}
 
     async def _fetch_oi_15m_db(self, symbol: str, limit: int = 5) -> Dict[str, Any]:
         """Fetch Bybit 15m OI rows from FastAPI; derive 1h when enough rows exist."""

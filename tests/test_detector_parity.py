@@ -2,7 +2,7 @@
 on the same synthetic dataset containing one valid OB+FVG pattern."""
 import pytest
 
-from backtest.faithful_imbalance import FIB_EXPIRY, _trend, generate_setups, recent_setups
+from backtest.faithful_imbalance import FIB_EXPIRY, _trend, generate_setups, nearest_unmitigated_setups, recent_setups
 from tests.synthetic import make_ltf_df, make_zone_df
 
 
@@ -36,8 +36,18 @@ def test_entry_sl_tp_identical(frames):
 
 def test_live_respects_max_age(frames):
     zone, ltf, trend = frames
-    # A setup 396 bars old is outside any sane fresh window -> with max_age
-    # equal to the default FIB_EXPIRY the (fresh) setup at ce=396 IS returned,
-    # but shrinking max_age to 1 (imbalance is 3 bars old) must drop it.
+    # Fresh-only detector returns the synthetic setup at default window,
+    # but shrinking max_age below the imbalance age must drop it.
     assert recent_setups(zone, ltf, trend, "BULL", max_age=FIB_EXPIRY)
     assert not recent_setups(zone, ltf, trend, "BULL", max_age=1)
+
+
+def test_nearest_unmitigated_keeps_older_unfilled_setup(frames):
+    zone, ltf, trend = frames
+    ltf = ltf.copy()
+    # Make the post-imbalance path stay above the entry zone so the setup remains unmitigated.
+    ltf.loc[397:, ["open", "high", "low", "close"]] = [120.5, 120.8, 120.4, 120.6]
+    out = nearest_unmitigated_setups(zone, ltf, trend, "BULL")
+    assert out, "nearest-unmitigated detector should keep the synthetic unfilled imbalance"
+    assert out[0]["age_bars"] >= 0
+    assert out[0]["dist_pct"] >= 0

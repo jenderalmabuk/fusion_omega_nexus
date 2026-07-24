@@ -83,12 +83,10 @@ class UniverseScanner:
         bybit_pairs = set(await fetch_symbols(EXCHANGES["bybit"]))
         binance_pairs = set(await fetch_symbols(EXCHANGES["binance"]))
         
-        # Intersection: pairs on BOTH exchanges
+        # Canonical universe: pairs on BOTH exchanges only.
         intersection = sorted(bybit_pairs & binance_pairs)
-        # Also include Binance-only pairs that have volume (for OI/klines fallback)
-        binance_only = sorted(binance_pairs - bybit_pairs)
-        self.binance_only_symbols = set(binance_only)
-        print(f"[scanner] Bybit: {len(bybit_pairs)} | Binance: {len(binance_pairs)} | Both: {len(intersection)} | Binance-only: {len(binance_only)}")
+        self.binance_only_symbols = set()
+        print(f"[scanner] Bybit: {len(bybit_pairs)} | Binance: {len(binance_pairs)} | Both: {len(intersection)}")
         
         # Sort by |24h price change| descending using Bybit tickers for intersection
         r = await self.client.get("https://api.bybit.com/v5/market/tickers?category=linear")
@@ -101,26 +99,11 @@ class UniverseScanner:
                 pct_map[sym] = abs(float(t.get("price24hPcnt", 0)))
                 vol_map[sym] = float(t.get("turnover24h", 0))
         
-        # For Binance-only pairs, fetch volume from Binance
-        binance_vol_map = {}
-        for sym in binance_only[:50]:  # limit to top 50 to avoid rate limit
-            try:
-                r = await self.client.get(f"https://fapi.binance.com/fapi/v1/ticker/24hr?symbol={sym}")
-                data = r.json()
-                binance_vol_map[sym] = float(data.get("quoteVolume", 0))
-            except Exception:
-                pass
-        
-        # Filter intersection by volume
+        # Filter canonical intersection by Bybit volume
         qualified = [s for s in intersection if vol_map.get(s, 0) >= min_volume_24h]
         qualified.sort(key=lambda s: pct_map.get(s, 0), reverse=True)
         
-        # Add Binance-only pairs with sufficient volume (top 20)
-        binance_qualified = [s for s in binance_only if binance_vol_map.get(s, 0) >= min_volume_24h]
-        binance_qualified.sort(key=lambda s: binance_vol_map.get(s, 0), reverse=True)
-        qualified.extend(binance_qualified[:20])  # top 20 Binance-only by volume
-        
-        print(f"[scanner] After volume filter ${min_volume_24h:,.0f}: {len(qualified)} pairs ({len(intersection)} intersection + {len(binance_qualified[:20])} Binance-only)")
+        print(f"[scanner] After volume filter ${min_volume_24h:,.0f}: {len(qualified)} canonical pairs")
         print(f"[scanner] Top 5: {qualified[:5]}")
         self.pairs = qualified
         return self.pairs

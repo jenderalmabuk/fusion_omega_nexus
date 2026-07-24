@@ -1,1 +1,24 @@
-{}
+{
+  "BANK/USDT:USDT": {
+    "blocked_until": "2026-07-24T00:47:04.024000+00:00",
+    "last_close": "2026-07-21T00:47:04.024000+00:00",
+    "loss_streak": 3,
+    "losses": 3,
+    "mode": "cooldown",
+    "net": 1.33008983,
+    "reason": "loss_streak=3",
+    "trades": 4,
+    "wins": 1
+  },
+  "DEXE/USDT:USDT": {
+    "blocked_until": "2026-07-29T12:31:09.673000+00:00",
+    "last_close": "2026-07-22T12:31:09.673000+00:00",
+    "loss_streak": 4,
+    "losses": 9,
+    "mode": "cooldown",
+    "net": -4.92328706,
+    "reason": "losses=9 net=-4.9233",
+    "trades": 10,
+    "wins": 1
+  }
+}

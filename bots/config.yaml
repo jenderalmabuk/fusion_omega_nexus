@@ -22,7 +22,7 @@ m30_imbalance:
   adversarial: true
   cvd: false
   btc_regime: false
-  symbols_file: universe.txt
+  symbols_file: ../runtime/revo/canonical_universe.txt
 
 # H1 Imbalance — Medium (adversarial)
 h1_imbalance:
@@ -45,7 +45,7 @@ h1_imbalance:
   adversarial: true
   cvd: false
   btc_regime: false
-  symbols_file: universe.txt
+  symbols_file: ../runtime/revo/canonical_universe.txt
 
 # ============================================================
 # FUSIONNEW forward-test bots — BEST STRATEGY (validated sweep 2026-07-14)
@@ -59,7 +59,7 @@ h1_fusionnew:
   tag: _fusionnew_h1
   ema_dist: 1.0
   min_turn: 1000000
-  stoch_max: 70
+  stoch_max: 50
   equity: 1000
   risk_pct: 0.01
   max_positions: 6
@@ -73,7 +73,7 @@ h1_fusionnew:
   adversarial: false
   cvd: true
   btc_regime: true
-  symbols_file: universe.txt
+  symbols_file: ../runtime/revo/canonical_universe.txt
 
 m30_fusionnew:
   tier: M30
@@ -81,7 +81,7 @@ m30_fusionnew:
   tag: _fusionnew_m30
   ema_dist: 1.0
   min_turn: 1000000
-  stoch_max: 70
+  stoch_max: 50
   equity: 1000
   risk_pct: 0.01
   max_positions: 6
@@ -95,4 +95,4 @@ m30_fusionnew:
   adversarial: false
   cvd: true
   btc_regime: true
-  symbols_file: universe.txt
+  symbols_file: ../runtime/revo/canonical_universe.txt

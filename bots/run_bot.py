@@ -70,6 +70,7 @@ def _load_universe_fallback() -> list:
     if env_src:
         candidates.append(env_src)
     candidates += [
+        os.path.join(repo_root, "runtime", "revo", "canonical_universe.json"),
         os.path.join(repo_root, "runtime", "revo", "freqtrade_pairlist.json"),
         os.path.join(repo_root, "runtime", "revo", "pair_universe_all.json"),
     ]

@@ -21,6 +21,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+import json
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .signal_schema import ParsedSignal, SignalSide
@@ -75,6 +77,23 @@ def _f(value: Any, default: float = 0.0) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+def _canonical_supported(symbol: str) -> bool:
+    paths = [
+        Path("/app/runtime/revo/canonical_universe.json"),
+        Path(__file__).resolve().parents[1] / "runtime" / "revo" / "canonical_universe.json",
+    ]
+    for path in paths:
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text())
+            pairs = data.get("pairs", data)
+            return symbol.upper() in {str(p).upper() for p in pairs}
+        except Exception:
+            continue
+    return True
 
 
 def _factor_price_freshness(sig: ParsedSignal, m: Dict[str, Any]) -> Factor:
@@ -343,6 +362,8 @@ def validate_signal(sig: ParsedSignal, metrics: Optional[Dict[str, Any]]) -> Val
     hard_blocks: List[str] = []
 
     # --- hard blocks (instant reject regardless of score) ---
+    if not _canonical_supported(sig.symbol):
+        hard_blocks.append("symbol not in canonical Bybit∩Binance USDT perp universe")
     if not metrics.get("data_valid", False) and _f(metrics.get("price")) <= 0:
         hard_blocks.append("no valid market data for symbol")
 
