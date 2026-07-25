@@ -98,12 +98,13 @@ def test_jsonl_and_heartbeat_are_atomic(tmp_path):
     assert json.loads(heartbeat.read_text())["status"] == "ok"
 
 
-def test_setup_message_matches_old_bot_shape():
-    msg = runner.setup_message(
-        {"symbol": "BTCUSDT", "side": "SHORT", "entry_price": 100.0, "sl_price": 102.0, "tp_price": 96.0},
-        {"execution": {"trader_response": {"qty": 2.5, "entry_price": 99.5}}},
-    )
-    assert "🆕 SETUP H4 SELL BTCUSDT [fusion_quantum_h4_15m]" in msg
-    assert "Entry 100 | SL 102 | TP 96 | qty 2.5 | RR 2.0" in msg
-    assert "TradingView: https://www.tradingview.com/chart/?symbol=BTCUSDT.P" in msg
-    assert "✅ FILLED BTCUSDT SELL @~99.5" in msg
+def test_setup_and_fill_messages_are_separate():
+    setup = {"symbol": "BTCUSDT", "side": "SHORT", "entry_price": 100.0, "sl_price": 102.0, "tp_price": 96.0}
+    placed = runner.setup_message(setup)
+    filled = runner.fill_message(setup, {"execution": {"trader_response": {"qty": 2.5, "entry_price": 99.5}}})
+    assert "🆕 SETUP H4 SELL BTCUSDT [fusion_quantum_h4_15m]" in placed
+    assert "Entry 100 | SL 102 | TP 96 | RR 2.0" in placed
+    assert "[PAPER] LIMIT placed" in placed
+    assert "FILLED" not in placed
+    assert filled.startswith("✅ FILLED BTCUSDT SELL @~99.5")
+    assert "SETUP" not in filled

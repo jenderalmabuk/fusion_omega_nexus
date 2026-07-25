@@ -145,6 +145,7 @@ class PaperMainnetTrader:
             "adv_snapshot": dict(_adv_snapshot) if isinstance(_adv_snapshot, dict) else {},
             "score": float(params.get("score", 0) or 0),
             "confidence": float(params.get("confidence", 0) or 0),
+            "tag": str(params.get("tag", "")),
         }
         logger.info("[PAPER] OPEN %s %s @ %.6g (%s) | SL %.6g TP1 %.6g | $%.0f",
                     side, symbol, fill, "limit" if fill == requested_entry else "mainnet mark", sl_price, tp1, notional)
@@ -268,6 +269,7 @@ class PaperMainnetTrader:
                 "equity": equity_after if equity_after is not None else 0.0,
                 "sl_original": pos["sl_price"], "active_sl_at_exit": pos["sl_price"],
                 "sl_kind_at_exit": "ORIGINAL",
+                "footer": "Fusion Quantum Dry-Run" if str(pos.get("tag", "")).startswith("fusion_quantum") else "",
             }))
         except Exception as e:
             logger.warning("[PAPER] close-notify dispatch failed for %s: %s", symbol, e)

@@ -547,7 +547,7 @@ def build_close_message(payload: Dict[str, Any]) -> str:
         "────────────────────",
         f'🔗 <a href="{tv_link}">📊 Lihat Chart TradingView 15m + SMA21</a>',
         "────────────────────",
-        _mode_footer(),
+        _safe_str(payload, "footer", default="") or _mode_footer(),
     ])
 
     return "\n".join(lines)

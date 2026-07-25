@@ -156,21 +156,28 @@ def notify(text: str) -> None:
         pass
 
 
-def setup_message(setup: dict[str, Any], result: dict[str, Any]) -> str:
+def setup_message(setup: dict[str, Any]) -> str:
     side = "BUY" if setup["side"] == "LONG" else "SELL"
     symbol = setup["symbol"]
-    execution = result.get("execution") or {}
-    tr = execution.get("trader_response") or {}
-    qty = tr.get("qty", 0)
-    fill = tr.get("entry_price", setup["entry_price"])
+
     rr = abs((setup["tp_price"] - setup["entry_price"]) / (setup["entry_price"] - setup["sl_price"]))
     tv = f"https://www.tradingview.com/chart/?symbol={symbol}.P"
     return (
         f"🆕 SETUP H4 {side} {symbol} [fusion_quantum_h4_15m]\n"
-        f"Entry {setup['entry_price']:.12g} | SL {setup['sl_price']:.12g} | TP {setup['tp_price']:.12g} | qty {float(qty):.12g} | RR {rr:.1f}\n"
-        f"[PAPER] LIMIT filled\n"
-        f"☁️ TradingView: {tv}\n"
-        f"✅ FILLED {symbol} {side} @~{float(fill):.12g} [fusion_quantum_h4_15m] → software SL/TP (SL {setup['sl_price']:.12g} / TP {setup['tp_price']:.12g})"
+        f"Entry {setup['entry_price']:.12g} | SL {setup['sl_price']:.12g} | TP {setup['tp_price']:.12g} | RR {rr:.1f}\n"
+        f"[PAPER] LIMIT placed\n"
+        f"☁️ TradingView: {tv}"
+    )
+
+
+def fill_message(setup: dict[str, Any], result: dict[str, Any]) -> str:
+    side = "BUY" if setup["side"] == "LONG" else "SELL"
+    tr = ((result.get("execution") or {}).get("trader_response") or {})
+    fill = tr.get("entry_price", setup["entry_price"])
+    return (
+        f"✅ FILLED {setup['symbol']} {side} @~{float(fill):.12g} "
+        f"[fusion_quantum_h4_15m] → software SL/TP "
+        f"(SL {setup['sl_price']:.12g} / TP {setup['tp_price']:.12g})"
     )
 
 
@@ -212,7 +219,7 @@ async def scan_once(state: State) -> dict[str, int]:
                     counts["filled"] += 1
                     counts["submitted"] += 1
                     try:
-                        await asyncio.to_thread(notify, setup_message(setup, result))
+                        await asyncio.to_thread(notify, fill_message(setup, result))
                     except Exception as exc:
                         append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "telegram_error", "error": repr(exc)})
             for setup in confirmed_setups(symbol, htf, ltf):
@@ -227,6 +234,10 @@ async def scan_once(state: State) -> dict[str, int]:
                 state.set_status(sid, "pending", setup=setup)
                 counts["pending"] += 1
                 append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "pending", "setup_id": sid, "setup": setup})
+                try:
+                    await asyncio.to_thread(notify, setup_message(setup))
+                except Exception as exc:
+                    append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "telegram_error", "error": repr(exc)})
         except Exception as exc:
             counts["errors"] += 1
             append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "scan_error", "symbol": symbol, "error": repr(exc)})
