@@ -120,8 +120,10 @@ def _resample_1m(symbol: str, tf: str, limit: int) -> pd.DataFrame:
     if tf_sec <= 60 or tf_sec % 60 != 0:
         return pd.DataFrame(columns=COLUMNS)
     step = tf_sec // 60  # 1m bars per synthesized bar
-    # fetch_recent on 1m won't recurse: TF_SEC["1m"]==60 fails the > 60 guard.
-    m1 = fetch_recent(symbol, "1m", limit * step)
+    # Nexus API caps `limit` at 2000. A 1000-bar 3m request otherwise asks for
+    # 3000 x 1m, gets HTTP 422, and silently falls back to frozen native data.
+    # 2000 x 1m still yields ~667 bars, above engine's 260-bar minimum.
+    m1 = fetch_recent(symbol, "1m", min(limit * step, 2000))
     if len(m1) == 0:
         return pd.DataFrame(columns=COLUMNS)
     g = m1.set_index(pd.to_datetime(m1["open_time"]))
