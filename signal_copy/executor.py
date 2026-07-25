@@ -124,19 +124,18 @@ class SignalExecutor:
         tp1 = tp_ladder[0] if tp_ladder else 0.0
         tp_full = tp_ladder[-1] if tp_ladder else 0.0
 
-        # ponytail: local mirror of the trader stale-signal guard; enough for
-        # user-facing NOT EXECUTED reasons. If the trader adds more guards,
-        # expose structured gateway reject reasons instead of duplicating them.
+        # Reject only when the whole provider target ladder is already behind
+        # market. TP1 may be a close partial and is not a validity boundary.
         live_price = float(metrics.get("price", 0.0) or 0.0)
-        if live_price > 0 and tp1 > 0:
-            if sig.side == SignalSide.LONG and tp1 <= live_price:
+        if live_price > 0 and tp_ladder:
+            if sig.side == SignalSide.LONG and all(tp <= live_price for tp in tp_ladder):
                 return ExecutionOutcome(
-                    False, f"stale — price {live_price:g} already past TP1 {tp1:g}",
+                    False, f"ALL_TARGETS_PASSED — price {live_price:g}",
                     sig.symbol, sig.side.value, entry_price, notional, sl_price, tp1, tp_full, risk_amount,
                 )
-            if sig.side == SignalSide.SHORT and tp1 >= live_price:
+            if sig.side == SignalSide.SHORT and all(tp >= live_price for tp in tp_ladder):
                 return ExecutionOutcome(
-                    False, f"stale — price {live_price:g} already past TP1 {tp1:g}",
+                    False, f"ALL_TARGETS_PASSED — price {live_price:g}",
                     sig.symbol, sig.side.value, entry_price, notional, sl_price, tp1, tp_full, risk_amount,
                 )
         

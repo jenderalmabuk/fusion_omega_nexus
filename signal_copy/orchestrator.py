@@ -707,6 +707,34 @@ class SignalCopyOrchestrator:
 
         sig = pc.result.signal
 
+        from .entry_policy import EntryAction, route_entry
+        price = _f(pc.result.metrics_snapshot.get("price"))
+        routing = route_entry(sig, price)
+        if routing.action == EntryAction.REJECT:
+            await self.confirmations.mark(signal_id, ConfirmState.EXPIRED, note=routing.code)
+            msg = f"✅ VALID tapi ❌ NOT EXECUTED {sig.side.value} {sig.symbol}\nReason: {routing.code}"
+            await self._notify_trades_channel(msg)
+            return msg
+        sig.active_entry = routing.entry
+        # Entry-zone semantics: market only while current price is inside the
+        # provider zone. Outside waits at the nearest boundary, including a
+        # pullback after TP1; provider SL/TP levels remain unchanged.
+        if routing.action == EntryAction.LIMIT:
+            self._pending_limits[signal_id] = {
+                "result": pc.result,
+                "created": time.time(),
+                "path_high": price,
+                "path_low": price,
+            }
+            await self.confirmations.mark(signal_id, ConfirmState.APPROVED, note="pending_limit")
+            pending_msg = (
+                f"⏳ LIMIT PENDING {sig.symbol} {sig.side.value} @ {routing.entry:g}. "
+                f"Harga {price:g}; reason={routing.code}; "
+                f"expiry={int(scfg.expiry_for_channel(getattr(sig, 'source_chat_id', None)) // 60)}m."
+            )
+            await self._notify_trades_channel(pending_msg)
+            return pending_msg
+
         # Parse-but-don't-execute at max open positions: the signal is already
         # parsed/validated/reported; skip only the EXECUTION when the book is
         # full (config-driven, fail-open). Gateway is the hard backstop.
@@ -718,7 +746,6 @@ class SignalCopyOrchestrator:
 
         # Limit setup: if price hasn't reached the entry yet, wait for it
         # (avoid chasing) — execute automatically when the price touches the limit.
-        price = _f(pc.result.metrics_snapshot.get("price"))
         entry = getattr(sig, "active_entry", None) or sig.entry_mid
         _regime = (pc.result.metrics_snapshot or {}).get("regime_label", "")
         if self._wait_for_limit(sig, price, regime=_regime):
@@ -889,30 +916,29 @@ class SignalCopyOrchestrator:
             price = _f(metrics.get("price"))
             if price <= 0:
                 continue
+            data["path_high"] = max(float(data.get("path_high", price)), price)
+            data["path_low"] = min(float(data.get("path_low", price)), price)
             if self._limit_reached(sig, price):
                 self._pending_limits.pop(token, None)
-                # Re-validate on pullback fill: the setup may have decayed while
-                # waiting (price/flow moved against the thesis). If it is no
-                # longer VALID, cancel the pending entry instead of chasing a
-                # stale signal. Toggle via SIGNAL_COPY_ENTRY_REVALIDATE_ON_FILL.
+                # Thesis-aware revalidation: historical SL/effective-target
+                # invalidation is permanent. Snapshot indicator rescoring is
+                # intentionally not a single-factor veto on a provider limit.
                 if getattr(scfg, "ENTRY_REVALIDATE_ON_FILL", True):
                     try:
-                        revalid = validate_signal(sig, metrics)
-                        if revalid.verdict != Verdict.VALID:
-                            logger.warning(
-                                "[PENDING] %s pullback filled but re-validation=%s "
-                                "(score=%.1f) — cancel entry (stale setup)",
-                                sig.symbol, revalid.verdict.value, revalid.score)
+                        from .entry_policy import PricePath, revalidate_pending
+                        revalid = revalidate_pending(
+                            sig,
+                            PricePath(high=data["path_high"], low=data["path_low"]),
+                            price,
+                        )
+                        if not revalid.ok:
                             await self.confirmations.mark(
-                                token, ConfirmState.EXPIRED,
-                                note=f"revalidate_failed:{revalid.verdict.value}:{revalid.score:.0f}")
+                                token, ConfirmState.EXPIRED, note=revalid.code)
                             await self._notify_trades_channel(
-                                f"🚫 Batal entry {sig.symbol} {sig.side.value}: harga kembali ke "
-                                f"limit tapi sinyal sudah tidak valid "
-                                f"({revalid.verdict.value}, score {revalid.score:.0f}).")
+                                f"✅ VALID tapi ❌ NOT EXECUTED {sig.side.value} {sig.symbol}\n"
+                                f"Reason: {revalid.code}")
                             continue
-                        # refresh snapshot so sizing/report use current metrics
-                        pc.metrics_snapshot = revalid.metrics_snapshot or metrics
+                        pc.metrics_snapshot = metrics
                     except Exception as exc:
                         logger.warning("[PENDING] re-validation error for %s: %s "
                                        "(proceeding with entry)", sig.symbol, exc)

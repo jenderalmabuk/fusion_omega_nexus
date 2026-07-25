@@ -9,10 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install dependencies
 COPY signal_copy/requirements.txt ./signal_copy_requirements.txt
-COPY bots/requirements.txt ./bots_requirements.txt
-RUN pip install --no-cache-dir --prefix=/install \
-    -r signal_copy_requirements.txt \
-    -r bots_requirements.txt
+RUN pip install --no-cache-dir --prefix=/install -r signal_copy_requirements.txt
 
 FROM python:3.12-slim
 

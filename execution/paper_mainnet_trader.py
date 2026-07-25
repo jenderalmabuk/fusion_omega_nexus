@@ -93,9 +93,14 @@ class PaperMainnetTrader:
         symbol = str(params.get("symbol", ""))
         side = str(params.get("side", "")).upper()
         sl_price = float(params.get("sl", params.get("sl_price", 0)) or 0)
-        tp1 = float(params.get("tp1", 0) or 0)
-        tp2 = float(params.get("tp2", 0) or 0)
-        tp3 = float(params.get("tp3", params.get("tp_full", 0)) or 0)
+        tp_ladder = []
+        for i in range(1, 21):
+            value = float(params.get(f"tp{i}", 0) or 0)
+            if value:
+                tp_ladder.append(value)
+        if not tp_ladder and params.get("tp_full"):
+            tp_ladder.append(float(params["tp_full"]))
+        tp1 = tp_ladder[0] if tp_ladder else 0.0
         notional = float(params.get("notional", params.get("size_usd", 0)) or 0)
         leverage = int(params["leverage"]) if params.get("leverage") else 1
         regime = str(params.get("regime", "TRENDING"))
@@ -123,15 +128,6 @@ class PaperMainnetTrader:
             logger.warning("[PAPER] %s SHORT SL %.6g <= fill %.6g — reject (instant-stop guard)", symbol, sl_price, fill)
             return None
 
-        # Stale-signal guard: reject if TP1 is already on the wrong side of the
-        # fill (price passed TP1 before we filled). Without this the mgmt loop's
-        # first poll instantly "hits" TP1 and closes at a LOSS mislabeled as TP1.
-        if side == "LONG" and tp1 and tp1 <= mark:
-            logger.warning("[PAPER] %s LONG TP1 %.6g <= mark %.6g — reject (stale-signal guard)", symbol, tp1, mark)
-            return None
-        if side == "SHORT" and tp1 and tp1 >= mark:
-            logger.warning("[PAPER] %s SHORT TP1 %.6g >= mark %.6g — reject (stale-signal guard)", symbol, tp1, mark)
-            return None
 
         qty = notional / fill if fill > 0 else 0
         # Observability: capture the signal-copy enrichment snapshot (metrics,
@@ -142,7 +138,8 @@ class PaperMainnetTrader:
         _adv_snapshot = params.get("adv_snapshot") or params.get("adv") or {}
         self.positions[symbol] = {
             "symbol": symbol, "side": side, "entry_price": fill,
-            "sl_price": sl_price, "tp1_price": tp1, "tp2_price": tp2, "tp3_price": tp3,
+            "sl_price": sl_price, "tp1_price": tp1, "tp_ladder": tp_ladder,
+            "next_tp_index": 0, "initial_qty": qty,
             "qty": qty, "notional": notional, "leverage": leverage, "regime": regime,
             "opened_at": datetime.now(UTC), "status": "OPEN", "tp1_hit": False,
             "adv_snapshot": dict(_adv_snapshot) if isinstance(_adv_snapshot, dict) else {},
@@ -166,24 +163,56 @@ class PaperMainnetTrader:
                     mark = await self._get_mark_price(symbol)
                     if mark <= 0:
                         continue
-                    side = pos["side"]; sl = pos["sl_price"]; tp1 = pos["tp1_price"]
+                    side = pos["side"]; sl = pos["sl_price"]
                     hit_sl = (side == "LONG" and sl and mark <= sl) or (side == "SHORT" and sl and mark >= sl)
                     if hit_sl:
                         await self._close(symbol, sl, "HARD_SL")
                         continue
-                    hit_tp = (side == "LONG" and tp1 and mark >= tp1) or (side == "SHORT" and tp1 and mark <= tp1)
-                    if hit_tp:
-                        await self._close(symbol, tp1, "TP1")
+                    await self._apply_take_profits(symbol, mark)
             except asyncio.CancelledError:
                 raise
             except Exception as e:
                 logger.exception("[PAPER] mgmt loop error: %s", e)
 
+    async def _apply_take_profits(self, symbol: str, mark: float):
+        pos = self.positions.get(symbol)
+        if not pos:
+            return
+        ladder = pos.get("tp_ladder") or [pos.get("tp1_price")]
+        idx = int(pos.get("next_tp_index", 0))
+        while idx < len(ladder):
+            tp = float(ladder[idx] or 0)
+            hit = (pos["side"] == "LONG" and mark >= tp) or (pos["side"] == "SHORT" and mark <= tp)
+            if not tp or not hit:
+                break
+            idx += 1
+            if idx == len(ladder):
+                await self._close(symbol, tp, f"TP{idx}")
+                return
+            slice_qty = float(pos["initial_qty"]) / len(ladder)
+            pos["qty"] = max(0.0, float(pos["qty"]) - slice_qty)
+            pos["next_tp_index"] = idx
+            await self._realize_partial(pos, tp, slice_qty, f"TP{idx}_PARTIAL")
+
+    async def _realize_partial(self, pos: Dict[str, Any], exit_price: float, qty: float, reason: str):
+        entry, side = pos["entry_price"], pos["side"]
+        pnl_pct = ((exit_price-entry)/entry*100) if side == "LONG" else ((entry-exit_price)/entry*100)
+        pnl_usd = entry * qty * pnl_pct / 100
+        equity_after = None
+        if self.risk_mgr is not None and hasattr(self.risk_mgr, "sync_balance"):
+            equity_after = float(self.risk_mgr.get_current_equity()) + pnl_usd
+            self.risk_mgr.sync_balance(equity_after)
+        await self._notify_close({"symbol": pos["symbol"], "side": side, "reason": reason,
+            "exit_price": exit_price, "pnl_pct": pnl_pct, "pnl_usd": pnl_usd,
+            "hold_minutes": (datetime.now(UTC)-pos["opened_at"]).total_seconds()/60,
+            "equity": equity_after or 0.0, "remaining_qty": pos["qty"]})
+
     async def _close(self, symbol: str, exit_price: float, reason: str):
         pos = self.positions.pop(symbol, None)
         if not pos:
             return
-        entry = pos["entry_price"]; side = pos["side"]; notional = pos["notional"]
+        entry = pos["entry_price"]; side = pos["side"]
+        notional = entry * float(pos.get("qty", 0.0))
         pnl_pct = ((exit_price - entry) / entry * 100) if side == "LONG" else ((entry - exit_price) / entry * 100)
         pnl_usd = notional * pnl_pct / 100
         hold_min = (datetime.now(UTC) - pos["opened_at"]).total_seconds() / 60

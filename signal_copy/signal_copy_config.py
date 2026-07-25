@@ -196,8 +196,8 @@ ADVERSARIAL_ENABLED = _bool("SIGNAL_COPY_ADVERSARIAL_ENABLED", True)
 #   "soft" = judge NO downgrades to WEAK only if score < SOFT_FLOOR; high-score
 #            signals ride through with the verdict attached as an advisory note.
 #   "off"  = advisory only: never changes the verdict, just annotates the report.
-# Default "soft": stop the LLM from vetoing strong deterministic setups (user ask).
-ADVERSARIAL_MODE = os.getenv("SIGNAL_COPY_ADVERSARIAL_MODE", "soft").strip().lower()
+# Advisory by default: LLM enriches report but never vetoes deterministic VALID.
+ADVERSARIAL_MODE = os.getenv("SIGNAL_COPY_ADVERSARIAL_MODE", "off").strip().lower()
 # Deterministic validation score at/above which the LLM can NEVER block.
 ADVERSARIAL_SOFT_FLOOR = float(os.getenv("SIGNAL_COPY_ADVERSARIAL_SOFT_FLOOR", "90"))
 
