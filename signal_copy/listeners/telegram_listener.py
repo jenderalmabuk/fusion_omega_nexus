@@ -73,6 +73,13 @@ class TelegramSignalListener:
                 text = event.raw_text or ""
                 if not text.strip():
                     return
+                try:
+                    if getattr(event.message, "reply_to_msg_id", None):
+                        replied = await event.message.get_reply_message()
+                        if replied and replied.raw_text:
+                            text += "\n[REPLY_CONTEXT] " + replied.raw_text[:800]
+                except Exception:
+                    pass
                 # Capture an attached chart image (photos only, to avoid
                 # downloading large docs/videos) for vision enrichment.
                 image = None

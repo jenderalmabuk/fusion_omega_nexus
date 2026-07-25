@@ -78,3 +78,9 @@ class GatewayClient:
         async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.get(f"{self.base_url}/portfolio", headers=self._headers) as resp:
                 return await resp.json()
+
+    async def position_action(self, symbol: str, action: str, price: float | None = None) -> Dict[str, Any]:
+        body = {"symbol": symbol, "action": action, "price": price}
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
+            async with session.post(f"{self.base_url}/position-action", json=body, headers=self._headers) as resp:
+                return await resp.json()

@@ -346,6 +346,46 @@ class SignalCopyOrchestrator:
             logger.warning("[SIGNAL_COPY] metrics fetch failed for %s: %s", symbol, exc)
             return {}
 
+    async def _handle_provider_update(self, text: str, source_chat_id: Optional[int]) -> bool:
+        from .provider_updates import UpdateKind, parse_provider_update
+        update = parse_provider_update(text, source_chat_id)
+        if update is None:
+            return False
+        matches = [(token, data) for token, data in self._pending_limits.items()
+                   if data["result"].signal.symbol == update.symbol
+                   and data["result"].signal.source_chat_id == source_chat_id]
+        if update.kind == UpdateKind.CANCEL:
+            for token, _ in matches:
+                self._pending_limits.pop(token, None)
+                await self.confirmations.mark(token, ConfirmState.EXPIRED, note="PROVIDER_CANCELLED")
+            await self._notify_trades_channel(
+                f"🚫 PROVIDER CANCEL {update.symbol}: pending dibatalkan={len(matches)}")
+            return True
+        client = getattr(self.trader, "client", None)
+        if client is None:
+            await self._notify_trades_channel(f"⚠️ PROVIDER UPDATE {update.symbol}: gateway unavailable")
+            return True
+        portfolio = await client.portfolio()
+        positions = [p for p in portfolio.get("open_positions", []) if p.get("symbol") == update.symbol]
+        if len(positions) != 1:
+            await self._notify_trades_channel(
+                f"⚠️ PROVIDER UPDATE {update.symbol}: no action, matching positions={len(positions)}")
+            return True
+        pos = positions[0]
+        if update.kind in (UpdateKind.MOVE_SL_BE, UpdateKind.MOVE_SL_PRICE):
+            new_sl = float(pos["entry_price"] if update.kind == UpdateKind.MOVE_SL_BE else (update.price or 0.0))
+            result = await client.position_action(update.symbol, "MOVE_SL", new_sl)
+        elif update.kind == UpdateKind.CLOSE:
+            result = await client.position_action(update.symbol, "CLOSE")
+        else:
+            await self._notify_trades_channel(
+                f"ℹ️ PROVIDER {update.kind.value} {update.symbol}: recorded; market verification required")
+            return True
+        await self._notify_trades_channel(
+            f"{'✅' if result.get('ok') else '⚠️'} PROVIDER {update.kind.value} {update.symbol}: "
+            f"{result.get('code', result)}")
+        return True
+
     # ---------- main entry from listeners ----------
     async def handle_incoming_text(
         self,
@@ -357,6 +397,8 @@ class SignalCopyOrchestrator:
     ) -> None:
         # Never parse messages that originate from our own bot/components.
         if source_chat_id is not None and source_chat_id in self.ignore_chat_ids:
+            return
+        if await self._handle_provider_update(text, source_chat_id):
             return
 
         # Calibration channels: parse + validate + notify, but NEVER auto-execute.

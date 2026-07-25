@@ -272,6 +272,27 @@ class PaperMainnetTrader:
         except Exception as e:
             logger.warning("[PAPER] close-notify dispatch failed for %s: %s", symbol, e)
 
+    async def update_stop(self, symbol: str, new_sl: float) -> Dict[str, Any]:
+        pos = self.positions.get(symbol)
+        if not pos:
+            return {"ok": False, "code": "POSITION_NOT_FOUND"}
+        from signal_copy.provider_updates import safer_stop
+        if not safer_stop(pos["side"], float(pos["sl_price"]), float(new_sl), float(pos["entry_price"])):
+            return {"ok": False, "code": "STOP_WIDENS_RISK"}
+        old = pos["sl_price"]
+        pos["sl_price"] = float(new_sl)
+        return {"ok": True, "code": "STOP_UPDATED", "old_sl": old, "new_sl": new_sl}
+
+    async def provider_close(self, symbol: str) -> Dict[str, Any]:
+        pos = self.positions.get(symbol)
+        if not pos:
+            return {"ok": False, "code": "POSITION_NOT_FOUND"}
+        mark = await self._get_mark_price(symbol)
+        if mark <= 0:
+            return {"ok": False, "code": "NO_MARKET_PRICE"}
+        await self._close(symbol, mark, "PROVIDER_CLOSE")
+        return {"ok": True, "code": "PROVIDER_CLOSED", "exit_price": mark}
+
     async def _notify_close(self, payload: Dict[str, Any]) -> None:
         """Build + send a CLOSE card to the trades channel. Never raises."""
         try:

@@ -52,6 +52,12 @@ class OrderIntentBody(BaseModel):
     dry_run: bool = False
 
 
+class PositionActionBody(BaseModel):
+    symbol: str
+    action: str
+    price: Optional[float] = None
+
+
 def _auth_dependency():
     token = os.getenv("GATEWAY_TOKEN", "")
     if not token:
@@ -85,5 +91,14 @@ def build_router(gateway: ExecutionGateway) -> APIRouter:
     @router.get("/health")
     async def health():
         return {"status": "ok", "service": "execution-gateway"}
+
+    @router.post("/position-action")
+    async def position_action(body: PositionActionBody):
+        symbol = body.symbol.upper().replace("/", "")
+        if body.action == "MOVE_SL" and body.price is not None:
+            return await gateway.trader.update_stop(symbol, body.price)
+        if body.action == "CLOSE":
+            return await gateway.trader.provider_close(symbol)
+        return {"ok": False, "code": "INVALID_POSITION_ACTION"}
 
     return router
