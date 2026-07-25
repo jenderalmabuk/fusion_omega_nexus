@@ -1,0 +1,51 @@
+{
+  "H1": {
+    "elapsed": 69.9,
+    "symbols": 465,
+    "short": 0,
+    "errors": [],
+    "funnel": {
+      "zones_found": 6784,
+      "zones_touched": 6625,
+      "mss_confirmed": 1112,
+      "pending_orders": 1112,
+      "fills": 377,
+      "expired_orders": 735
+    },
+    "all": {
+      "n": 377,
+      "wr": 44.0,
+      "pf": 1.31,
+      "net_unit": 72.0475,
+      "maxdd_unit": 27.2733
+    },
+    "is": {
+      "n": 226,
+      "wr": 40.3,
+      "pf": 1.1,
+      "net_unit": 15.8045,
+      "maxdd_unit": 27.2733
+    },
+    "oos": {
+      "n": 151,
+      "wr": 49.7,
+      "pf": 1.69,
+      "net_unit": 56.2429,
+      "maxdd_unit": 9.7345
+    },
+    "long": {
+      "n": 203,
+      "wr": 39.4,
+      "pf": 1.1,
+      "net_unit": 13.2449,
+      "maxdd_unit": 23.8275
+    },
+    "short_side": {
+      "n": 174,
+      "wr": 49.4,
+      "pf": 1.6,
+      "net_unit": 58.8026,
+      "maxdd_unit": 17.6133
+    }
+  }
+}

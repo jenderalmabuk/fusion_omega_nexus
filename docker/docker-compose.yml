@@ -485,6 +485,10 @@ services:
       MAX_OPEN_POS_GLOBAL: ${MAX_OPEN_POS_GLOBAL:-20}
       PAPER_NEXUS_API: http://fastapi:8000
       BOT_JOURNAL_DIR: /app/journal
+      SIGNAL_COPY_PARSER_NOTIFY_BOT_TOKEN: ${SIGNAL_COPY_PARSER_NOTIFY_BOT_TOKEN:-}
+      SIGNAL_COPY_PARSER_NOTIFY_CHAT_ID: ${SIGNAL_COPY_PARSER_NOTIFY_CHAT_ID:-0}
+      SIGNAL_COPY_TRADES_NOTIFY_BOT_TOKEN: ${SIGNAL_COPY_TRADES_NOTIFY_BOT_TOKEN:-}
+      SIGNAL_COPY_TRADES_NOTIFY_CHAT_ID: ${SIGNAL_COPY_TRADES_NOTIFY_CHAT_ID:-0}
       BINANCE_TESTNET_API_KEY: ${BINANCE_TESTNET_API_KEY:-}
       BINANCE_TESTNET_SECRET: ${BINANCE_TESTNET_SECRET:-}
     ports:
@@ -571,6 +575,73 @@ services:
         condition: service_started
     restart: unless-stopped
     profiles: ["bots"]
+    networks:
+      - nexus_net
+      - docker_default
+
+  # Isolated Fusion Quantum gateway. Separate portfolio, state, and port.
+  fusion_quantum_gateway:
+    image: nexus-bot:latest
+    container_name: nexus_fusion_quantum_gateway
+    command: ["python", "-u", "-m", "uvicorn", "gateway.run_gateway:app", "--host", "0.0.0.0", "--port", "8790"]
+    user: "1000:1000"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: /app
+      GATEWAY_TOKEN: ${FQ_GATEWAY_TOKEN:-${GATEWAY_TOKEN}}
+      GATEWAY_PAPER_MAINNET: "true"
+      STARTING_BALANCE: ${FQ_STARTING_BALANCE:-1000}
+      MAX_OPEN_POS_GLOBAL: ${FQ_MAX_OPEN_POS_GLOBAL:-20}
+      MAX_SAME_DIRECTION_POS: ${FQ_MAX_SAME_DIRECTION_POS:-20}
+      FQ_TELEGRAM_BOT_TOKEN: ${FQ_TELEGRAM_BOT_TOKEN:-}
+      FQ_TELEGRAM_CHAT_ID: ${FQ_TELEGRAM_CHAT_ID:-}
+      PAPER_NEXUS_API: http://fastapi:8000
+      BOT_JOURNAL_DIR: /app/fq_journal
+    ports:
+      - "127.0.0.1:8790:8790"
+    volumes:
+      - ../runtime/fusion_quantum/journal:/app/fq_journal
+    depends_on:
+      fastapi:
+        condition: service_started
+    restart: unless-stopped
+    profiles: ["fusion-quantum-paper"]
+    networks:
+      - nexus_net
+      - docker_default
+
+  # Isolated H4+15m validation runner. Never included by "bots" profile.
+  # Start explicitly: docker compose --profile fusion-quantum-paper up -d fusion_quantum_gateway fusion_quantum_paper
+  fusion_quantum_paper:
+    image: nexus-bot:latest
+    container_name: nexus_fusion_quantum_paper
+    command: ["python", "-u", "-m", "fusion_quantum.paper_runner"]
+    user: "1000:1000"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      NEXUS_API_URL: http://fastapi:8000
+      GATEWAY_URL: http://fusion_quantum_gateway:8790/gateway
+      GATEWAY_TOKEN: ${FQ_GATEWAY_TOKEN:-${GATEWAY_TOKEN}}
+      FQ_RUNTIME_DIR: /state
+      FQ_PAPER_AUDIT: /state/paper_gateway_audit.jsonl
+      FQ_UNIVERSE_FILE: /app/runtime/revo/canonical_universe.txt
+      FQ_POLL_SEC: ${FQ_POLL_SEC:-300}
+      FQ_FIB_EXPIRY: ${FQ_FIB_EXPIRY:-6}
+      FQ_MAX_PENDING_LIMITS: ${FQ_MAX_PENDING_LIMITS:-20}
+      FQ_TELEGRAM_BOT_TOKEN: ${FQ_TELEGRAM_BOT_TOKEN:-}
+      FQ_TELEGRAM_CHAT_ID: ${FQ_TELEGRAM_CHAT_ID:-}
+      LOG_DIR: /tmp
+      MPLCONFIGDIR: /tmp/matplotlib
+    volumes:
+      - ../runtime/fusion_quantum:/state
+      - ../runtime/revo:/app/runtime/revo:ro
+    depends_on:
+      fastapi:
+        condition: service_started
+      fusion_quantum_gateway:
+        condition: service_started
+    restart: unless-stopped
+    profiles: ["fusion-quantum-paper"]
     networks:
       - nexus_net
       - docker_default

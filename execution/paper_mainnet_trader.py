@@ -111,14 +111,16 @@ class PaperMainnetTrader:
         if mark <= 0:
             logger.warning("[PAPER] no mainnet price for %s — reject", symbol)
             return None
+        requested_entry = float(params.get("entry_price", 0) or 0)
+        fill = requested_entry if str(params.get("tag", "")).startswith("fusion_quantum") and requested_entry > 0 else mark
 
         # Sanity guard: reject if signal SL is on the wrong side of the fill
         # (protects against fake fills that would instant-stop).
-        if side == "LONG" and sl_price >= mark:
-            logger.warning("[PAPER] %s LONG SL %.6g >= mark %.6g — reject (instant-stop guard)", symbol, sl_price, mark)
+        if side == "LONG" and sl_price >= fill:
+            logger.warning("[PAPER] %s LONG SL %.6g >= fill %.6g — reject (instant-stop guard)", symbol, sl_price, fill)
             return None
-        if side == "SHORT" and sl_price and sl_price <= mark:
-            logger.warning("[PAPER] %s SHORT SL %.6g <= mark %.6g — reject (instant-stop guard)", symbol, sl_price, mark)
+        if side == "SHORT" and sl_price and sl_price <= fill:
+            logger.warning("[PAPER] %s SHORT SL %.6g <= fill %.6g — reject (instant-stop guard)", symbol, sl_price, fill)
             return None
 
         # Stale-signal guard: reject if TP1 is already on the wrong side of the
@@ -131,7 +133,7 @@ class PaperMainnetTrader:
             logger.warning("[PAPER] %s SHORT TP1 %.6g >= mark %.6g — reject (stale-signal guard)", symbol, tp1, mark)
             return None
 
-        qty = notional / mark if mark > 0 else 0
+        qty = notional / fill if fill > 0 else 0
         # Observability: capture the signal-copy enrichment snapshot (metrics,
         # score, confidence) at open so the trade journal isn't blank at close.
         # This is the metrics dict the executor forwards as `adv_snapshot`
@@ -139,7 +141,7 @@ class PaperMainnetTrader:
         # Nexus-scanner SMC structure fields — those stay UNKNOWN by design.
         _adv_snapshot = params.get("adv_snapshot") or params.get("adv") or {}
         self.positions[symbol] = {
-            "symbol": symbol, "side": side, "entry_price": mark,
+            "symbol": symbol, "side": side, "entry_price": fill,
             "sl_price": sl_price, "tp1_price": tp1, "tp2_price": tp2, "tp3_price": tp3,
             "qty": qty, "notional": notional, "leverage": leverage, "regime": regime,
             "opened_at": datetime.now(UTC), "status": "OPEN", "tp1_hit": False,
@@ -147,10 +149,10 @@ class PaperMainnetTrader:
             "score": float(params.get("score", 0) or 0),
             "confidence": float(params.get("confidence", 0) or 0),
         }
-        logger.info("[PAPER] OPEN %s %s @ %.6g (mainnet mark) | SL %.6g TP1 %.6g | $%.0f",
-                    side, symbol, mark, sl_price, tp1, notional)
+        logger.info("[PAPER] OPEN %s %s @ %.6g (%s) | SL %.6g TP1 %.6g | $%.0f",
+                    side, symbol, fill, "limit" if fill == requested_entry else "mainnet mark", sl_price, tp1, notional)
         return {"success": True, "ok": True, "symbol": symbol, "side": side,
-                "entry_price": mark, "qty": qty, "notional": notional}
+                "entry_price": fill, "qty": qty, "notional": notional}
 
     # ── management ───────────────────────────────────────────────
     async def _management_loop(self):
@@ -247,7 +249,17 @@ class PaperMainnetTrader:
             from signal_copy.telegram_formatter import build_close_message
             from signal_copy.telegram_transport import send_trades_notification
             msg = build_close_message(payload)
-            await send_trades_notification(msg)
+            if await send_trades_notification(msg):
+                return
+            # Native fallback: bot image may omit python-telegram-bot.
+            import json, os, urllib.request
+            token = os.getenv("FQ_TELEGRAM_BOT_TOKEN") or os.getenv("SIGNAL_COPY_TRADES_NOTIFY_BOT_TOKEN") or os.getenv("SIGNAL_COPY_PARSER_NOTIFY_BOT_TOKEN")
+            chat = os.getenv("FQ_TELEGRAM_CHAT_ID") or os.getenv("SIGNAL_COPY_TRADES_NOTIFY_CHAT_ID") or os.getenv("SIGNAL_COPY_PARSER_NOTIFY_CHAT_ID")
+            if not token or not chat:
+                raise RuntimeError("Telegram close token/chat not configured")
+            body = json.dumps({"chat_id": chat, "text": "🔄 [TRADES] " + msg, "parse_mode": "HTML", "disable_web_page_preview": True}).encode()
+            req = urllib.request.Request(f"https://api.telegram.org/bot{token}/sendMessage", data=body, headers={"Content-Type": "application/json"})
+            await asyncio.to_thread(urllib.request.urlopen, req, timeout=10)
         except Exception as e:
             logger.warning("[PAPER] close notification send failed: %s", e)
 

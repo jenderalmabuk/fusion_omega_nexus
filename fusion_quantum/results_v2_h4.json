@@ -1,0 +1,101 @@
+{
+  "H4": {
+    "elapsed": 16.0,
+    "symbols": 465,
+    "short": 83,
+    "errors": [],
+    "date_range": {
+      "start": "2026-07-10 09:30:00+00:00",
+      "cutoff": "2026-07-18 10:15:00+00:00",
+      "end": "2026-07-24 21:15:00+00:00"
+    },
+    "funnel": {
+      "zones_found": 1640,
+      "zones_touched": 1590,
+      "mss_confirmed": 323,
+      "pending_orders": 323,
+      "fills": 121,
+      "expired_orders": 202
+    },
+    "concentration": {
+      "top10_abs_share_pct": 17.4,
+      "top10": [
+        {
+          "symbol": "FILUSDT",
+          "net_r": 3.88
+        },
+        {
+          "symbol": "B2USDT",
+          "net_r": 3.873
+        },
+        {
+          "symbol": "PAXGUSDT",
+          "net_r": 3.688
+        },
+        {
+          "symbol": "BSVUSDT",
+          "net_r": -2.907
+        },
+        {
+          "symbol": "CVXUSDT",
+          "net_r": 2.454
+        },
+        {
+          "symbol": "ALPINEUSDT",
+          "net_r": -2.146
+        },
+        {
+          "symbol": "METISUSDT",
+          "net_r": -2.1
+        },
+        {
+          "symbol": "RESOLVUSDT",
+          "net_r": -2.089
+        },
+        {
+          "symbol": "ESPORTSUSDT",
+          "net_r": 1.995
+        },
+        {
+          "symbol": "HANAUSDT",
+          "net_r": 1.975
+        }
+      ]
+    },
+    "all": {
+      "n": 121,
+      "wr": 56.2,
+      "pf": 2.24,
+      "net_unit": 67.7398,
+      "maxdd_unit": 7.0324
+    },
+    "is": {
+      "n": 72,
+      "wr": 52.8,
+      "pf": 1.86,
+      "net_unit": 31.4737,
+      "maxdd_unit": 7.0324
+    },
+    "oos": {
+      "n": 49,
+      "wr": 61.2,
+      "pf": 2.98,
+      "net_unit": 36.266,
+      "maxdd_unit": 3.3331
+    },
+    "long": {
+      "n": 57,
+      "wr": 49.1,
+      "pf": 1.74,
+      "net_unit": 21.5243,
+      "maxdd_unit": 5.7416
+    },
+    "short_side": {
+      "n": 64,
+      "wr": 62.5,
+      "pf": 2.8,
+      "net_unit": 46.2155,
+      "maxdd_unit": 4.2975
+    }
+  }
+}

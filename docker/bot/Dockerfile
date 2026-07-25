@@ -19,6 +19,8 @@ WORKDIR /app
 COPY --from=builder /install /usr/local
 # Copy fusionnew engine code
 COPY --chown=nexus:nexus fusionnew/ ./fusionnew/
+# Isolated Fusion Quantum paper runner (inactive unless compose profile selected).
+COPY --chown=nexus:nexus fusion_quantum/ ./fusion_quantum/
 # Copy gateway for execution routing
 COPY --chown=nexus:nexus gateway/ ./gateway/
 # Copy execution layer (BinanceTestnetTrader)

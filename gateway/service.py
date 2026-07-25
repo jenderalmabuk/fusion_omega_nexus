@@ -142,7 +142,13 @@ class ExecutionGateway:
 
         if not opened:
             await self._safe_release(symbol)
-            res.reason = "trader rejected/blocked the open (see trader logs)"
+            reason_detail = ""
+            if isinstance(opened, dict) and opened.get("error"):
+                reason_detail = f" | {opened['error']}"
+            elif isinstance(opened, dict) and opened.get("reason"):
+                reason_detail = f" | {opened['reason']}"
+            res.reason = f"trader rejected open: no position created{reason_detail}"
+            logger.warning("[GATEWAY] %s %s: %s", symbol, side, res.reason)
             return self._record(intent, res)
 
         try:

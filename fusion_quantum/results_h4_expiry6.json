@@ -1,0 +1,179 @@
+{
+  "H4": {
+    "elapsed": 15.9,
+    "symbols": 465,
+    "short": 83,
+    "errors": [],
+    "date_range": {
+      "start": "2026-07-10 09:30:00+00:00",
+      "cutoff": "2026-07-19 11:00:00+00:00",
+      "end": "2026-07-24 21:15:00+00:00"
+    },
+    "funnel": {
+      "zones_found": 1640,
+      "zones_touched": 1590,
+      "mss_confirmed": 323,
+      "pending_orders": 323,
+      "fills": 102,
+      "expired_orders": 221
+    },
+    "concentration": {
+      "top10_abs_share_pct": 17.6,
+      "top10": [
+        {
+          "symbol": "FILUSDT",
+          "net_r": 3.88
+        },
+        {
+          "symbol": "B2USDT",
+          "net_r": 3.873
+        },
+        {
+          "symbol": "ALPINEUSDT",
+          "net_r": -2.146
+        },
+        {
+          "symbol": "METISUSDT",
+          "net_r": -2.1
+        },
+        {
+          "symbol": "RESOLVUSDT",
+          "net_r": -2.089
+        },
+        {
+          "symbol": "ESPORTSUSDT",
+          "net_r": 1.995
+        },
+        {
+          "symbol": "ERAUSDT",
+          "net_r": 1.976
+        },
+        {
+          "symbol": "HANAUSDT",
+          "net_r": 1.975
+        },
+        {
+          "symbol": "USELESSUSDT",
+          "net_r": 1.971
+        },
+        {
+          "symbol": "FUSDT",
+          "net_r": 1.963
+        }
+      ]
+    },
+    "walk_forward": [
+      {
+        "train_end": "2026-07-13 06:30:00+00:00",
+        "test_start": "2026-07-13 11:00:00+00:00",
+        "test_end": "2026-07-17 10:15:00+00:00",
+        "train": {
+          "n": 34,
+          "wr": 50.0,
+          "pf": 1.68,
+          "net_unit": 12.3908,
+          "maxdd_unit": 6.0092
+        },
+        "test": {
+          "n": 17,
+          "wr": 58.8,
+          "pf": 2.47,
+          "net_unit": 11.3866,
+          "maxdd_unit": 2.1293
+        }
+      },
+      {
+        "train_end": "2026-07-17 10:15:00+00:00",
+        "test_start": "2026-07-17 12:15:00+00:00",
+        "test_end": "2026-07-20 02:00:00+00:00",
+        "train": {
+          "n": 51,
+          "wr": 52.9,
+          "pf": 1.92,
+          "net_unit": 23.7774,
+          "maxdd_unit": 6.0092
+        },
+        "test": {
+          "n": 17,
+          "wr": 64.7,
+          "pf": 3.09,
+          "net_unit": 13.4488,
+          "maxdd_unit": 2.1571
+        }
+      },
+      {
+        "train_end": "2026-07-20 02:00:00+00:00",
+        "test_start": "2026-07-20 02:30:00+00:00",
+        "test_end": "2026-07-23 11:45:00+00:00",
+        "train": {
+          "n": 68,
+          "wr": 55.9,
+          "pf": 2.15,
+          "net_unit": 37.2263,
+          "maxdd_unit": 6.0092
+        },
+        "test": {
+          "n": 17,
+          "wr": 64.7,
+          "pf": 3.29,
+          "net_unit": 13.1487,
+          "maxdd_unit": 2.108
+        }
+      },
+      {
+        "train_end": "2026-07-23 11:45:00+00:00",
+        "test_start": "2026-07-23 12:45:00+00:00",
+        "test_end": "2026-07-24 21:15:00+00:00",
+        "train": {
+          "n": 85,
+          "wr": 57.6,
+          "pf": 2.32,
+          "net_unit": 50.375,
+          "maxdd_unit": 6.0092
+        },
+        "test": {
+          "n": 17,
+          "wr": 64.7,
+          "pf": 4.02,
+          "net_unit": 15.2333,
+          "maxdd_unit": 1.8899
+        }
+      }
+    ],
+    "all": {
+      "n": 102,
+      "wr": 58.8,
+      "pf": 2.52,
+      "net_unit": 65.6083,
+      "maxdd_unit": 6.0092
+    },
+    "is": {
+      "n": 61,
+      "wr": 55.7,
+      "pf": 2.12,
+      "net_unit": 32.7139,
+      "maxdd_unit": 6.0092
+    },
+    "oos": {
+      "n": 41,
+      "wr": 63.4,
+      "pf": 3.35,
+      "net_unit": 32.8943,
+      "maxdd_unit": 2.1571
+    },
+    "long": {
+      "n": 48,
+      "wr": 47.9,
+      "pf": 1.65,
+      "net_unit": 16.1988,
+      "maxdd_unit": 3.2492
+    },
+    "short_side": {
+      "n": 54,
+      "wr": 68.5,
+      "pf": 3.7,
+      "net_unit": 49.4095,
+      "maxdd_unit": 3.2743
+    }
+  }
+}

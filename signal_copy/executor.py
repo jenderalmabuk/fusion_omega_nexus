@@ -226,7 +226,13 @@ class SignalExecutor:
                 await self.risk_mgr.release_open_risk(sig.symbol)
             except Exception:
                 pass
-            outcome.reason = "trader rejected/blocked the open (see logs)"
+            reason_detail = ""
+            if isinstance(opened, dict) and opened.get("error"):
+                reason_detail = f" | {opened['error']}"
+            elif isinstance(opened, dict) and opened.get("reason"):
+                reason_detail = f" | {opened['reason']}"
+            outcome.reason = f"trader rejected open: no position created{reason_detail}"
+            logger.warning("[SIGNAL_EXEC] %s %s: %s", sig.symbol, sig.side.value, outcome.reason)
             return outcome
 
         try:
