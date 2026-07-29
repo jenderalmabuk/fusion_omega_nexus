@@ -74,7 +74,7 @@ class GatewayTraderShim:
         if result.get("ok"):
             return result  # truthy dict == "opened" for SignalExecutor
         logger.info("[SIGNAL_COPY->GW] rejected %s: %s", intent.symbol, result.get("reason"))
-        return None
+        return result
 
 
 class RemoteRiskStub:

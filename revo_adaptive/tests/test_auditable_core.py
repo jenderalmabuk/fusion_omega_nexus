@@ -18,6 +18,16 @@ class GateTests(unittest.TestCase):
         self.assertEqual("long", decision.side)
         self.assertIn("ALLOW_A_GRADE_PULLBACK", decision.reasons)
 
+    def test_gate_denies_deep_discount(self):
+        g = GateInput(symbol="X/USDT:USDT", score=10, rsi=35, discount_pct=7.0, qvol_med48=999_000, atr_pct=2, er=0.10, flow="long", btc_mode="neutral", btc_coupling="coupled", data_age_sec=1)
+        self.assertFalse(decide_entry(g, Config(max_discount_pct=6.0)).allow)
+        self.assertIn("DENY_FALLING_KNIFE", decide_entry(g, Config(max_discount_pct=6.0)).reasons)
+
+    def test_gate_denies_high_er(self):
+        g = GateInput(symbol="X/USDT:USDT", score=10, rsi=35, discount_pct=4.0, qvol_med48=999_000, atr_pct=2, er=0.20, flow="long", btc_mode="neutral", btc_coupling="coupled", data_age_sec=1)
+        self.assertFalse(decide_entry(g, Config(max_er=0.15)).allow)
+        self.assertIn("DENY_ER", decide_entry(g, Config(max_er=0.15)).reasons)
+
     def test_btc_hard_dump_blocks_only_coupled_pairs(self):
         coupled = GateInput(symbol="X/USDT:USDT", score=10, rsi=35, discount_pct=4, qvol_med48=999_000, atr_pct=2, flow="long", btc_mode="hard_dump", btc_coupling="coupled", data_age_sec=1)
         decoupled = GateInput(**{**coupled.__dict__, "btc_coupling": "decoupled_positive"})

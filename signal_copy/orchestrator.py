@@ -89,6 +89,7 @@ class SignalCopyOrchestrator:
         self._sweeper_task: Optional[asyncio.Task] = None
         # limit setups waiting for price to reach the entry: token -> {result, created}
         self._pending_limits: Dict[str, dict] = {}
+        self._pending_restored = False
         # chat ids whose messages must never be parsed as signals (e.g. our own
         # confirm bot, to prevent its prompts from re-triggering the pipeline).
         self.ignore_chat_ids: set = set()
@@ -722,14 +723,20 @@ class SignalCopyOrchestrator:
         if not getattr(scfg, "GATE_EXEC_ON_MAX_POS", True):
             return False
         at_max, cnt, cap = await self._at_max_positions()
+        pending = len(getattr(self, "_pending_limits", {}) or {})
+        # Dormant pending limits consume neither running slots nor portfolio
+        # risk. Gateway still atomically backstops running count at fill time.
+        if cnt >= 0:
+            at_max = cnt >= cap
         if not at_max:
             return False
-        logger.info("[MAX_POS] %s parsed but NOT executed: book full (%d/%d)",
-                    sig.symbol, cnt, cap)
+        logger.info("[MAX_POS] %s parsed but NOT executed: running book full (%d active; %d pending; cap=%d)",
+                    sig.symbol, cnt, pending, cap)
         try:
             await self._notify_trades_channel(
                 f"⏸️ {sig.symbol} {sig.side.value}: sinyal di-parse & valid, tapi "
-                f"TIDAK dieksekusi — posisi terbuka sudah maksimal ({cnt}/{cap}). "
+                f"TIDAK dieksekusi — kapasitas running maksimal "
+                f"({cnt}/{cap} aktif; {pending} pending tidak memakai slot). "
                 f"Sinyal tetap tercatat; eksekusi dilewati.")
         except Exception as exc:
             logger.error("[MAX_POS] notify failed: %s", exc)
@@ -768,6 +775,8 @@ class SignalCopyOrchestrator:
                 "path_high": price,
                 "path_low": price,
             }
+            from . import pending_journal
+            pending_journal.record("PENDING", sig, price=price, boundary=routing.entry, reason=routing.code)
             await self.confirmations.mark(signal_id, ConfirmState.APPROVED, note="pending_limit")
             pending_msg = (
                 f"⏳ LIMIT PENDING {sig.symbol} {sig.side.value} @ {routing.entry:g}. "
@@ -938,9 +947,45 @@ class SignalCopyOrchestrator:
         else:
             return price >= ref
 
+    async def restore_pending_limits(self) -> tuple[int, int]:
+        """Rebuild fresh dormant limits; terminalize stale rows after restart."""
+        if self._pending_restored:
+            return (0, 0)
+        self._pending_restored = True
+        from . import pending_journal
+        from .validation_engine import ValidationResult, Verdict
+        restored = expired = 0
+        for row in pending_journal.load_latest_pending():
+            try:
+                sig = pending_journal.signal_from_row(row)
+                expiry = scfg.expiry_for_channel(sig.source_chat_id)
+                age = pending_journal.row_age_seconds(row)
+                if age > expiry:
+                    pending_journal.record("EXPIRED_ON_RESTART", sig, age_sec=int(age), expiry_sec=int(expiry))
+                    expired += 1
+                    continue
+                result = ValidationResult(signal=sig, verdict=Verdict.VALID,
+                                          score=float(row.get("score") or 0.0),
+                                          metrics_snapshot={})
+                pc = await self.confirmations.register(result, expires_in=max(1.0, expiry - age))
+                await self.confirmations.mark(sig.signal_id, ConfirmState.APPROVED,
+                                              note="restored_pending_limit")
+                self._pending_limits[sig.signal_id] = {
+                    "result": result,
+                    "created": time.time() - age,
+                    "path_high": float(row.get("path_high") or row.get("price") or sig.active_entry or sig.entry_mid),
+                    "path_low": float(row.get("path_low") or row.get("price") or sig.active_entry or sig.entry_mid),
+                }
+                restored += 1
+            except Exception as exc:
+                logger.warning("[PENDING] restore skipped row %s: %s", row.get("signal_id"), exc)
+        logger.info("[PENDING] restart reconciliation restored=%d expired=%d", restored, expired)
+        return restored, expired
+
     # ---------- public: handle pending limits (call periodically) ----------
     async def check_pending_limits(self) -> None:
         """Poll pending limits and execute when price reaches the zone."""
+        await self.restore_pending_limits()
         for token, data in list(self._pending_limits.items()):
             pc = data.get("result")
             if not pc:
@@ -950,9 +995,15 @@ class SignalCopyOrchestrator:
             _expiry = scfg.expiry_for_channel(getattr(sig, "source_chat_id", None))
             if time.time() - float(data.get("created", 0.0)) > _expiry:
                 self._pending_limits.pop(token, None)
+                from . import pending_journal
+                pending_journal.record("EXPIRED", sig, expiry_sec=int(_expiry),
+                                       path_high=data.get("path_high"), path_low=data.get("path_low"))
                 await self.confirmations.mark(
                     token, ConfirmState.EXPIRED,
                     note=f"limit_expired:{int(_expiry)}s")
+                await self._notify_trades_channel(
+                    f"⌛ LIMIT EXPIRED {sig.symbol} {sig.side.value} @ {getattr(sig, 'active_entry', sig.entry_mid):g} "
+                    f"({int(_expiry // 60)}m tanpa fill)")
                 continue
             metrics = await self._fetch_metrics(sig.symbol)
             price = _f(metrics.get("price"))
@@ -961,7 +1012,17 @@ class SignalCopyOrchestrator:
             data["path_high"] = max(float(data.get("path_high", price)), price)
             data["path_low"] = min(float(data.get("path_low", price)), price)
             if self._limit_reached(sig, price):
-                self._pending_limits.pop(token, None)
+                from .entry_policy import pending_fill_allowed
+                allowed, drift_r = pending_fill_allowed(sig, price)
+                if not allowed:
+                    self._pending_limits.pop(token, None)
+                    from . import pending_journal
+                    pending_journal.record("DRIFT_REJECTED", sig, price=price, drift_r=round(drift_r, 4))
+                    await self.confirmations.mark(token, ConfirmState.EXPIRED, note="LIMIT_FILL_DRIFT_EXCEEDED")
+                    await self._notify_trades_channel(
+                        f"✅ VALID tapi ❌ NOT EXECUTED {sig.side.value} {sig.symbol}\n"
+                        f"Reason: LIMIT_FILL_DRIFT_EXCEEDED ({drift_r:.2f}R > 0.10R)")
+                    continue
                 # Thesis-aware revalidation: historical SL/effective-target
                 # invalidation is permanent. Snapshot indicator rescoring is
                 # intentionally not a single-factor veto on a provider limit.
@@ -974,6 +1035,7 @@ class SignalCopyOrchestrator:
                             price,
                         )
                         if not revalid.ok:
+                            self._pending_limits.pop(token, None)
                             await self.confirmations.mark(
                                 token, ConfirmState.EXPIRED, note=revalid.code)
                             await self._notify_trades_channel(
@@ -984,13 +1046,14 @@ class SignalCopyOrchestrator:
                     except Exception as exc:
                         logger.warning("[PENDING] re-validation error for %s: %s "
                                        "(proceeding with entry)", sig.symbol, exc)
-                # Parse-but-don't-execute at max open positions (pending-limit
-                # fill path). The signal was parsed/validated/reported earlier;
-                # skip only the EXECUTION when the book is full.
+                # A touched pending waits while all running slots are occupied.
+                # Keep polling it: expiry, path invalidation, and 0.10R drift
+                # remain active. Never convert it to a market chase later.
                 if await self._gate_on_max_positions(sig):
                     await self.confirmations.mark(
-                        token, ConfirmState.EXPIRED, note="skipped_max_positions")
+                        token, ConfirmState.APPROVED, note="WAITING_FOR_SLOT")
                     continue
+                self._pending_limits.pop(token, None)
                 await self.confirmations.mark(
                     token,
                     ConfirmState.APPROVED,
@@ -1005,6 +1068,13 @@ class SignalCopyOrchestrator:
                     token,
                     ConfirmState.EXECUTED if outcome.ok else ConfirmState.FAILED,
                     note=outcome.reason,
+                )
+                from . import pending_journal
+                pending_journal.record(
+                    "FILLED" if outcome.ok else "GATEWAY_REJECTED", pc.signal,
+                    price=price, fill=outcome.entry_price, notional=outcome.notional,
+                    risk_amount=outcome.risk_amount, drift_r=round(drift_r, 4),
+                    rr_tp1=getattr(outcome, "rr_tp1", 0.0), reason=outcome.reason,
                 )
                 if outcome.ok and outcome.notional > 0:
                     exec_payload = {

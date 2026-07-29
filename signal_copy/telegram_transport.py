@@ -26,6 +26,22 @@ _parser_bot: Optional[Bot] = None
 _trades_bot: Optional[Bot] = None
 
 
+async def _send_with_retry(send_call, attempts: int = 3) -> bool:
+    """Retry notification transport only; never retries trade execution."""
+    attempts = max(1, int(attempts))
+    for attempt in range(1, attempts + 1):
+        try:
+            await send_call()
+            return True
+        except Exception as exc:
+            if attempt >= attempts:
+                logger.error("❌ Telegram send failed after %d attempts: %s", attempts, exc)
+                return False
+            logger.warning("⚠️ Telegram send attempt %d/%d failed: %s", attempt, attempts, exc)
+            await asyncio.sleep(min(2 ** (attempt - 1), 4))
+    return False
+
+
 async def _ensure_bot_ready():
     global _parser_bot, _trades_bot
     if _parser_bot is None and PARSER_BOT_TOKEN:
@@ -64,13 +80,11 @@ async def send_parser_notification(message: str, chart_path: Optional[str] = Non
                     return True
             except Exception as exc:
                 logger.warning(f"⚠️ Parser chart send failed, fallback to text: {exc}")
-        await _parser_bot.send_message(
-            chat_id=PARSER_CHAT_ID,
-            text=message,
-            parse_mode="HTML",
-            disable_web_page_preview=True,
-        )
-        return True
+        async def _send_text():
+            await _parser_bot.send_message(
+                chat_id=PARSER_CHAT_ID, text=message, parse_mode="HTML",
+                disable_web_page_preview=True)
+        return await _send_with_retry(_send_text)
     except Exception as exc:
         logger.error(f"❌ Parser bot send failed: {exc}")
         return False
@@ -90,13 +104,14 @@ async def send_trades_notification(message: str) -> bool:
 
     wrapped = "🔄 [TRADES] " + message
     try:
-        await target_bot.send_message(
+        async def _send_text():
+            await target_bot.send_message(
             chat_id=TRADES_CHAT_ID if target_bot is _trades_bot else PARSER_CHAT_ID,
             text=wrapped,
             parse_mode="HTML",
             disable_web_page_preview=True,
-        )
-        return True
+            )
+        return await _send_with_retry(_send_text)
     except Exception as exc:
         logger.error(f"❌ Trades bot send failed: {exc}")
         return False

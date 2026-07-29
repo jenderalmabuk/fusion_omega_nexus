@@ -26,6 +26,24 @@ def test_ambiguous_message_without_symbol_or_reply_rejected():
     assert parse_provider_update("Move SL to BEP", -1001652601224) is None
 
 
+def test_generic_words_never_become_symbols():
+    samples = (
+        "CRYPTO signal close now",
+        "Close full position",
+        "I full closed it",
+        "FULL SETUP DETAILS IS HERE close now",
+        "Close all trade now",
+    )
+    for text in samples:
+        assert parse_provider_update(text, -1001652601224) is None, text
+
+
+def test_reply_context_allows_generic_close_update():
+    u = parse_provider_update("Close full position", -1001652601224,
+                              reply_symbol="ETHUSDT")
+    assert u and u.kind == UpdateKind.CLOSE and u.symbol == "ETHUSDT"
+
+
 def test_only_risk_reducing_stop_is_safe():
     assert safer_stop("LONG", old_sl=95, new_sl=100, entry=105)
     assert not safer_stop("LONG", old_sl=95, new_sl=90, entry=105)

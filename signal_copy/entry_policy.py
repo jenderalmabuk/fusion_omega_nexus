@@ -42,8 +42,16 @@ def _rr_ladder(sig, entry: float) -> list[float]:
     return [abs(tp - entry) / risk for tp in sig.take_profits] if risk > 0 else []
 
 
+def pending_fill_allowed(sig, price: float, max_drift_r: float = 0.10) -> tuple[bool, float]:
+    """Allow triggered pending market fill only near its active boundary."""
+    boundary = float(getattr(sig, "active_entry", None) or (sig.entry_low if price < sig.entry_low else sig.entry_high))
+    risk = abs(boundary - float(sig.stop_loss or 0.0))
+    drift_r = abs(float(price) - boundary) / risk if risk > 0 else float("inf")
+    return drift_r <= max_drift_r + 1e-7, drift_r
+
+
 def route_entry(sig, price: float) -> EntryDecision:
-    """Market inside provider zone; otherwise wait at nearest zone boundary."""
+    """Market inside zone or within 0.10R; otherwise wait at nearest boundary."""
     price = float(price or 0.0)
     if price <= 0:
         return EntryDecision(EntryAction.REJECT, 0.0, "NO_MARKET_PRICE")
@@ -57,8 +65,13 @@ def route_entry(sig, price: float) -> EntryDecision:
     if low <= price <= high:
         entry, action, code = price, EntryAction.MARKET, "PRICE_INSIDE_ENTRY_ZONE"
     else:
-        entry = low if price < low else high
-        action, code = EntryAction.LIMIT, "PRICE_OUTSIDE_ENTRY_ZONE"
+        boundary = low if price < low else high
+        risk = abs(boundary - sl)
+        drift_r = abs(price - boundary) / risk if risk > 0 else float("inf")
+        if drift_r <= 0.1000001:
+            entry, action, code = price, EntryAction.MARKET, "MARKET_LATE_ENTRY_0_10R"
+        else:
+            entry, action, code = boundary, EntryAction.LIMIT, "PRICE_OUTSIDE_ENTRY_ZONE"
     return EntryDecision(action, entry, code, passed, _rr_ladder(sig, entry))
 
 

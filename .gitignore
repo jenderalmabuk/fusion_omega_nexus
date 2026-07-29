@@ -37,6 +37,10 @@ fusionnew/backtest/sweep_ablation_result.json
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+# 538MB of regenerable Bybit feather (bt6m harness). Rebuild with
+# bt6m/to_ft.py + bt6m/gen_aux.py, never commit.
+revo_adaptive/user_data/data_bt6m/
+tmp_*.py
 
 # Common ignores
 node_modules

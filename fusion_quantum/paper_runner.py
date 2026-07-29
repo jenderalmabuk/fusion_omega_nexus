@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+from dataclasses import dataclass
 import json
 import os
 import time
@@ -20,9 +21,13 @@ from fusion_quantum.backtest_quantum import (
     CONFIRM_WINDOW, RR, _atr, _imbalances, _valid_obs, mss_confirm,
 )
 from fusion_quantum.paper_engine import submit_paper
+from gateway.client import GatewayClient
 
 FIB_EXPIRY = int(os.getenv("FQ_FIB_EXPIRY", "6"))
-MAX_PENDING = int(os.getenv("FQ_MAX_PENDING_LIMITS", "20"))
+MAX_RUNNING = int(os.getenv("FQ_MAX_RUNNING_POSITIONS", "20"))
+
+# Pending limit orders intentionally have no cap. Running positions alone capped by gateway.
+MAX_PENDING = None
 RUNTIME = Path(os.getenv("FQ_RUNTIME_DIR", "runtime/fusion_quantum"))
 STATE_PATH = Path(os.getenv("FQ_STATE_PATH", str(RUNTIME / "state.json")))
 AUDIT_PATH = Path(os.getenv("FQ_PAPER_AUDIT", str(RUNTIME / "paper_audit.jsonl")))
@@ -85,10 +90,27 @@ class State:
         return sum(1 for row in self.data["setups"].values() if row.get("status") == "pending")
 
     def can_add_pending(self) -> bool:
-        return self.pending_count() < MAX_PENDING
+        return True
 
     def pending_for(self, symbol: str) -> list[tuple[str, dict[str, Any]]]:
         return [(sid, row["setup"]) for sid, row in self.data["setups"].items() if row.get("status") == "pending" and row.get("setup", {}).get("symbol") == symbol]
+
+
+def reconcile_pending(state: State, running_symbols: set[str], *, symbol: str | None = None, keep_id: str | None = None) -> int:
+    """Terminalize limits that cannot remain executable; never alter trade levels."""
+    changed = 0
+    for sid, row in state.data["setups"].items():
+        setup = row.get("setup", {})
+        setup_symbol = setup.get("symbol")
+        if row.get("status") != "pending" or (symbol and setup_symbol != symbol):
+            continue
+        status = "blocked_running" if setup_symbol in running_symbols else "superseded"
+        if status == "superseded" and (keep_id is None or sid == keep_id):
+            continue
+        state.set_status(sid, status, setup=setup, lifecycle_reason=status)
+        append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": status, "setup_id": sid, "setup": setup})
+        changed += 1
+    return changed
 
 
 def setup_id(setup: dict[str, Any]) -> str:
@@ -96,8 +118,97 @@ def setup_id(setup: dict[str, Any]) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()[:24]
 
 
+def lifecycle_key(setup: dict[str, Any]) -> str | None:
+    """Stable one-zone identity. Backtest rule: one zone, one retest."""
+    key = setup.get("zone_key")
+    if not key:
+        return None
+    return "|".join(str(x) for x in key)
+
+
+# Terminal statuses consume the zone permanently. awaiting is soft and may later confirm.
+_ZONE_TERMINAL = {
+    "failed_confirmation", "paper_opened", "expired", "rejected",
+    "blocked_running", "superseded", "pending",
+}
+
+
+def lifecycle_claimed(state: State, setup: dict[str, Any]) -> bool:
+    key = lifecycle_key(setup)
+    if not key:
+        return False
+    for row in state.data["setups"].values():
+        old = row.get("setup") or {}
+        if lifecycle_key(old) == key and row.get("status") in _ZONE_TERMINAL:
+            return True
+    return False
+
+
+def zone_key(zone: dict[str, Any], side: str) -> list[Any]:
+    t = zone["t"]
+    try:
+        stamp = pd.Timestamp(t)
+        t = stamp.isoformat() if not pd.isna(stamp) else str(t)
+    except (TypeError, ValueError):
+        t = str(t)
+    return [side, str(t), float(zone["zlow"]), float(zone["zhigh"])]
+
+
+@dataclass
+class LifecycleScan:
+    setups: list[dict[str, Any]]
+    consumed: list[dict[str, Any]]
+
+
+def lifecycle_scan(symbol: str, htf: pd.DataFrame, ltf: pd.DataFrame) -> LifecycleScan:
+    """Consume each structural zone on its first retest, matching backtest."""
+    if len(ltf) < 10:
+        return LifecycleScan([], [])
+    atr = _atr(ltf); lows, highs = ltf.low.to_numpy(), ltf.high.to_numpy()
+    found, consumed, touched = [], [], set()
+    for side in ("BULL", "BEAR"):
+        obs = _valid_obs(htf, side)
+        for im in _imbalances(ltf, side):
+            ce = int(im["ce"])
+            prior = [ob for ob in obs if ob["t"] < im["t"] and im["leg_low"] <= ob["zhigh"] and im["leg_high"] >= ob["zlow"]]
+            if not prior: continue
+            zone = prior[-1]; zkey = zone_key(zone, side); key = "|".join(str(x) for x in zkey)
+            entry0 = im["leg_low"] + .618*(im["leg_high"]-im["leg_low"]) if side == "BULL" else im["leg_high"] - .618*(im["leg_high"]-im["leg_low"])
+            start = next((i for i in range(ce+1, min(ce+CONFIRM_WINDOW+1, len(ltf))) if (lows[i] <= entry0 if side == "BULL" else highs[i] >= entry0)), None)
+            if start is None or key in touched: continue
+            touched.add(key)
+            conf_end = min(start + CONFIRM_WINDOW, len(ltf))
+            window_complete = conf_end >= start + CONFIRM_WINDOW
+            event = {
+                "symbol": symbol,
+                "side": "LONG" if side == "BULL" else "SHORT",
+                "zone_key": zkey,
+                "first_touch_at": str(ltf.open_time.iloc[start]),
+                "outcome": "awaiting_confirmation",
+            }
+            conf = mss_confirm(ltf, zone, side, start, conf_end)
+            if not conf:
+                if window_complete:
+                    event["outcome"] = "failed_confirmation"
+                consumed.append(event)
+                continue
+            event["outcome"] = "confirmed"
+            consumed.append(event)
+            if conf["i"]+FIB_EXPIRY < len(ltf)-1 or not np.isfinite(atr[conf["i"]]): continue
+            lo,hi = (conf["sweep"],conf["disp"]) if side=="BULL" else (conf["disp"],conf["sweep"])
+            entry = lo+.559*(hi-lo) if side=="BULL" else hi-.559*(hi-lo)
+            risk = entry-(lo-.5*atr[conf["i"]]) if side=="BULL" else (hi+.5*atr[conf["i"]])-entry
+            if risk <= 0: continue
+            found.append({"symbol":symbol,"side":event["side"],"zone_key":zkey,"entry_price":float(entry),"sl_price":float(entry-risk if side=="BULL" else entry+risk),"tp_price":float(entry+RR*risk if side=="BULL" else entry-RR*risk),"confirmed_at":str(ltf.open_time.iloc[conf["i"]]),"expires_at":str(pd.Timestamp(ltf.open_time.iloc[conf["i"]])+pd.Timedelta(minutes=15*FIB_EXPIRY))})
+    return LifecycleScan(found, consumed)
+
+
 def confirmed_setups(symbol: str, htf: pd.DataFrame, ltf: pd.DataFrame) -> list[dict[str, Any]]:
     """Reproduce backtest confirmation, entry, SL and TP formulas."""
+    return lifecycle_scan(symbol, htf, ltf).setups
+
+
+def _legacy_confirmed_setups(symbol: str, htf: pd.DataFrame, ltf: pd.DataFrame) -> list[dict[str, Any]]:
     if len(ltf) < 10:
         return []
     atr = _atr(ltf)
@@ -126,6 +237,7 @@ def confirmed_setups(symbol: str, htf: pd.DataFrame, ltf: pd.DataFrame) -> list[
                 continue
             found.append({
                 "symbol": symbol, "side": "LONG" if side == "BULL" else "SHORT",
+                "zone_key": zone_key(prior[-1], side),
                 "entry_price": float(entry), "sl_price": float(entry - risk if side == "BULL" else entry + risk),
                 "tp_price": float(entry + RR * risk if side == "BULL" else entry - RR * risk),
                 "confirmed_at": str(ltf.open_time.iloc[conf["i"]]),
@@ -138,13 +250,18 @@ def gateway_accepted(result: dict[str, Any]) -> bool:
     return bool(result.get("ok") and result.get("would_deploy") is True and result.get("status") == "paper_opened")
 
 
-def pending_action(setup: dict[str, Any], low: float, high: float, at: pd.Timestamp) -> str:
-    if at > pd.Timestamp(setup["expires_at"]):
+def pending_action(setup: dict[str, Any], bars: pd.DataFrame, pending_since: pd.Timestamp, now: pd.Timestamp) -> str:
+    expires_at = pd.Timestamp(setup["expires_at"])
+    expires_at = expires_at.tz_localize("UTC") if expires_at.tzinfo is None else expires_at.tz_convert("UTC")
+    if now > expires_at:
         return "expired"
+    eligible = bars[pd.to_datetime(bars["open_time"], utc=True) >= pending_since]
+    if eligible.empty:
+        return "wait"
     entry = float(setup["entry_price"])
     if setup["side"] == "LONG":
-        return "fill" if low <= entry else "wait"
-    return "fill" if high >= entry else "wait"
+        return "fill" if float(eligible["low"].min()) <= entry else "wait"
+    return "fill" if float(eligible["high"].max()) >= entry else "wait"
 
 
 def notify(text: str) -> None:
@@ -190,20 +307,26 @@ def symbols() -> list[str]:
 
 
 async def scan_once(state: State) -> dict[str, int]:
-    counts = {"symbols": 0, "confirmed": 0, "pending": state.pending_count(), "filled": 0, "submitted": 0, "expired": 0, "errors": 0}
+    counts = {"symbols": 0, "confirmed": 0, "pending": state.pending_count(), "filled": 0, "submitted": 0, "expired": 0, "blocked_running": 0, "superseded": 0, "errors": 0}
+    cycle_started = time.monotonic()
+    portfolio = await GatewayClient().portfolio()
+    running_symbols = {str(x).upper() for x in portfolio.get("open_symbols", [])}
+    counts["blocked_running"] += reconcile_pending(state, running_symbols)
     for symbol in symbols():
         try:
             htf, ltf = await asyncio.gather(
-                asyncio.to_thread(fetch_recent, symbol, "4h", 300),
+                asyncio.to_thread(fetch_recent, symbol, "4h", 1000),
                 asyncio.to_thread(fetch_recent, symbol, "15m", 1000),
             )
             counts["symbols"] += 1
             if htf.attrs.get("stale") or ltf.attrs.get("stale"):
                 append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "stale", "symbol": symbol})
                 continue
-            last = ltf.iloc[-1]
             for sid, setup in state.pending_for(symbol):
-                action = pending_action(setup, float(last.low), float(last.high), pd.Timestamp(last.open_time))
+                row = state.data["setups"][sid]
+                pending_since = pd.Timestamp(row.get("pending_since", row["updated_at"]))
+                pending_since = pending_since.tz_localize("UTC") if pending_since.tzinfo is None else pending_since.tz_convert("UTC")
+                action = pending_action(setup, ltf, pending_since, pd.Timestamp.now(tz="UTC"))
                 if action == "wait":
                     continue
                 if action == "expired":
@@ -222,25 +345,62 @@ async def scan_once(state: State) -> dict[str, int]:
                         await asyncio.to_thread(notify, fill_message(setup, result))
                     except Exception as exc:
                         append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "telegram_error", "error": repr(exc)})
-            for setup in confirmed_setups(symbol, htf, ltf):
+            scan = lifecycle_scan(symbol, htf, ltf)
+            for event in scan.consumed:
+                outcome = event.get("outcome")
+                if outcome not in {"failed_confirmation", "awaiting_confirmation"}:
+                    continue
+                key = lifecycle_key(event)
+                if not key:
+                    continue
+                zid = "zone_" + hashlib.sha256(key.encode()).hexdigest()[:19]
+                row = state.data["setups"].get(zid)
+                if row and row.get("status") in _ZONE_TERMINAL:
+                    continue
+                if outcome == "awaiting_confirmation":
+                    state.set_status(zid, "awaiting_confirmation", setup=event, lifecycle_reason="first_retest_awaiting_mss")
+                    append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "awaiting_confirmation", "setup_id": zid, "setup": event})
+                    continue
+                if state.claim(zid) or (row and row.get("status") == "awaiting_confirmation"):
+                    state.set_status(zid, "failed_confirmation", setup=event, lifecycle_reason="first_retest_failed_mss")
+                    append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "failed_confirmation", "setup_id": zid, "setup": event})
+            for setup in scan.setups:
                 sid = setup_id(setup)
+                if lifecycle_claimed(state, setup):
+                    append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "blocked_zone_lifecycle", "setup_id": sid, "setup": setup})
+                    continue
+                # Drop soft awaiting row for same zone so confirmed path owns it.
+                zkey = lifecycle_key(setup)
+                if zkey:
+                    zid = "zone_" + hashlib.sha256(zkey.encode()).hexdigest()[:19]
+                    row = state.data["setups"].get(zid)
+                    if row and row.get("status") == "awaiting_confirmation":
+                        state.set_status(zid, "confirmed", setup=setup, lifecycle_reason="awaiting_to_confirmed")
                 if not state.claim(sid):
                     continue
                 counts["confirmed"] += 1
-                if not state.can_add_pending():
-                    state.set_status(sid, "rejected", setup=setup, reason="pending limit cap reached")
-                    append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "rejected", "setup_id": sid, "setup": setup, "reason": "pending limit cap reached"})
+                if symbol in running_symbols:
+                    state.set_status(sid, "blocked_running", setup=setup, lifecycle_reason="blocked_running")
+                    counts["blocked_running"] += 1
+                    append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "blocked_running", "setup_id": sid, "setup": setup})
                     continue
-                state.set_status(sid, "pending", setup=setup)
+                counts["superseded"] += reconcile_pending(state, running_symbols, symbol=symbol, keep_id=sid)
+                row = state.data["setups"].get(sid, {})
+                already_notified = bool(row.get("setup_notification_sent"))
+                state.set_status(sid, "pending", setup=setup, pending_since=now_iso())
                 counts["pending"] += 1
                 append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "pending", "setup_id": sid, "setup": setup})
-                try:
-                    await asyncio.to_thread(notify, setup_message(setup))
-                except Exception as exc:
-                    append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "telegram_error", "error": repr(exc)})
+                if not already_notified:
+                    try:
+                        await asyncio.to_thread(notify, setup_message(setup))
+                        state.set_status(sid, "pending", setup=setup, setup_notification_sent=True)
+                    except Exception as exc:
+                        append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "telegram_error", "error": repr(exc)})
         except Exception as exc:
             counts["errors"] += 1
             append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "scan_error", "symbol": symbol, "error": repr(exc)})
+    counts["pending"] = state.pending_count()
+    append_jsonl(AUDIT_PATH, {"at": now_iso(), "event": "cycle_timing", "duration_sec": round(time.monotonic() - cycle_started, 3), "counts": counts})
     return counts
 
 

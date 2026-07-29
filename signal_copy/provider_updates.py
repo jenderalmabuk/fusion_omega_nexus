@@ -25,7 +25,12 @@ class ProviderUpdate:
 def _symbol(text: str, fallback: str | None) -> str:
     if fallback:
         return fallback.upper().replace("/", "").replace("-", "")
-    ignored = {"MOVE", "MOVED", "CANCEL", "CANCELLED", "CLOSE", "SIGNAL", "STOP", "LOSS", "SL", "BEP", "BE", "TP", "HIT", "NOW", "TO"}
+    ignored = {
+        "MOVE", "MOVED", "SET", "CANCEL", "CANCELLED", "CLOSE", "CLOSED",
+        "SIGNAL", "STOP", "LOSS", "SL", "BEP", "BE", "TP", "HIT", "NOW", "TO",
+        "CRYPTO", "FULL", "PARTIAL", "POSITION", "TRADE", "ENTRY", "TARGET",
+        "PROFIT", "SETUP", "DETAIL", "DETAILS", "ALL", "HERE", "IS", "IT",
+    }
     for base in re.findall(r"(?:#|\b)([A-Z0-9]{2,12})(?:/USDT|USDT)?\b", text.upper()):
         if base not in ignored:
             return base if base.endswith("USDT") else base + "USDT"

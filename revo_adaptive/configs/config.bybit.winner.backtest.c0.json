@@ -1,0 +1,82 @@
+{
+  "initial_state": "stopped",
+  "max_open_trades": 20,
+  "stake_amount": 50,
+  "stake_currency": "USDT",
+  "tradable_balance_ratio": 0.95,
+  "dry_run_wallet": 1000,
+  "fee": 0.0006,
+  "timeframe": "5m",
+  "process_throttle_secs": 5,
+  "trading_mode": "futures",
+  "fiat_display_currency": "USD",
+  "exchange": {
+    "name": "bybit",
+    "key": "${BYBIT_API_KEY}",
+    "secret": "${BYBIT_API_SECRET}",
+    "pair_whitelist": [
+      "0G/USDT:USDT",
+      "ADA/USDT:USDT",
+      "ANKR/USDT:USDT",
+      "ATOM/USDT:USDT",
+      "BAN/USDT:USDT",
+      "BLUR/USDT:USDT",
+      "CAP/USDT:USDT",
+      "COOKIE/USDT:USDT",
+      "DOT/USDT:USDT",
+      "ESP/USDT:USDT",
+      "FOLKS/USDT:USDT",
+      "GWEI/USDT:USDT",
+      "ID/USDT:USDT",
+      "KAIA/USDT:USDT",
+      "LITE/USDT:USDT",
+      "MEME/USDT:USDT",
+      "MVLL/USDT:USDT",
+      "OPEN/USDT:USDT",
+      "PLUME/USDT:USDT",
+      "US/USDT:USDT"
+    ],
+    "pair_blacklist": [],
+    "ccxt_config": {},
+    "ccxt_async_config": {},
+    "demo_trading": false
+  },
+  "pairlists": [
+    {
+      "method": "StaticPairList"
+    }
+  ],
+  "edge": {
+    "enabled": false
+  },
+  "internals": {
+    "process_throttle_secs": 5
+  },
+  "$schema": "https://schema.freqtrade.io/schema.json",
+  "margin_mode": "isolated",
+  "dataformat_ohlcv": "feather",
+  "dry_run": true,
+  "cancel_open_orders_on_exit": true,
+  "entry_pricing": {
+    "price_side": "other",
+    "use_order_book": true,
+    "order_book_top": 1
+  },
+  "exit_pricing": {
+    "price_side": "other",
+    "use_order_book": true,
+    "order_book_top": 1
+  },
+  "rpc": {
+    "enabled": true,
+    "listen_ip": "0.0.0.0",
+    "listen_port": 8080,
+    "username": "freqtrade",
+    "password": "freqtrade"
+  },
+  "dataprovider": {
+    "name": "freqtrade.exchange.exchange.Exchange",
+    "params": {}
+  },
+  "datadir": "/freqtrade/user_data/data_bt6m"
+}

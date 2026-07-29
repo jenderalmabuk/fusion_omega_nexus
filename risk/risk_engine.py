@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -73,7 +74,11 @@ class RiskManager:
         self.vip_risk_budget_pct = 0.15
         self.vip_risk_used = 0.0
 
-        self.parallel_open_risk_budget_pct = 0.08
+        paper_mode = os.getenv("GATEWAY_PAPER_MAINNET", "true").lower() in ("1", "true", "yes")
+        default_global_risk = 0.20 if paper_mode else 0.05
+        self.parallel_open_risk_budget_pct = float(
+            os.getenv("MAX_GLOBAL_OPEN_RISK_PCT", str(default_global_risk))
+        )
         self.open_risk_reservation_ttl_seconds = 120
         self._risk_lock = asyncio.Lock()
         self._reserved_open_risk: Dict[str, ReservedRisk] = {}
@@ -193,7 +198,30 @@ class RiskManager:
         return sum(max(0.0, r.amount) for r in self._reserved_open_risk.values())
 
     def get_parallel_open_risk_budget(self) -> float:
-        return max(10.0, float(self.current_equity) * float(self.parallel_open_risk_budget_pct))
+        return max(0.0, float(self.current_equity) * float(self.parallel_open_risk_budget_pct))
+
+    def get_active_open_risk_total(self) -> float:
+        """Remaining gross loss to active provider stops, using actual fills/qty."""
+        total = 0.0
+        for pos in self._iter_trader_positions():
+            entry = self._safe_float(self._position_attr(pos, "entry_price", 0.0))
+            stop = self._safe_float(self._position_attr(pos, "sl_price", self._position_attr(pos, "sl", 0.0)))
+            qty = self._safe_float(self._position_attr(pos, "qty", 0.0))
+            side = str(self._position_attr(pos, "side", "") or "").upper()
+            valid_stop = (side == "LONG" and 0 < stop < entry) or (side == "SHORT" and stop > entry)
+            if entry > 0 and qty > 0 and valid_stop:
+                total += abs(entry - stop) * qty
+        return total
+
+    def get_total_open_risk(self) -> float:
+        return self.get_active_open_risk_total() + self.get_reserved_risk_total()
+
+    @staticmethod
+    def get_max_running_positions() -> int:
+        paper = os.getenv("GATEWAY_PAPER_MAINNET", "true").lower() in ("1", "true", "yes")
+        key = "PAPER_MAX_RUNNING_POSITIONS" if paper else "REAL_MAX_RUNNING_POSITIONS"
+        default = "30" if paper else "20"
+        return max(1, int(os.getenv(key, os.getenv("FQ_MAX_RUNNING_POSITIONS", default))))
 
     async def reserve_open_risk(self, symbol: str, risk_amount: float) -> bool:
         symbol_u = str(symbol or "").upper()
@@ -204,7 +232,12 @@ class RiskManager:
             self._clear_stale_open_risk_reservations()
             if symbol_u in self._reserved_open_risk or symbol_u in self._position_symbols():
                 return False
-            if self.get_reserved_risk_total() + risk_amount > self.get_parallel_open_risk_budget():
+            # Reserve an in-flight running slot atomically with risk. Dormant
+            # pending setups never call this and remain unlimited.
+            max_running = self.get_max_running_positions()
+            if self._position_count() + len(self._reserved_open_risk) >= max_running:
+                return False
+            if self.get_total_open_risk() + risk_amount > self.get_parallel_open_risk_budget():
                 return False
             self._reserved_open_risk[symbol_u] = ReservedRisk(symbol=symbol_u, amount=risk_amount, created_at=datetime.now(UTC))
             return True
@@ -261,7 +294,7 @@ class RiskManager:
                 count += 1
         return count
 
-    def check_risk_limits(self, symbol: Optional[str] = None, is_vip: bool = False, side: Optional[str] = None) -> Dict[str, Any]:
+    def check_risk_limits(self, symbol: Optional[str] = None, is_vip: bool = False, side: Optional[str] = None, skip_entry_cooldown: bool = False, skip_cluster_limit: bool = False) -> Dict[str, Any]:
         self._clear_temp_pause_if_needed()
         self._clear_stale_open_risk_reservations()
 
@@ -279,23 +312,23 @@ class RiskManager:
             return {"can_trade": False, "reason": "Hard daily stop hit"}
         if self.is_exposure_limit_exceeded():
             return {"can_trade": False, "reason": "Total exposure limit exceeded"}
-        if self.is_cluster_limit_exceeded():
+        if not skip_cluster_limit and self.is_cluster_limit_exceeded():
             return {"can_trade": False, "reason": "Major cluster limit reached"}
         if self.get_reserved_risk_total() > self.get_parallel_open_risk_budget():
             return {"can_trade": False, "reason": "Pending open-risk budget exhausted"}
 
         now = datetime.now(UTC)
-        if self.last_trade_time:
+        if not skip_entry_cooldown and self.last_trade_time:
             delta = (now - self.last_trade_time).total_seconds() / 60.0
             if delta < self.cooldown_global_min:
                 return {"can_trade": False, "reason": f"Global cooldown {delta:.1f} min"}
-        if symbol and symbol in self.last_trade_time_per_symbol:
+        if not skip_entry_cooldown and symbol and symbol in self.last_trade_time_per_symbol:
             delta = (now - self.last_trade_time_per_symbol[symbol]).total_seconds() / 60.0
             if delta < self.cooldown_symbol_min:
                 return {"can_trade": False, "reason": f"{symbol} cooldown {delta:.1f} min"}
-        if side and self._same_direction_position_count(side) >= MAX_SAME_DIRECTION_POS:
+        if MAX_SAME_DIRECTION_POS > 0 and side and self._same_direction_position_count(side) >= MAX_SAME_DIRECTION_POS:
             return {"can_trade": False, "reason": f"Same direction position limit reached:{side}"}
-        if not is_vip and self._position_count() >= MAX_OPEN_POS_GLOBAL:
+        if not is_vip and self._position_count() >= self.get_max_running_positions():
             return {"can_trade": False, "reason": "Max open positions reached"}
 
         drawdown = self.get_current_drawdown()

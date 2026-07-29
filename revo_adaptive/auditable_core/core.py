@@ -11,9 +11,11 @@ from typing import Iterable
 class Config:
     min_score: int = 9
     min_discount_pct: float = 3.5
+    max_discount_pct: float = 6.0
     rsi_max: float = 40.0
     min_qvol_med48: float = 200_000.0
     max_atr_pct: float = 8.0
+    max_er: float = 0.15
     max_data_age_sec: int = 120
     true_decay_min_age: float = 60.0
     true_decay_max_mfe_pct: float = 0.25
@@ -32,7 +34,7 @@ class GateInput:
     btc_mode: str
     btc_coupling: str
     data_age_sec: int
-
+    er: float = 0.0
 
 @dataclass(frozen=True)
 class GateDecision:
@@ -83,8 +85,12 @@ def decide_entry(g: GateInput, c: Config = Config()) -> GateDecision:
         reasons.append("DENY_RSI")
     if g.discount_pct < c.min_discount_pct:
         reasons.append("DENY_NO_DISCOUNT")
+    if g.discount_pct > c.max_discount_pct:
+        reasons.append("DENY_FALLING_KNIFE")
     if g.atr_pct > c.max_atr_pct:
         reasons.append("DENY_ATR_EXPLOSIVE")
+    if g.er > c.max_er:
+        reasons.append("DENY_ER")
     if g.flow not in {"long", "neutral", "unknown"}:
         reasons.append("DENY_FLOW_HOSTILE")
     if g.btc_mode == "hard_dump" and g.btc_coupling != "decoupled_positive":

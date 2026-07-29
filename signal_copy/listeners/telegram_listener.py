@@ -15,6 +15,7 @@ Configure via signal_copy/signal_copy_config.py.
 from __future__ import annotations
 
 import asyncio
+import re
 from typing import Awaitable, Callable, List, Optional
 
 from utils.logger import logger
@@ -50,6 +51,20 @@ class TelegramSignalListener:
     def _name_for(self, chat_id, fallback: str = "") -> str:
         return self.channel_names.get(chat_id, fallback or str(chat_id))
 
+    @staticmethod
+    def _reply_context_marker(text: str) -> str:
+        """Pass reply identity only; never append quoted trade text.
+
+        Quoted provider cards are often complete signals. Appending them makes
+        parser treat update/repost as a new trade.
+        """
+        upper = str(text or "").upper()
+        match = re.search(r"(?:#|\b)([A-Z0-9]{2,12})(?:\s*/?\s*USDT)\b", upper)
+        if not match:
+            return ""
+        base = match.group(1)
+        return f"[REPLY_SYMBOL: {base}USDT]"
+
     # ---- Telethon backend (user account, reads any joined group) ----
     async def _start_telethon(self) -> bool:
         try:
@@ -77,7 +92,9 @@ class TelegramSignalListener:
                     if getattr(event.message, "reply_to_msg_id", None):
                         replied = await event.message.get_reply_message()
                         if replied and replied.raw_text:
-                            text += "\n[REPLY_CONTEXT] " + replied.raw_text[:800]
+                            marker = self._reply_context_marker(replied.raw_text)
+                            if marker:
+                                text += "\n" + marker
                 except Exception:
                     pass
                 # Capture an attached chart image (photos only, to avoid

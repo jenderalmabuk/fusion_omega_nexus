@@ -33,7 +33,7 @@ def intent_from_setup(setup: dict[str, Any]) -> OrderIntent:
         regime="UNKNOWN",
         confidence=float(setup.get("confidence", 0.5)),
         tier="Probe",
-        tag="fusion_quantum_h4_15m",
+        tag="fusion_quantum_pending_h4_15m",
         adv_snapshot={"timeframe": "4h+15m", "paper": True},
     )
 

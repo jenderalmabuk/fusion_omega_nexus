@@ -302,6 +302,12 @@ class Engine:
         self.cold_batch = cold_batch
         self.soft_pending_cap = soft_pending_cap
         self.stoch_max = stoch_max
+        # Live audit fixes (env-tunable so a rollback needs no rebuild):
+        # SL_FLOOR_PCT — minimum stop distance; sub-1.5% stops were net-negative live.
+        # NEAREST_MAX_AGE — cap setup age (LTF bars); 0 previously meant "never expire",
+        # which surfaced 3-day-old zones that then died at the liquidity gate.
+        self.sl_floor_pct = float(os.environ.get("SL_FLOOR_PCT", "0") or 0)
+        self.NEAREST_MAX_AGE = int(os.environ.get("NEAREST_MAX_AGE", "0") or 0)
         self._btc_trend = None
         self._stats = {"cand": 0, "stale": 0, "fresh": 0, "blocked": 0,
                        "blocked_max_open": 0, "blocked_pending_cap": 0, "blocked_oi_pressure": 0,
@@ -458,12 +464,14 @@ class Engine:
         # structural retests. Age is soft; mitigation/invalidation kill setups.
         # ponytail: legacy recent_setups remains for tests/old bots; remove after migration.
         detector = nearest_unmitigated_setups if "fusionnew" in self.tag else recent_setups
-        age_arg = 0 if detector is nearest_unmitigated_setups else self.MAX_SETUP_AGE
+        age_arg = self.NEAREST_MAX_AGE if detector is nearest_unmitigated_setups else self.MAX_SETUP_AGE
         bull = detector(zone_df, ltf, trend, "BULL", self.rr,
-                        max_age=age_arg, sl_swing=self.sl_swing) \
+                        max_age=age_arg, sl_swing=self.sl_swing,
+                        sl_floor_pct=self.sl_floor_pct) \
             if self.direction in ("both", "long") else []
         bear = detector(zone_df, ltf, trend, "BEAR", self.rr,
-                        max_age=age_arg, sl_swing=self.sl_swing) \
+                        max_age=age_arg, sl_swing=self.sl_swing,
+                        sl_floor_pct=self.sl_floor_pct) \
             if self.direction in ("both", "short") else []
         if self.use_cvd:
             bull = _filter_flow(symbol, 0, "BULL", bull, ltf, True, False)
@@ -476,8 +484,11 @@ class Engine:
             bull = _filter_ema_dist(bull, zone_df, self.ema_dist)
             bear = _filter_ema_dist(bear, zone_df, self.ema_dist)
         if self.min_turn > 0:
-            bull = _filter_liquidity(bull, ltf, self.min_turn)
-            bear = _filter_liquidity(bear, ltf, self.min_turn)
+            # Live decides NOW, so measure turnover at the latest closed bar, not at the
+            # (possibly days-old) setup candle. See _filter_liquidity docstring.
+            _now_idx = len(ltf) - 1
+            bull = _filter_liquidity(bull, ltf, self.min_turn, at_idx=_now_idx)
+            bear = _filter_liquidity(bear, ltf, self.min_turn, at_idx=_now_idx)
         assert ltf is not None
         if detector is nearest_unmitigated_setups and self.stoch_max > 0:
             # Hybrid quality gate: stochastic filters stretched entries; OI/CVD/price

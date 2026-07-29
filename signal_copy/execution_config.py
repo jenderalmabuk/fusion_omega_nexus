@@ -32,8 +32,9 @@ MAX_NOTIONAL_PCT_OF_BALANCE = float(os.getenv("MAX_NOTIONAL_PCT_OF_BALANCE", "20
 # Max open positions globally
 MAX_OPEN_POS_GLOBAL = int(os.getenv("MAX_OPEN_POS_GLOBAL", "5"))
 
-# Max same direction positions
-MAX_SAME_DIRECTION_POS = int(os.getenv("MAX_SAME_DIRECTION_POS", "3"))
+# Max same-direction positions; 0 disables this extra cap. SignalCopy uses the
+# global pending+active capacity instead.
+MAX_SAME_DIRECTION_POS = int(os.getenv("MAX_SAME_DIRECTION_POS", "0"))
 
 # Max total exposure %
 MAX_TOTAL_EXPOSURE_PCT = float(os.getenv("MAX_TOTAL_EXPOSURE_PCT", "80.0"))
@@ -106,7 +107,7 @@ _DEFAULTS = {
     "MAX_DRAWDOWN_PCT": 10.0,
     "MAX_NOTIONAL_PCT_OF_BALANCE": 20.0,
     "MAX_OPEN_POS_GLOBAL": 5,
-    "MAX_SAME_DIRECTION_POS": 3,
+    "MAX_SAME_DIRECTION_POS": 0,
     "MAX_TOTAL_EXPOSURE_PCT": 80.0,
     "RISK_PER_TRADE_PCT": 1.0,
     "HARD_MAX_HOLD_MINUTES": 480,

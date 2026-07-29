@@ -1,7 +1,7 @@
 # Bot config — per-engine overrides
 # These map to engine CLI args
 
-# M30 Imbalance — Medium (adversarial)
+# M30 Imbalance — legacy control, LLM OFF for gate A/B
 m30_imbalance:
   tier: M30
   direction: both
@@ -19,16 +19,40 @@ m30_imbalance:
   warm_batch: 40
   cold_batch: 347
   soft_pending_cap: 20
-  adversarial: true
+  adversarial: false
   cvd: false
   btc_regime: false
   symbols_file: ../runtime/revo/canonical_universe.txt
 
-# H1 Imbalance — Medium (adversarial)
+# H1 Imbalance — control arm (both directions, preserves original state/history)
 h1_imbalance:
   tier: H1
   direction: both
   tag: _h1_adversarial
+  ema_dist: 1.0
+  min_turn: 1000000
+  stoch_max: 70
+  equity: 1000
+  risk_pct: 0.01
+  max_positions: 6
+  leverage: 5
+  daily_loss_pct: 0.05
+  max_dd_pct: 0.20
+  interval_sec: 600
+  warm_batch: 40
+  cold_batch: 347
+  soft_pending_cap: 20
+  adversarial: false
+  cvd: false
+  btc_regime: false
+  symbols_file: ../runtime/revo/canonical_universe.txt
+
+# H1 short-only candidate — isolated forward-test treatment arm.
+# Same knobs as h1_imbalance; only direction and tag differ.
+h1_short_candidate:
+  tier: H1
+  direction: short
+  tag: _h1_short_candidate
   ema_dist: 1.0
   min_turn: 1000000
   stoch_max: 70
@@ -59,7 +83,7 @@ h1_fusionnew:
   tag: _fusionnew_h1
   ema_dist: 1.0
   min_turn: 1000000
-  stoch_max: 50
+  stoch_max: 70
   equity: 1000
   risk_pct: 0.01
   max_positions: 6
@@ -81,7 +105,7 @@ m30_fusionnew:
   tag: _fusionnew_m30
   ema_dist: 1.0
   min_turn: 1000000
-  stoch_max: 50
+  stoch_max: 70
   equity: 1000
   risk_pct: 0.01
   max_positions: 6

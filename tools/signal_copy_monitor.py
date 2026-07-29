@@ -22,7 +22,98 @@ def money(value):
     return f"${float(value or 0):+.2f}"
 
 
-def show(data):
+def fetch_mark(symbol, base_url):
+    """Fetch latest mark through Nexus market-data API; None on failure."""
+    try:
+        payload = fetch(f"{base_url.rstrip('/')}/klines/binance/{symbol}?tf=1m&limit=1", "")
+        bars = payload.get("data") if isinstance(payload, dict) else payload
+        if bars:
+            return float(bars[-1].get("close", 0))
+    except Exception:
+        pass
+    return None
+
+
+def position_risk(position):
+    """Gross remaining loss to provider SL, before TP/fees."""
+    entry = float(position.get("entry_price") or 0)
+    stop = float(position.get("sl_price") or 0)
+    qty = float(position.get("qty", position.get("initial_qty", 0)) or 0)
+    if not entry or not stop or not qty:
+        return None
+    return abs(entry - stop) * qty
+
+
+def unrealized_pnl(position, mark):
+    if mark is None:
+        return None
+    entry = float(position.get("entry_price") or 0)
+    qty = float(position.get("qty", position.get("initial_qty", 0)) or 0)
+    if not entry or not qty:
+        return 0.0
+    if str(position.get("side", "")).upper() == "LONG":
+        return (mark - entry) * qty
+    return (entry - mark) * qty
+
+
+def risk_pct(risk, equity):
+    if risk is None or not equity:
+        return None
+    return risk / float(equity) * 100.0
+
+
+def show(data, market_url):
+    unrealized_total = 0.0
+    unrealized_known = True
+    risk_total = 0.0
+    risk_known = True
+    equity = float(data.get("equity") or 0)
+    for position in data.get("open_positions", []):
+        mark = fetch_mark(position.get("symbol", ""), market_url)
+        position["monitor_mark"] = mark
+        position["unrealized_pnl"] = unrealized_pnl(position, mark)
+        position["risk_to_sl"] = position_risk(position)
+        if position["risk_to_sl"] is None:
+            risk_known = False
+        else:
+            risk_total += position["risk_to_sl"]
+        if position["unrealized_pnl"] is None:
+            unrealized_known = False
+        else:
+            unrealized_total += position["unrealized_pnl"]
+    print("\033[2J\033[H", end="")
+    pnl_text = money(unrealized_total) if unrealized_known else "unavailable"
+    portfolio_risk_text = (f"{money(risk_total)} ({risk_pct(risk_total, equity):.2f}%)"
+                           if risk_known and equity else "unavailable")
+    print(f"SIGNAL COPY MONITOR | {datetime.now().astimezone().isoformat(timespec='seconds')}")
+    print(f"Equity ${data.get('equity', 0):.2f} | Unrealized PnL {pnl_text} | Daily PnL {data.get('daily_pnl_pct', 0):+.2f}% | "
+          f"Exposure {data.get('total_exposure_pct', 0):.2f}% | Open {data.get('open_position_count', 0)}")
+    print(f"Open risk to SL {portfolio_risk_text} | Pending risk reserved ${data.get('reserved_risk_total', 0):.2f} | "
+          f"Daily limit={data.get('daily_loss_limit_hit', False)} | "
+          f"Exposure limit={data.get('exposure_limit_exceeded', False)}")
+
+    positions = data.get("open_positions", [])
+    print("\nOPEN POSITIONS")
+    if not positions:
+        print("  none")
+    for p in positions:
+        upnl = p.get("unrealized_pnl")
+        mark_text = f"mark={p['monitor_mark']}" if p.get("monitor_mark") is not None else "mark=?"
+        pnl_text = money(upnl) if upnl is not None else "unavailable"
+        rpnl = p.get("risk_to_sl")
+        risk_text = money(rpnl) if rpnl is not None else "unavailable"
+        risk_pct_text = f" ({risk_pct(rpnl, equity):.2f}%)" if rpnl is not None and equity else ""
+        print(f"  {p.get('symbol')} {p.get('side')} entry={p.get('entry_price')} {mark_text} "
+              f"uPnL={pnl_text} risk-to-SL={risk_text}{risk_pct_text} SL={p.get('sl_price')} TP1={p.get('tp1_price')} "
+              f"notional=${float(p.get('notional', 0)):.2f}")
+    return
+
+
+def show_legacy(data):
+    show(data, "http://127.0.0.1:8000")
+
+
+def _show_old(data):
     print("\033[2J\033[H", end="")
     print(f"SIGNAL COPY MONITOR | {datetime.now().astimezone().isoformat(timespec='seconds')}")
     print(f"Equity ${data.get('equity', 0):.2f} | Daily PnL {data.get('daily_pnl_pct', 0):+.2f}% | "
@@ -40,7 +131,7 @@ def show(data):
               f"SL={p.get('sl_price')} TP1={p.get('tp1_price')} "
               f"notional=${float(p.get('notional', 0)):.2f}")
 
-    print("\nLAST SIGNAL-COPY ENTRIES")
+    print("\nLAST SIGNAL-COPY INTENTS")
     intents = [x for x in data.get("recent_intents", [])
                if (x.get("intent") or {}).get("source") == "SIGNAL_COPY"]
     if not intents:
@@ -71,10 +162,11 @@ def main():
     ap.add_argument("--url", default=os.getenv("GATEWAY_URL", "http://127.0.0.1:8787/gateway") + "/portfolio")
     ap.add_argument("--token", default=os.getenv("GATEWAY_TOKEN", ""))
     ap.add_argument("--watch", type=float, default=0, help="refresh seconds; 0 = one snapshot")
+    ap.add_argument("--market-url", default=os.getenv("PAPER_NEXUS_API", "http://127.0.0.1:8000"), help="Nexus market-data base URL")
     args = ap.parse_args()
     while True:
         try:
-            show(fetch(args.url, args.token))
+            show(fetch(args.url, args.token), args.market_url)
         except Exception as exc:
             print(f"monitor error: {exc}")
         if args.watch <= 0:

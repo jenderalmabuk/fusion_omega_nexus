@@ -117,8 +117,25 @@ def _trend_ok_strong(trend_df: pd.DataFrame, ts: np.datetime64, side: str,
     return bool(trend_df["up"].iloc[idx]) if side == "BULL" else bool(trend_df["down"].iloc[idx])
 
 
+def _apply_sl_floor(entry: float, sl: float, side: str, floor_pct: float) -> float:
+    """Widen SL to at least floor_pct% away from entry.
+
+    Live audit (101 closed trades, 4 engines): every SL bucket under 1.5% was net
+    negative; only >=1.5% was profitable (+31.41). Swing-based stops on the LTF sat
+    inside single-bar noise (e.g. TAOUSDT SL 0.216% -> filled and stopped in the same
+    second, same candle). floor_pct<=0 keeps the original behaviour.
+    """
+    if floor_pct <= 0:
+        return sl
+    min_risk = entry * floor_pct / 100.0
+    if side == "BULL":
+        return min(sl, entry - min_risk)
+    return max(sl, entry + min_risk)
+
+
 def generate_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: pd.DataFrame,
-                    side: str, rr: float = RR, sl_swing: int = 0) -> List[Dict[str, Any]]:
+                    side: str, rr: float = RR, sl_swing: int = 0,
+                    sl_floor_pct: float = 0.0) -> List[Dict[str, Any]]:
     """Pure entry generation (shared by backtest AND live bot => live == backtest).
     Returns setups with entry/sl/tp known at the imbalance candle-3 close (no look-ahead)."""
     obs = _valid_obs(zone_df, side)
@@ -159,12 +176,14 @@ def generate_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: pd.DataFram
         entry = compute_fibonacci_entry(candle, fib_level=0.618)
         if side == "BULL":
             sl = (ltf["low"].to_numpy()[max(0, ce - sl_swing):ce].min() - 0.25 * latr[ce]) if sl_swing > 0 else (leg_low - 0.5 * latr[ce])
+            sl = _apply_sl_floor(entry, sl, side, sl_floor_pct)
             if not (sl < entry):
                 continue
             risk = entry - sl
             tp = entry + rr * risk
         else:
             sl = (ltf["high"].to_numpy()[max(0, ce - sl_swing):ce].max() + 0.25 * latr[ce]) if sl_swing > 0 else (leg_high + 0.5 * latr[ce])
+            sl = _apply_sl_floor(entry, sl, side, sl_floor_pct)
             if not (sl > entry):
                 continue
             risk = sl - entry
@@ -190,7 +209,7 @@ def _annotate_ob_invalidation(obs: List[Dict[str, Any]], zone_df: pd.DataFrame, 
 
 def nearest_unmitigated_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: pd.DataFrame,
                                side: str, rr: float = RR, max_age: int = 0,
-                               sl_swing: int = 0) -> List[Dict[str, Any]]:
+                               sl_swing: int = 0, sl_floor_pct: float = 0.0) -> List[Dict[str, Any]]:
     """Live detector: choose nearest valid imbalance that is still unmitigated/uninvalidated.
     Age is a soft preference only; max_age<=0 disables hard expiry."""
     obs = _valid_obs(zone_df, side)
@@ -221,6 +240,7 @@ def nearest_unmitigated_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: 
                 if ce + 1 < len(ltf) and (ltf["low"].iloc[ce + 1:] <= entry).any():
                     continue
                 sl = (ltf["low"].to_numpy()[max(0, ce - sl_swing):ce].min() - 0.25 * latr[ce]) if sl_swing > 0 else (im["leg_low"] - 0.5 * latr[ce])
+                sl = _apply_sl_floor(entry, sl, side, sl_floor_pct)
                 if not (sl < entry):
                     continue
                 risk = entry - sl
@@ -232,6 +252,7 @@ def nearest_unmitigated_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: 
                 if ce + 1 < len(ltf) and (ltf["high"].iloc[ce + 1:] >= entry).any():
                     continue
                 sl = (ltf["high"].to_numpy()[max(0, ce - sl_swing):ce].max() + 0.25 * latr[ce]) if sl_swing > 0 else (im["leg_high"] + 0.5 * latr[ce])
+                sl = _apply_sl_floor(entry, sl, side, sl_floor_pct)
                 if not (sl > entry):
                     continue
                 risk = sl - entry
@@ -252,7 +273,8 @@ def nearest_unmitigated_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: 
 
 
 def recent_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: pd.DataFrame,
-                  side: str, rr: float = RR, max_age: int = FIB_EXPIRY, sl_swing: int = 0) -> List[Dict[str, Any]]:
+                  side: str, rr: float = RR, max_age: int = FIB_EXPIRY, sl_swing: int = 0,
+                  sl_floor_pct: float = 0.0) -> List[Dict[str, Any]]:
     """Backward-compatible wrapper: retain fresh-only behavior for legacy callers/tests."""
     obs = _valid_obs(zone_df, side)
     imbs = _imbalances(ltf, side)
@@ -298,12 +320,14 @@ def recent_setups(zone_df: pd.DataFrame, ltf: pd.DataFrame, trend: pd.DataFrame,
         entry = compute_fibonacci_entry(candle, fib_level=0.618)
         if side == "BULL":
             sl = (ltf["low"].to_numpy()[max(0, ce - sl_swing):ce].min() - 0.25 * latr[ce]) if sl_swing > 0 else (leg_low - 0.5 * latr[ce])
+            sl = _apply_sl_floor(entry, sl, side, sl_floor_pct)
             if not (sl < entry):
                 continue
             risk = entry - sl
             tp = entry + rr * risk
         else:
             sl = (ltf["high"].to_numpy()[max(0, ce - sl_swing):ce].max() + 0.25 * latr[ce]) if sl_swing > 0 else (leg_high + 0.5 * latr[ce])
+            sl = _apply_sl_floor(entry, sl, side, sl_floor_pct)
             if not (sl > entry):
                 continue
             risk = sl - entry
@@ -319,13 +343,23 @@ FUND_CAP = 0.0005
 DP_LOOKBACK = 60   # LTF bars for the dealing range (discount/premium)
 
 
-def _filter_liquidity(setups: List[Dict[str, Any]], ltf: pd.DataFrame, min_turn: float, lookback: int = 20) -> List[Dict[str, Any]]:
+def _filter_liquidity(setups: List[Dict[str, Any]], ltf: pd.DataFrame, min_turn: float,
+                      lookback: int = 20, at_idx: "int | None" = None) -> List[Dict[str, Any]]:
     """Recent-liquidity gate (freqtrade insight: 24h volume can be STALE — check CURRENT turnover).
-    Keep setups where recent LTF quote-turnover (sum vol*close over `lookback` bars) >= min_turn.
-    Validated: lifts WR ~57%->67% by skipping thin/stale-liquidity moments."""
+    Keep setups where LTF quote-turnover (sum vol*close over `lookback` bars) >= min_turn.
+
+    The window ends at the DECISION bar. In backtest the decision happens at the setup
+    candle (`at_idx=None` -> per-setup `ce`), which keeps it look-ahead free. Live decides
+    on the latest closed bar, so the live engine passes `at_idx=len(ltf)-1`; without that
+    a setup found 900 bars ago was being judged on 3-day-old turnover and dropped
+    (measured: only 6/28 live setups survived, median window turnover 192K vs 1M floor).
+    """
     if min_turn <= 0 or not setups:
         return setups
     turn = ltf["volume"].to_numpy() * ltf["close"].to_numpy()
+    if at_idx is not None:
+        end = min(int(at_idx) + 1, len(turn))
+        return setups if float(turn[max(0, end - lookback):end].sum()) >= min_turn else []
     keep = []
     for s in setups:
         ce = s["ce"]
@@ -440,6 +474,14 @@ def _manage_exit(side, entry, sl, tp, ll, lh, lc, atr, fill, mode):
     ext = entry
     reason = "TIME"
     end = min(fill + 1 + MAX_HOLD, len(ll)) - 1
+    # Fill-bar SL check: live fills and stops CAN land in the same candle (audit:
+    # 4/13 FusionNew trades filled and stopped within one 5m bar). Skipping the fill
+    # bar made the backtest optimistic vs live. Conservative same-bar assumption:
+    # if the fill bar also touches SL, count it as an SL exit.
+    if (side == "BULL" and ll[fill] <= sl) or (side == "BEAR" and lh[fill] >= sl):
+        profit = (sl - entry) if side == "BULL" else (entry - sl)
+        fees = entry * MAKER_FEE + entry * (TAKER_FEE + SLIP)
+        return profit - fees, "SL"
     for m in range(fill + 1, min(fill + 1 + MAX_HOLD, len(ll))):
         h, lo = lh[m], ll[m]
         if side == "BULL":
@@ -494,9 +536,9 @@ def _simulate_side(symbol: str, tier: str, days: int, side: str,
                    rr: float = RR, use_cvd: bool = False, use_funding: bool = False,
                    btc_trend: "pd.DataFrame | None" = None, use_discount: bool = False,
                    exit_mode: str = "fixed", ema_dist: float = 0.0, min_turn: float = 0.0,
-                   stoch_max: float = 0.0) -> List[Dict[str, Any]]:
+                   stoch_max: float = 0.0, sl_floor_pct: float = 0.0) -> List[Dict[str, Any]]:
     cfg = TIERS[tier]
-    setups = generate_setups(zone_df, ltf, trend, side, rr)
+    setups = generate_setups(zone_df, ltf, trend, side, rr, sl_floor_pct=sl_floor_pct)
     setups = _filter_flow(symbol, days, side, setups, ltf, use_cvd, use_funding)
     if use_discount:
         setups = _filter_discount(side, setups, ltf)
@@ -536,7 +578,7 @@ def _simulate_symbol(symbol: str, tier: str, days: int, direction: str, rr: floa
                      use_cvd: bool = False, use_funding: bool = False,
                      use_btc: bool = False, use_discount: bool = False,
                      exit_mode: str = "fixed", ema_dist: float = 0.0, min_turn: float = 0.0,
-                     stoch_max: float = 0.0) -> List[Dict[str, Any]]:
+                     stoch_max: float = 0.0, sl_floor_pct: float = 0.0) -> List[Dict[str, Any]]:
     cfg = TIERS[tier]
     zone_df = fetch_klines(symbol, cfg["zone"], days)
     ltf = fetch_klines(symbol, cfg["ltf"], days)
@@ -546,9 +588,9 @@ def _simulate_symbol(symbol: str, tier: str, days: int, direction: str, rr: floa
     btc_trend = _trend(fetch_klines("BTCUSDT", cfg["zone"], days)) if use_btc else None
     out: List[Dict[str, Any]] = []
     if direction in ("both", "long"):
-        out += _simulate_side(symbol, tier, days, "BULL", zone_df, ltf, trend, rr, use_cvd, use_funding, btc_trend, use_discount, exit_mode, ema_dist, min_turn, stoch_max)
+        out += _simulate_side(symbol, tier, days, "BULL", zone_df, ltf, trend, rr, use_cvd, use_funding, btc_trend, use_discount, exit_mode, ema_dist, min_turn, stoch_max, sl_floor_pct)
     if direction in ("both", "short"):
-        out += _simulate_side(symbol, tier, days, "BEAR", zone_df, ltf, trend, rr, use_cvd, use_funding, btc_trend, use_discount, exit_mode, ema_dist, min_turn, stoch_max)
+        out += _simulate_side(symbol, tier, days, "BEAR", zone_df, ltf, trend, rr, use_cvd, use_funding, btc_trend, use_discount, exit_mode, ema_dist, min_turn, stoch_max, sl_floor_pct)
     return out
 
 

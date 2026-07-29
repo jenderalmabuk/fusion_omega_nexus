@@ -1,6 +1,7 @@
 from signal_copy.entry_policy import (
     EntryAction,
     PricePath,
+    pending_fill_allowed,
     route_entry,
     revalidate_pending,
 )
@@ -29,17 +30,65 @@ def test_short_inside_zone_routes_market_without_rewriting_provider_levels():
 
 
 def test_short_above_zone_waits_at_nearest_boundary():
-    decision = route_entry(neo(), 2.150)
+    decision = route_entry(neo(), 2.1501)
     assert decision.action == EntryAction.LIMIT
     assert decision.entry == 2.130
     assert decision.code == "PRICE_OUTSIDE_ENTRY_ZONE"
 
 
 def test_short_below_zone_even_past_tp1_waits_for_retest():
-    decision = route_entry(neo(), 2.050)
+    decision = route_entry(neo(), 2.045)
     assert decision.action == EntryAction.LIMIT
     assert decision.entry == 2.068
     assert decision.passed_targets == [2.057]
+
+
+def test_short_profit_drift_at_point_one_r_routes_late_market():
+    # Lower boundary risk distance: 2.21276 - 2.068 = 0.14476.
+    decision = route_entry(neo(), 2.068 - 0.1 * 0.14476)
+    assert decision.action == EntryAction.MARKET
+    assert decision.code == "MARKET_LATE_ENTRY_0_10R"
+
+
+def test_short_toward_stop_drift_at_point_one_r_routes_late_market():
+    # Upper boundary risk distance: 2.21276 - 2.130 = 0.08276.
+    decision = route_entry(neo(), 2.130 + 0.1 * 0.08276)
+    assert decision.action == EntryAction.MARKET
+    assert decision.code == "MARKET_LATE_ENTRY_0_10R"
+
+
+def test_long_profit_drift_at_point_one_r_routes_late_market():
+    sig = ParsedSignal(
+        symbol="TESTUSDT", side=SignalSide.LONG,
+        entry_low=100, entry_high=110, stop_loss=90,
+        take_profits=[112, 130], leverage=10,
+    )
+    decision = route_entry(sig, 112)
+    assert decision.action == EntryAction.MARKET
+    assert decision.code == "MARKET_LATE_ENTRY_0_10R"
+
+
+def test_long_outside_beyond_point_one_r_stays_pending():
+    sig = ParsedSignal(
+        symbol="TESTUSDT", side=SignalSide.LONG,
+        entry_low=100, entry_high=110, stop_loss=90,
+        take_profits=[115, 140], leverage=10,
+    )
+    decision = route_entry(sig, 112.01)
+    assert decision.action == EntryAction.LIMIT
+    assert decision.entry == 110
+
+
+def test_pending_short_fill_rejects_market_chase_beyond_point_one_r():
+    allowed, drift_r = pending_fill_allowed(neo(), 2.050)
+    assert not allowed
+    assert drift_r > 0.10
+
+
+def test_pending_short_fill_allows_market_within_point_one_r():
+    allowed, drift_r = pending_fill_allowed(neo(), 2.060)
+    assert allowed
+    assert drift_r <= 0.10
 
 
 def test_all_targets_passed_rejects():

@@ -33,7 +33,32 @@ FIB_EXPIRY = 12
 CONFIRM_WINDOW = 24
 RR = 2.0
 FEE_SLIP = 0.0007
-TIERS = {"H1": ("1h", "5m"), "M30": ("30m", "3m")}
+TIERS = {"H4_M15": ("4h", "15m")}
+
+EXIT_MODES = ("baseline_2r", "partial25_1r_be", "partial25_1r_be_atr")
+
+def manage_quantum_exit(side, entry, sl, risk, lows, highs, closes, atr, fill, mode):
+    sign = 1 if side == "BULL" else -1
+    tp1, tp2 = entry + sign * risk, entry + sign * 2 * risk
+    stop, remaining, total, partial = sl, 1.0, 0.0, False
+    for i in range(fill, len(lows)):
+        hit_stop = lows[i] <= stop if side == "BULL" else highs[i] >= stop
+        hit_tp1 = highs[i] >= tp1 if side == "BULL" else lows[i] <= tp1
+        hit_tp2 = highs[i] >= tp2 if side == "BULL" else lows[i] <= tp2
+        if mode == "baseline_2r":
+            if hit_stop: return (stop-entry)*sign/risk, "HARD_SL"
+            if hit_tp2: return 2.0, "TP2"
+            continue
+        if not partial and hit_stop: return (stop-entry)*sign/risk, "HARD_SL"
+        if not partial and hit_tp1:
+            fraction = 0.25 if mode.startswith("partial25") else 0.5
+            total, remaining, partial, stop = fraction, 1.0 - fraction, True, entry
+        if partial and mode.endswith("_atr"):
+            trail = highs[i] - 1.5*atr[i] if side == "BULL" else lows[i] + 1.5*atr[i]
+            stop = max(stop, trail) if side == "BULL" else min(stop, trail)
+        if partial and hit_stop: return total + remaining*(stop-entry)*sign/risk, "BE/TRAIL"
+        if partial and hit_tp2: return total + remaining*2.0, "TP2"
+    return total + remaining*(closes[-1]-entry)*sign/risk, "END"
 
 
 class ZoneLifecycle:
@@ -91,7 +116,7 @@ def mss_confirm(ltf, zone, side, start, end):
     return None
 
 
-def simulate(sym, tier, days=180):
+def simulate(sym, tier, days=180, mode="baseline_2r"):
     ztf, ltf_tf = TIERS[tier]; z=fetch_klines(sym,ztf,days); l=fetch_klines(sym,ltf_tf,days)
     if len(z) < 50 or len(l) < 300: return {"symbol":sym,"short":True}
     atr=_atr(l); trades=[]; lifecycle=ZoneLifecycle()
@@ -123,8 +148,8 @@ def simulate(sym, tier, days=180):
                 if (side=="BULL" and lows[f]<=entry) or (side=="BEAR" and highs[f]>=entry): fill=f;break
             if fill is None: lifecycle.mark("expired_orders"); continue
             lifecycle.mark("fills")
-            pu,reason=_manage_exit(side,entry,sl,tp,lows,highs,closes,atr,fill,"fixed")
-            trades.append({"symbol":sym,"side":side,"entry_time":str(l.open_time.iloc[fill]),"pnl_unit":pnl_r(pu,risk),"reason":reason})
+            pu,reason=manage_quantum_exit(side,entry,sl,risk,lows,highs,closes,atr,fill,mode)
+            trades.append({"symbol":sym,"side":side,"entry_time":str(l.open_time.iloc[fill]),"pnl_unit":float(pu),"reason":reason,"mode":mode})
     return {"symbol":sym,"trades":trades,"funnel":lifecycle.funnel}
 
 
@@ -163,9 +188,10 @@ def main():
     syms=[x.strip() for x in open(universe) if x.strip()]; allr={}
     fetch_klines("BTCUSDT", "1h", 180)  # preload once before worker threads
     for tier in TIERS:
+      for mode in EXIT_MODES:
         t0=time.time(); rows=[]
         with ThreadPoolExecutor(max_workers=10) as ex:
-            fs={ex.submit(simulate,s,tier):s for s in syms}
+            fs={ex.submit(simulate,s,tier,180,mode):s for s in syms}
             for n,f in enumerate(as_completed(fs),1):
                 try: rows.append(f.result())
                 except Exception as e: rows.append({"symbol":fs[f],"error":repr(e)})
@@ -175,8 +201,12 @@ def main():
         iset=[x for x in ts if x["entry_time"] < cutoff] if cutoff else []
         oset=[x for x in ts if x["entry_time"] >= cutoff] if cutoff else []
         funnel={k:sum(r.get("funnel",{}).get(k,0) for r in rows) for k in ZoneLifecycle().funnel}
-        allr[tier]={"elapsed":round(time.time()-t0,1),"symbols":len(syms),"short":sum(r.get("short",False) for r in rows),"errors":[r for r in rows if r.get("error")],"date_range":{"start":ts[0]["entry_time"] if ts else None,"cutoff":cutoff,"end":ts[-1]["entry_time"] if ts else None},"funnel":funnel,"concentration":concentration(ts),"walk_forward":walk_forward(ts),"all":metrics(ts),"is":metrics(iset),"oos":metrics(oset),"long":metrics([x for x in ts if x["side"]=="BULL"]),"short_side":metrics([x for x in ts if x["side"]=="BEAR"])}
-        print(tier,json.dumps(allr[tier]),flush=True)
+        key=f"{tier}_{mode}"
+        allr[key]={"elapsed":round(time.time()-t0,1),"symbols":len(syms),"short":sum(r.get("short",False) for r in rows),"errors":[r for r in rows if r.get("error")],"date_range":{"start":ts[0]["entry_time"] if ts else None,"cutoff":cutoff,"end":ts[-1]["entry_time"] if ts else None},"funnel":funnel,"concentration":concentration(ts),"walk_forward":walk_forward(ts),"all":metrics(ts),"is":metrics(iset),"oos":metrics(oset),"long":metrics([x for x in ts if x["side"]=="BULL"]),"short_side":metrics([x for x in ts if x["side"]=="BEAR"])}
+        print(tier,mode,json.dumps(allr[key]),flush=True)
+    output = ROOT / "fusion_quantum/results/h4_m15_exit_ablation.json"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(allr, indent=2))
     Path("/tmp/fusion_quantum_results.json").write_text(json.dumps(allr,indent=2)); print(json.dumps(allr,indent=2))
 
 if __name__=="__main__": main()

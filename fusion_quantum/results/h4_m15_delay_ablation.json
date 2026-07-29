@@ -1,0 +1,474 @@
+{
+  "exit_mode": "baseline_2r",
+  "symbols": 465,
+  "scenarios": {
+    "bt_parity_d0_e12": {
+      "all": {
+        "n": 121,
+        "wr": 54.5,
+        "pf": 2.45,
+        "net_unit": 76.5648,
+        "maxdd_unit": 6.0
+      },
+      "is": {
+        "n": 72,
+        "wr": 50.0,
+        "pf": 2.02,
+        "net_unit": 36.3899,
+        "maxdd_unit": 6.0
+      },
+      "oos": {
+        "n": 49,
+        "wr": 61.2,
+        "pf": 3.33,
+        "net_unit": 40.1749,
+        "maxdd_unit": 3.0
+      },
+      "long": {
+        "n": 57,
+        "wr": 47.4,
+        "pf": 1.92,
+        "net_unit": 25.6718,
+        "maxdd_unit": 4.0
+      },
+      "short": {
+        "n": 64,
+        "wr": 60.9,
+        "pf": 3.04,
+        "net_unit": 50.893,
+        "maxdd_unit": 4.0
+      },
+      "delay_bars": 0,
+      "expiry_bars": 12,
+      "window_follows_delay": false,
+      "delay_minutes": 0,
+      "elapsed_sec": 17.4,
+      "errors": [],
+      "funnel": {
+        "zones_found": 1640,
+        "zones_touched": 1590,
+        "mss_confirmed": 323,
+        "pending_orders": 323,
+        "fills": 121,
+        "expired_orders": 202
+      },
+      "fill_rate_pct": 37.5
+    },
+    "bt_d1_e12": {
+      "all": {
+        "n": 110,
+        "wr": 52.7,
+        "pf": 2.28,
+        "net_unit": 63.5648,
+        "maxdd_unit": 6.0
+      },
+      "is": {
+        "n": 66,
+        "wr": 48.5,
+        "pf": 1.9,
+        "net_unit": 30.3899,
+        "maxdd_unit": 6.0
+      },
+      "oos": {
+        "n": 44,
+        "wr": 59.1,
+        "pf": 3.05,
+        "net_unit": 33.1749,
+        "maxdd_unit": 3.0
+      },
+      "long": {
+        "n": 53,
+        "wr": 45.3,
+        "pf": 1.77,
+        "net_unit": 20.6718,
+        "maxdd_unit": 4.0
+      },
+      "short": {
+        "n": 57,
+        "wr": 59.6,
+        "pf": 2.86,
+        "net_unit": 42.893,
+        "maxdd_unit": 4.0
+      },
+      "delay_bars": 1,
+      "expiry_bars": 12,
+      "window_follows_delay": false,
+      "delay_minutes": 15,
+      "elapsed_sec": 17.1,
+      "errors": [],
+      "funnel": {
+        "zones_found": 1640,
+        "zones_touched": 1590,
+        "mss_confirmed": 323,
+        "pending_orders": 323,
+        "fills": 110,
+        "expired_orders": 213
+      },
+      "fill_rate_pct": 34.1
+    },
+    "bt_d2_e12": {
+      "all": {
+        "n": 100,
+        "wr": 49.0,
+        "pf": 1.95,
+        "net_unit": 46.5648,
+        "maxdd_unit": 6.0
+      },
+      "is": {
+        "n": 60,
+        "wr": 43.3,
+        "pf": 1.55,
+        "net_unit": 18.3899,
+        "maxdd_unit": 6.0
+      },
+      "oos": {
+        "n": 40,
+        "wr": 57.5,
+        "pf": 2.85,
+        "net_unit": 28.1749,
+        "maxdd_unit": 4.0
+      },
+      "long": {
+        "n": 49,
+        "wr": 42.9,
+        "pf": 1.61,
+        "net_unit": 15.6718,
+        "maxdd_unit": 4.0
+      },
+      "short": {
+        "n": 51,
+        "wr": 54.9,
+        "pf": 2.34,
+        "net_unit": 30.893,
+        "maxdd_unit": 3.0
+      },
+      "delay_bars": 2,
+      "expiry_bars": 12,
+      "window_follows_delay": false,
+      "delay_minutes": 30,
+      "elapsed_sec": 19.1,
+      "errors": [],
+      "funnel": {
+        "zones_found": 1640,
+        "zones_touched": 1590,
+        "mss_confirmed": 323,
+        "pending_orders": 323,
+        "fills": 100,
+        "expired_orders": 223
+      },
+      "fill_rate_pct": 31.0
+    },
+    "bt_d4_e12": {
+      "all": {
+        "n": 85,
+        "wr": 47.1,
+        "pf": 1.8,
+        "net_unit": 34.426,
+        "maxdd_unit": 7.0
+      },
+      "is": {
+        "n": 51,
+        "wr": 45.1,
+        "pf": 1.64,
+        "net_unit": 18.0,
+        "maxdd_unit": 7.0
+      },
+      "oos": {
+        "n": 34,
+        "wr": 50.0,
+        "pf": 2.08,
+        "net_unit": 16.426,
+        "maxdd_unit": 4.0
+      },
+      "long": {
+        "n": 43,
+        "wr": 39.5,
+        "pf": 1.38,
+        "net_unit": 9.2819,
+        "maxdd_unit": 5.0
+      },
+      "short": {
+        "n": 42,
+        "wr": 54.8,
+        "pf": 2.32,
+        "net_unit": 25.1442,
+        "maxdd_unit": 3.0
+      },
+      "delay_bars": 4,
+      "expiry_bars": 12,
+      "window_follows_delay": false,
+      "delay_minutes": 60,
+      "elapsed_sec": 15.8,
+      "errors": [],
+      "funnel": {
+        "zones_found": 1640,
+        "zones_touched": 1590,
+        "mss_confirmed": 323,
+        "pending_orders": 323,
+        "fills": 85,
+        "expired_orders": 238
+      },
+      "fill_rate_pct": 26.3
+    },
+    "runtime_d0_e6": {
+      "all": {
+        "n": 102,
+        "wr": 57.8,
+        "pf": 2.83,
+        "net_unit": 74.5648,
+        "maxdd_unit": 5.0
+      },
+      "is": {
+        "n": 61,
+        "wr": 54.1,
+        "pf": 2.39,
+        "net_unit": 38.3899,
+        "maxdd_unit": 5.0
+      },
+      "oos": {
+        "n": 41,
+        "wr": 63.4,
+        "pf": 3.74,
+        "net_unit": 36.1749,
+        "maxdd_unit": 2.0
+      },
+      "long": {
+        "n": 48,
+        "wr": 45.8,
+        "pf": 1.83,
+        "net_unit": 19.6718,
+        "maxdd_unit": 3.0
+      },
+      "short": {
+        "n": 54,
+        "wr": 68.5,
+        "pf": 4.23,
+        "net_unit": 54.893,
+        "maxdd_unit": 3.0
+      },
+      "delay_bars": 0,
+      "expiry_bars": 6,
+      "window_follows_delay": false,
+      "delay_minutes": 0,
+      "elapsed_sec": 16.4,
+      "errors": [],
+      "funnel": {
+        "zones_found": 1640,
+        "zones_touched": 1590,
+        "mss_confirmed": 323,
+        "pending_orders": 323,
+        "fills": 102,
+        "expired_orders": 221
+      },
+      "fill_rate_pct": 31.6
+    },
+    "runtime_d1_e6": {
+      "all": {
+        "n": 91,
+        "wr": 56.0,
+        "pf": 2.63,
+        "net_unit": 61.5648,
+        "maxdd_unit": 5.0
+      },
+      "is": {
+        "n": 54,
+        "wr": 50.0,
+        "pf": 2.03,
+        "net_unit": 27.3899,
+        "maxdd_unit": 5.0
+      },
+      "oos": {
+        "n": 37,
+        "wr": 64.9,
+        "pf": 4.05,
+        "net_unit": 34.1749,
+        "maxdd_unit": 2.0
+      },
+      "long": {
+        "n": 44,
+        "wr": 43.2,
+        "pf": 1.64,
+        "net_unit": 14.6718,
+        "maxdd_unit": 3.0
+      },
+      "short": {
+        "n": 47,
+        "wr": 68.1,
+        "pf": 4.13,
+        "net_unit": 46.893,
+        "maxdd_unit": 3.0
+      },
+      "delay_bars": 1,
+      "expiry_bars": 6,
+      "window_follows_delay": false,
+      "delay_minutes": 15,
+      "elapsed_sec": 16.7,
+      "errors": [],
+      "funnel": {
+        "zones_found": 1640,
+        "zones_touched": 1590,
+        "mss_confirmed": 323,
+        "pending_orders": 323,
+        "fills": 91,
+        "expired_orders": 232
+      },
+      "fill_rate_pct": 28.2
+    },
+    "runtime_d2_e6": {
+      "all": {
+        "n": 79,
+        "wr": 53.2,
+        "pf": 2.3,
+        "net_unit": 45.9487,
+        "maxdd_unit": 4.6101
+      },
+      "is": {
+        "n": 47,
+        "wr": 46.8,
+        "pf": 1.79,
+        "net_unit": 19.3899,
+        "maxdd_unit": 4.6101
+      },
+      "oos": {
+        "n": 32,
+        "wr": 62.5,
+        "pf": 3.45,
+        "net_unit": 26.5588,
+        "maxdd_unit": 2.0
+      },
+      "long": {
+        "n": 39,
+        "wr": 41.0,
+        "pf": 1.47,
+        "net_unit": 10.0557,
+        "maxdd_unit": 4.6101
+      },
+      "short": {
+        "n": 40,
+        "wr": 65.0,
+        "pf": 3.56,
+        "net_unit": 35.893,
+        "maxdd_unit": 2.0
+      },
+      "delay_bars": 2,
+      "expiry_bars": 6,
+      "window_follows_delay": false,
+      "delay_minutes": 30,
+      "elapsed_sec": 17.0,
+      "errors": [],
+      "funnel": {
+        "zones_found": 1640,
+        "zones_touched": 1590,
+        "mss_confirmed": 323,
+        "pending_orders": 323,
+        "fills": 79,
+        "expired_orders": 244
+      },
+      "fill_rate_pct": 24.5
+    },
+    "runtime_d4_e6": {
+      "all": {
+        "n": 58,
+        "wr": 53.4,
+        "pf": 2.31,
+        "net_unit": 33.81,
+        "maxdd_unit": 4.0
+      },
+      "is": {
+        "n": 34,
+        "wr": 52.9,
+        "pf": 2.25,
+        "net_unit": 20.0,
+        "maxdd_unit": 4.0
+      },
+      "oos": {
+        "n": 24,
+        "wr": 54.2,
+        "pf": 2.41,
+        "net_unit": 13.81,
+        "maxdd_unit": 3.0
+      },
+      "long": {
+        "n": 29,
+        "wr": 41.4,
+        "pf": 1.48,
+        "net_unit": 7.6658,
+        "maxdd_unit": 5.0
+      },
+      "short": {
+        "n": 29,
+        "wr": 65.5,
+        "pf": 3.61,
+        "net_unit": 26.1442,
+        "maxdd_unit": 3.0
+      },
+      "delay_bars": 4,
+      "expiry_bars": 6,
+      "window_follows_delay": false,
+      "delay_minutes": 60,
+      "elapsed_sec": 16.6,
+      "errors": [],
+      "funnel": {
+        "zones_found": 1640,
+        "zones_touched": 1590,
+        "mss_confirmed": 323,
+        "pending_orders": 323,
+        "fills": 58,
+        "expired_orders": 265
+      },
+      "fill_rate_pct": 18.0
+    },
+    "d2_e6_window_kept": {
+      "all": {
+        "n": 91,
+        "wr": 50.5,
+        "pf": 2.06,
+        "net_unit": 45.9487,
+        "maxdd_unit": 5.6101
+      },
+      "is": {
+        "n": 54,
+        "wr": 44.4,
+        "pf": 1.62,
+        "net_unit": 18.3899,
+        "maxdd_unit": 5.6101
+      },
+      "oos": {
+        "n": 37,
+        "wr": 59.5,
+        "pf": 2.99,
+        "net_unit": 27.5588,
+        "maxdd_unit": 3.0
+      },
+      "long": {
+        "n": 44,
+        "wr": 43.2,
+        "pf": 1.6,
+        "net_unit": 14.0557,
+        "maxdd_unit": 4.6101
+      },
+      "short": {
+        "n": 47,
+        "wr": 57.4,
+        "pf": 2.59,
+        "net_unit": 31.893,
+        "maxdd_unit": 3.0
+      },
+      "delay_bars": 2,
+      "expiry_bars": 6,
+      "window_follows_delay": true,
+      "delay_minutes": 30,
+      "elapsed_sec": 17.9,
+      "errors": [],
+      "funnel": {
+        "zones_found": 1640,
+        "zones_touched": 1590,
+        "mss_confirmed": 323,
+        "pending_orders": 323,
+        "fills": 91,
+        "expired_orders": 232
+      },
+      "fill_rate_pct": 28.2
+    }
+  }
+}

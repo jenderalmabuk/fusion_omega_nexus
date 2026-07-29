@@ -1,0 +1,246 @@
+{
+  "exit_mode": "baseline_2r",
+  "tier": [
+    "H4_M15"
+  ],
+  "elapsed_sec": 16.6,
+  "symbols": 465,
+  "short_history": 83,
+  "errors": [],
+  "funnel": {
+    "zones_found": 1640,
+    "zones_touched": 1590,
+    "mss_confirmed": 323,
+    "pending_orders": 323,
+    "fills": 121,
+    "expired_orders": 202
+  },
+  "trades_total": 121,
+  "trades_tagged": 121,
+  "date_range": {
+    "start": "2026-07-10 09:30:00+00:00",
+    "end": "2026-07-24 21:15:00+00:00"
+  },
+  "variants": {
+    "baseline": {
+      "cutoff": "2026-07-18 10:15:00+00:00",
+      "all": {
+        "n": 121,
+        "wr": 54.5,
+        "pf": 2.45,
+        "net_unit": 76.5648,
+        "maxdd_unit": 6.0
+      },
+      "is": {
+        "n": 72,
+        "wr": 50.0,
+        "pf": 2.02,
+        "net_unit": 36.3899,
+        "maxdd_unit": 6.0
+      },
+      "oos": {
+        "n": 49,
+        "wr": 61.2,
+        "pf": 3.33,
+        "net_unit": 40.1749,
+        "maxdd_unit": 3.0
+      },
+      "long": {
+        "n": 57,
+        "wr": 47.4,
+        "pf": 1.92,
+        "net_unit": 25.6718,
+        "maxdd_unit": 4.0
+      },
+      "short": {
+        "n": 64,
+        "wr": 60.9,
+        "pf": 3.04,
+        "net_unit": 50.893,
+        "maxdd_unit": 4.0
+      },
+      "blocked": {
+        "n": 0,
+        "blocked_net_r": 0,
+        "blocked_winners": 0,
+        "blocked_losers": 0
+      }
+    },
+    "A_block_short_btc_green": {
+      "cutoff": "2026-07-18 08:15:00+00:00",
+      "all": {
+        "n": 78,
+        "wr": 50.0,
+        "pf": 2.05,
+        "net_unit": 38.8159,
+        "maxdd_unit": 5.0
+      },
+      "is": {
+        "n": 46,
+        "wr": 47.8,
+        "pf": 1.86,
+        "net_unit": 20.3899,
+        "maxdd_unit": 3.0
+      },
+      "oos": {
+        "n": 32,
+        "wr": 53.1,
+        "pf": 2.39,
+        "net_unit": 18.426,
+        "maxdd_unit": 5.0
+      },
+      "long": {
+        "n": 57,
+        "wr": 47.4,
+        "pf": 1.92,
+        "net_unit": 25.6718,
+        "maxdd_unit": 4.0
+      },
+      "short": {
+        "n": 21,
+        "wr": 57.1,
+        "pf": 2.46,
+        "net_unit": 13.1442,
+        "maxdd_unit": 3.0
+      },
+      "blocked": {
+        "n": 43,
+        "blocked_net_r": 37.749,
+        "blocked_winners": 27,
+        "blocked_losers": 16
+      }
+    },
+    "B_block_short_btc_above_ema20_rising": {
+      "cutoff": "2026-07-20 08:30:00+00:00",
+      "all": {
+        "n": 79,
+        "wr": 51.9,
+        "pf": 2.27,
+        "net_unit": 45.4206,
+        "maxdd_unit": 4.0
+      },
+      "is": {
+        "n": 47,
+        "wr": 44.7,
+        "pf": 1.64,
+        "net_unit": 16.3899,
+        "maxdd_unit": 4.0
+      },
+      "oos": {
+        "n": 32,
+        "wr": 62.5,
+        "pf": 3.84,
+        "net_unit": 29.0307,
+        "maxdd_unit": 3.0
+      },
+      "long": {
+        "n": 57,
+        "wr": 47.4,
+        "pf": 1.92,
+        "net_unit": 25.6718,
+        "maxdd_unit": 4.0
+      },
+      "short": {
+        "n": 22,
+        "wr": 63.6,
+        "pf": 3.47,
+        "net_unit": 19.7489,
+        "maxdd_unit": 3.0
+      },
+      "blocked": {
+        "n": 42,
+        "blocked_net_r": 31.144,
+        "blocked_winners": 25,
+        "blocked_losers": 17
+      }
+    },
+    "C_block_both_momentum_025": {
+      "cutoff": "2026-07-18 10:15:00+00:00",
+      "all": {
+        "n": 78,
+        "wr": 57.7,
+        "pf": 2.74,
+        "net_unit": 55.4667,
+        "maxdd_unit": 4.0
+      },
+      "is": {
+        "n": 46,
+        "wr": 54.3,
+        "pf": 2.38,
+        "net_unit": 29.0,
+        "maxdd_unit": 4.0
+      },
+      "oos": {
+        "n": 32,
+        "wr": 62.5,
+        "pf": 3.42,
+        "net_unit": 26.4667,
+        "maxdd_unit": 3.2398
+      },
+      "long": {
+        "n": 39,
+        "wr": 43.6,
+        "pf": 1.6,
+        "net_unit": 12.5736,
+        "maxdd_unit": 5.0
+      },
+      "short": {
+        "n": 39,
+        "wr": 71.8,
+        "pf": 4.9,
+        "net_unit": 42.893,
+        "maxdd_unit": 3.0
+      },
+      "blocked": {
+        "n": 43,
+        "blocked_net_r": 21.098,
+        "blocked_winners": 21,
+        "blocked_losers": 22
+      }
+    },
+    "D_long_only": {
+      "cutoff": "2026-07-19 23:00:00+00:00",
+      "all": {
+        "n": 57,
+        "wr": 47.4,
+        "pf": 1.92,
+        "net_unit": 25.6718,
+        "maxdd_unit": 4.0
+      },
+      "is": {
+        "n": 34,
+        "wr": 44.1,
+        "pf": 1.61,
+        "net_unit": 11.3899,
+        "maxdd_unit": 4.0
+      },
+      "oos": {
+        "n": 23,
+        "wr": 52.2,
+        "pf": 2.55,
+        "net_unit": 14.2819,
+        "maxdd_unit": 4.0
+      },
+      "long": {
+        "n": 57,
+        "wr": 47.4,
+        "pf": 1.92,
+        "net_unit": 25.6718,
+        "maxdd_unit": 4.0
+      },
+      "short": {
+        "n": 0,
+        "wr": 0,
+        "pf": 0,
+        "net_unit": 0,
+        "maxdd_unit": 0
+      },
+      "blocked": {
+        "n": 64,
+        "blocked_net_r": 50.893,
+        "blocked_winners": 39,
+        "blocked_losers": 25
+      }
+    }
+  }
+}

@@ -37,6 +37,9 @@ class ExecutionOutcome:
     tp1: float = 0.0
     tp_full: float = 0.0
     risk_amount: float = 0.0
+    entry_drift_r: float = 0.0
+    rr_tp1: float = 0.0
+    rr_full: float = 0.0
     raw: Optional[Dict[str, Any]] = None
 
 
@@ -104,7 +107,8 @@ class SignalExecutor:
         if sig.stop_loss is not None and entry_price > 0 and equity > 0:
             sl_frac = abs(entry_price - sig.stop_loss) / entry_price
             if sl_frac > 0:
-                risk_budget = equity * (risk_pct if risk_pct is not None else self.risk_pct)
+                effective_risk_pct = min(risk_pct if risk_pct is not None else self.risk_pct, self.risk_pct)
+                risk_budget = equity * effective_risk_pct
                 notional = risk_budget / sl_frac
                 # Cap by leverage capacity (use up to 50% of leveraged buying
                 # power as a safety margin), NOT by the tiny per-position
@@ -220,17 +224,17 @@ class SignalExecutor:
             outcome.reason = f"submit_open error: {exc}"
             return outcome
 
-        if not opened:
+        if not opened or (isinstance(opened, dict) and opened.get("ok") is False):
             try:
                 await self.risk_mgr.release_open_risk(sig.symbol)
             except Exception:
                 pass
-            reason_detail = ""
-            if isinstance(opened, dict) and opened.get("error"):
-                reason_detail = f" | {opened['error']}"
-            elif isinstance(opened, dict) and opened.get("reason"):
-                reason_detail = f" | {opened['reason']}"
-            outcome.reason = f"trader rejected open: no position created{reason_detail}"
+            if isinstance(opened, dict) and opened.get("reason"):
+                outcome.reason = str(opened["reason"])
+            elif isinstance(opened, dict) and opened.get("error"):
+                outcome.reason = str(opened["error"])
+            else:
+                outcome.reason = "trader rejected open: no position created"
             logger.warning("[SIGNAL_EXEC] %s %s: %s", sig.symbol, sig.side.value, outcome.reason)
             return outcome
 
@@ -249,5 +253,10 @@ class SignalExecutor:
         if isinstance(opened, dict):
             outcome.entry_price = float(opened.get("entry_price", entry_price) or entry_price)
             outcome.notional = float(opened.get("notional", notional) or notional)
-        logger.info("[SIGNAL_EXEC] OPENED %s %s via signal %s", sig.symbol, sig.side.value, sig.signal_id)
+        boundary = float(getattr(sig, "active_entry", None) or sig.entry_mid or 0.0)
+        stop_distance = abs(outcome.entry_price - sl_price)
+        outcome.entry_drift_r = abs(outcome.entry_price - boundary) / abs(boundary - sl_price) if boundary and boundary != sl_price else 0.0
+        outcome.rr_tp1 = abs(tp1 - outcome.entry_price) / stop_distance if tp1 and stop_distance else 0.0
+        outcome.rr_full = abs(tp_full - outcome.entry_price) / stop_distance if tp_full and stop_distance else 0.0
+        logger.info("[SIGNAL_EXEC] OPENED %s %s via signal %s fill=%.8g drift=%.3fR rr1=%.3f rrfull=%.3f", sig.symbol, sig.side.value, sig.signal_id, outcome.entry_price, outcome.entry_drift_r, outcome.rr_tp1, outcome.rr_full)
         return outcome

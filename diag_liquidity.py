@@ -2,28 +2,27 @@
 count how many setups pass each gate. Does NOT save state or trigger orders.
 Expects Nexus API reachable from inside container."""
 import json, os, sys, time, collections, statistics
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "fusionnew"))
 
 # Patch fetch_recent
 import backtest.data
 import bots.nexus_data as nd
 backtest.data.fetch_recent = nd.fetch_recent
 
-from clean_core.engine import Engine
-from clean_core.imbalance_common import TIERS
-from clean_core.imbalance_scheme import recent_setups
-from backtest.faithful_imbalance import _filter_liquidity, _filter_ema_dist, _filter_flow, _filter_stochastic
-from backtest.data import _drop_forming_bar
+from clean_core.engine import Engine, TIERS, _trend
+from backtest.faithful_imbalance import recent_setups, FIB_EXPIRY, _filter_liquidity, _filter_ema_dist, _filter_flow, _filter_stochastic
+from clean_core.engine import _drop_forming_bar
 
-UNIVERSE_PATH = os.path.join(os.path.dirname(__file__), "universe.txt")
+UNIVERSE_PATH = "/app/runtime/revo/canonical_universe.txt"
 with open(UNIVERSE_PATH) as f:
     symbols = [l.strip() for l in f if l.strip()]
 
-TIER = "M30"
+TIER = os.environ.get("DIAG_TIER", "M30").upper()
 LTF_TF = TIERS[TIER]["ltf"]      # 5m
 ZONE_TF = TIERS[TIER]["zone"]    # H1
-FIB_EXPIRY = TIERS[TIER]["fib_expiry"]  # from common
-MIN_TURN = 500_000
+MIN_TURN = 1_000_000
 EMA_DIST = 1.0
 STOCH_MAX = 70
 
@@ -52,8 +51,9 @@ for i, sym in enumerate(symbols):
     zone_df = _drop_forming_bar(zone_df, ZONE_TF)
     ltf = _drop_forming_bar(ltf, LTF_TF)
 
-    bull = recent_setups(zone_df, ltf, None, "BULL", 3.0, fib_expiry=FIB_EXPIRY)
-    bear = recent_setups(zone_df, ltf, None, "BEAR", 3.0, fib_expiry=FIB_EXPIRY)
+    trend = _trend(zone_df)
+    bull = recent_setups(zone_df, ltf, trend, "BULL", 3.0, max_age=FIB_EXPIRY)
+    bear = recent_setups(zone_df, ltf, trend, "BEAR", 3.0, max_age=FIB_EXPIRY)
 
     raw = len(bull) + len(bear)
 
@@ -63,8 +63,8 @@ for i, sym in enumerate(symbols):
     n_ema = len(bull) + len(bear)
 
     if MIN_TURN > 0:
-        bull = _filter_liquidity(bull, ltf, MIN_TURN)
-        bear = _filter_liquidity(bear, ltf, MIN_TURN)
+        bull = _filter_liquidity(bull, ltf, MIN_TURN, at_idx=len(ltf)-1)
+        bear = _filter_liquidity(bear, ltf, MIN_TURN, at_idx=len(ltf)-1)
     n_liq = len(bull) + len(bear)
 
     if STOCH_MAX > 0:

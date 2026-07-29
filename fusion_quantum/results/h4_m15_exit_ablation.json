@@ -1,0 +1,533 @@
+{
+  "H4_M15_baseline_2r": {
+    "elapsed": 16.7,
+    "symbols": 465,
+    "short": 83,
+    "errors": [],
+    "date_range": {
+      "start": "2026-07-10 09:30:00+00:00",
+      "cutoff": "2026-07-18 10:15:00+00:00",
+      "end": "2026-07-24 21:15:00+00:00"
+    },
+    "funnel": {
+      "zones_found": 1640,
+      "zones_touched": 1590,
+      "mss_confirmed": 323,
+      "pending_orders": 323,
+      "fills": 121,
+      "expired_orders": 202
+    },
+    "concentration": {
+      "top10_abs_share_pct": 17.2,
+      "top10": [
+        {
+          "symbol": "PAXGUSDT",
+          "net_r": 5.0
+        },
+        {
+          "symbol": "FILUSDT",
+          "net_r": 4.0
+        },
+        {
+          "symbol": "B2USDT",
+          "net_r": 4.0
+        },
+        {
+          "symbol": "BSVUSDT",
+          "net_r": -2.61
+        },
+        {
+          "symbol": "JUPUSDT",
+          "net_r": 2.0
+        },
+        {
+          "symbol": "RESOLVUSDT",
+          "net_r": -2.0
+        },
+        {
+          "symbol": "ALPINEUSDT",
+          "net_r": -2.0
+        },
+        {
+          "symbol": "ALICEUSDT",
+          "net_r": 2.0
+        },
+        {
+          "symbol": "BRUSDT",
+          "net_r": 2.0
+        },
+        {
+          "symbol": "GALAUSDT",
+          "net_r": 2.0
+        }
+      ]
+    },
+    "walk_forward": [
+      {
+        "train_end": "2026-07-13 00:45:00+00:00",
+        "test_start": "2026-07-13 01:00:00+00:00",
+        "test_end": "2026-07-16 15:30:00+00:00",
+        "train": {
+          "n": 40,
+          "wr": 47.5,
+          "pf": 1.81,
+          "net_unit": 17.0,
+          "maxdd_unit": 6.0
+        },
+        "test": {
+          "n": 21,
+          "wr": 57.1,
+          "pf": 2.79,
+          "net_unit": 15.3899,
+          "maxdd_unit": 3.6101
+        }
+      },
+      {
+        "train_end": "2026-07-16 15:30:00+00:00",
+        "test_start": "2026-07-17 03:15:00+00:00",
+        "test_end": "2026-07-20 01:15:00+00:00",
+        "train": {
+          "n": 61,
+          "wr": 50.8,
+          "pf": 2.09,
+          "net_unit": 32.3899,
+          "maxdd_unit": 6.0
+        },
+        "test": {
+          "n": 20,
+          "wr": 60.0,
+          "pf": 3.0,
+          "net_unit": 16.0,
+          "maxdd_unit": 4.0
+        }
+      },
+      {
+        "train_end": "2026-07-20 01:00:00+00:00",
+        "test_start": "2026-07-20 01:15:00+00:00",
+        "test_end": "2026-07-23 09:00:00+00:00",
+        "train": {
+          "n": 80,
+          "wr": 52.5,
+          "pf": 2.23,
+          "net_unit": 46.3899,
+          "maxdd_unit": 6.0
+        },
+        "test": {
+          "n": 20,
+          "wr": 55.0,
+          "pf": 2.4,
+          "net_unit": 11.7602,
+          "maxdd_unit": 2.0
+        }
+      },
+      {
+        "train_end": "2026-07-23 09:00:00+00:00",
+        "test_start": "2026-07-23 09:45:00+00:00",
+        "test_end": "2026-07-24 19:45:00+00:00",
+        "train": {
+          "n": 100,
+          "wr": 53.0,
+          "pf": 2.26,
+          "net_unit": 58.1501,
+          "maxdd_unit": 6.0
+        },
+        "test": {
+          "n": 20,
+          "wr": 60.0,
+          "pf": 3.48,
+          "net_unit": 16.9229,
+          "maxdd_unit": 1.8259
+        }
+      }
+    ],
+    "all": {
+      "n": 121,
+      "wr": 54.5,
+      "pf": 2.45,
+      "net_unit": 76.5648,
+      "maxdd_unit": 6.0
+    },
+    "is": {
+      "n": 72,
+      "wr": 50.0,
+      "pf": 2.02,
+      "net_unit": 36.3899,
+      "maxdd_unit": 6.0
+    },
+    "oos": {
+      "n": 49,
+      "wr": 61.2,
+      "pf": 3.33,
+      "net_unit": 40.1749,
+      "maxdd_unit": 3.0
+    },
+    "long": {
+      "n": 57,
+      "wr": 47.4,
+      "pf": 1.92,
+      "net_unit": 25.6718,
+      "maxdd_unit": 4.0
+    },
+    "short_side": {
+      "n": 64,
+      "wr": 60.9,
+      "pf": 3.04,
+      "net_unit": 50.893,
+      "maxdd_unit": 4.0
+    }
+  },
+  "H4_M15_partial25_1r_be": {
+    "elapsed": 17.3,
+    "symbols": 465,
+    "short": 83,
+    "errors": [],
+    "date_range": {
+      "start": "2026-07-10 09:30:00+00:00",
+      "cutoff": "2026-07-18 10:15:00+00:00",
+      "end": "2026-07-24 21:15:00+00:00"
+    },
+    "funnel": {
+      "zones_found": 1640,
+      "zones_touched": 1590,
+      "mss_confirmed": 323,
+      "pending_orders": 323,
+      "fills": 121,
+      "expired_orders": 202
+    },
+    "concentration": {
+      "top10_abs_share_pct": 19.3,
+      "top10": [
+        {
+          "symbol": "PAXGUSDT",
+          "net_r": 5.5
+        },
+        {
+          "symbol": "FILUSDT",
+          "net_r": 3.5
+        },
+        {
+          "symbol": "ONDOUSDT",
+          "net_r": 2.0
+        },
+        {
+          "symbol": "NMRUSDT",
+          "net_r": 2.0
+        },
+        {
+          "symbol": "IOUSDT",
+          "net_r": 2.0
+        },
+        {
+          "symbol": "CYSUSDT",
+          "net_r": 2.0
+        },
+        {
+          "symbol": "B2USDT",
+          "net_r": 2.0
+        },
+        {
+          "symbol": "CVXUSDT",
+          "net_r": 2.0
+        },
+        {
+          "symbol": "JUPUSDT",
+          "net_r": 1.75
+        },
+        {
+          "symbol": "ALICEUSDT",
+          "net_r": 1.75
+        }
+      ]
+    },
+    "walk_forward": [
+      {
+        "train_end": "2026-07-13 00:45:00+00:00",
+        "test_start": "2026-07-13 01:00:00+00:00",
+        "test_end": "2026-07-16 15:30:00+00:00",
+        "train": {
+          "n": 40,
+          "wr": 67.5,
+          "pf": 2.37,
+          "net_unit": 17.75,
+          "maxdd_unit": 2.75
+        },
+        "test": {
+          "n": 21,
+          "wr": 85.7,
+          "pf": 6.5,
+          "net_unit": 16.5,
+          "maxdd_unit": 1.0
+        }
+      },
+      {
+        "train_end": "2026-07-16 15:30:00+00:00",
+        "test_start": "2026-07-17 03:15:00+00:00",
+        "test_end": "2026-07-20 01:15:00+00:00",
+        "train": {
+          "n": 61,
+          "wr": 73.8,
+          "pf": 3.14,
+          "net_unit": 34.25,
+          "maxdd_unit": 2.75
+        },
+        "test": {
+          "n": 20,
+          "wr": 85.0,
+          "pf": 6.42,
+          "net_unit": 16.25,
+          "maxdd_unit": 1.0
+        }
+      },
+      {
+        "train_end": "2026-07-20 01:00:00+00:00",
+        "test_start": "2026-07-20 01:15:00+00:00",
+        "test_end": "2026-07-23 09:00:00+00:00",
+        "train": {
+          "n": 80,
+          "wr": 76.2,
+          "pf": 3.57,
+          "net_unit": 48.75,
+          "maxdd_unit": 2.75
+        },
+        "test": {
+          "n": 20,
+          "wr": 85.0,
+          "pf": 6.38,
+          "net_unit": 16.1442,
+          "maxdd_unit": 2.0
+        }
+      },
+      {
+        "train_end": "2026-07-23 09:00:00+00:00",
+        "test_start": "2026-07-23 09:45:00+00:00",
+        "test_end": "2026-07-24 19:45:00+00:00",
+        "train": {
+          "n": 100,
+          "wr": 78.0,
+          "pf": 3.95,
+          "net_unit": 64.8942,
+          "maxdd_unit": 2.75
+        },
+        "test": {
+          "n": 20,
+          "wr": 65.0,
+          "pf": 3.62,
+          "net_unit": 15.2357,
+          "maxdd_unit": 1.8259
+        }
+      }
+    ],
+    "all": {
+      "n": 121,
+      "wr": 76.0,
+      "pf": 3.93,
+      "net_unit": 81.4987,
+      "maxdd_unit": 3.0
+    },
+    "is": {
+      "n": 72,
+      "wr": 75.0,
+      "pf": 3.25,
+      "net_unit": 40.5,
+      "maxdd_unit": 2.75
+    },
+    "oos": {
+      "n": 49,
+      "wr": 77.6,
+      "pf": 5.17,
+      "net_unit": 40.9987,
+      "maxdd_unit": 3.0
+    },
+    "long": {
+      "n": 57,
+      "wr": 71.9,
+      "pf": 3.19,
+      "net_unit": 32.5429,
+      "maxdd_unit": 4.0
+    },
+    "short_side": {
+      "n": 64,
+      "wr": 79.7,
+      "pf": 4.77,
+      "net_unit": 48.9558,
+      "maxdd_unit": 2.75
+    }
+  },
+  "H4_M15_partial25_1r_be_atr": {
+    "elapsed": 17.2,
+    "symbols": 465,
+    "short": 83,
+    "errors": [],
+    "date_range": {
+      "start": "2026-07-10 09:30:00+00:00",
+      "cutoff": "2026-07-18 10:15:00+00:00",
+      "end": "2026-07-24 21:15:00+00:00"
+    },
+    "funnel": {
+      "zones_found": 1640,
+      "zones_touched": 1590,
+      "mss_confirmed": 323,
+      "pending_orders": 323,
+      "fills": 121,
+      "expired_orders": 202
+    },
+    "concentration": {
+      "top10_abs_share_pct": 21.0,
+      "top10": [
+        {
+          "symbol": "PAXGUSDT",
+          "net_r": 5.436
+        },
+        {
+          "symbol": "CYSUSDT",
+          "net_r": 2.578
+        },
+        {
+          "symbol": "B2USDT",
+          "net_r": 2.358
+        },
+        {
+          "symbol": "NMRUSDT",
+          "net_r": 2.255
+        },
+        {
+          "symbol": "IOUSDT",
+          "net_r": 2.164
+        },
+        {
+          "symbol": "ALCHUSDT",
+          "net_r": 2.081
+        },
+        {
+          "symbol": "ONDOUSDT",
+          "net_r": 1.807
+        },
+        {
+          "symbol": "ALPINEUSDT",
+          "net_r": 1.807
+        },
+        {
+          "symbol": "ALICEUSDT",
+          "net_r": 1.75
+        },
+        {
+          "symbol": "COOKIEUSDT",
+          "net_r": 1.75
+        }
+      ]
+    },
+    "walk_forward": [
+      {
+        "train_end": "2026-07-13 00:45:00+00:00",
+        "test_start": "2026-07-13 01:00:00+00:00",
+        "test_end": "2026-07-16 15:30:00+00:00",
+        "train": {
+          "n": 40,
+          "wr": 67.5,
+          "pf": 2.26,
+          "net_unit": 16.3627,
+          "maxdd_unit": 2.2086
+        },
+        "test": {
+          "n": 21,
+          "wr": 85.7,
+          "pf": 5.84,
+          "net_unit": 14.5082,
+          "maxdd_unit": 1.0
+        }
+      },
+      {
+        "train_end": "2026-07-16 15:30:00+00:00",
+        "test_start": "2026-07-17 03:15:00+00:00",
+        "test_end": "2026-07-20 01:15:00+00:00",
+        "train": {
+          "n": 61,
+          "wr": 73.8,
+          "pf": 2.93,
+          "net_unit": 30.8709,
+          "maxdd_unit": 2.2086
+        },
+        "test": {
+          "n": 20,
+          "wr": 85.0,
+          "pf": 5.82,
+          "net_unit": 14.4686,
+          "maxdd_unit": 1.0
+        }
+      },
+      {
+        "train_end": "2026-07-20 01:00:00+00:00",
+        "test_start": "2026-07-20 01:15:00+00:00",
+        "test_end": "2026-07-23 09:00:00+00:00",
+        "train": {
+          "n": 80,
+          "wr": 76.2,
+          "pf": 3.32,
+          "net_unit": 44.1431,
+          "maxdd_unit": 2.2086
+        },
+        "test": {
+          "n": 20,
+          "wr": 85.0,
+          "pf": 6.56,
+          "net_unit": 16.6782,
+          "maxdd_unit": 2.0
+        }
+      },
+      {
+        "train_end": "2026-07-23 09:00:00+00:00",
+        "test_start": "2026-07-23 09:45:00+00:00",
+        "test_end": "2026-07-24 19:45:00+00:00",
+        "train": {
+          "n": 100,
+          "wr": 78.0,
+          "pf": 3.76,
+          "net_unit": 60.8213,
+          "maxdd_unit": 2.2086
+        },
+        "test": {
+          "n": 20,
+          "wr": 65.0,
+          "pf": 2.44,
+          "net_unit": 8.3634,
+          "maxdd_unit": 1.8259
+        }
+      }
+    ],
+    "all": {
+      "n": 121,
+      "wr": 76.0,
+      "pf": 3.54,
+      "net_unit": 70.5535,
+      "maxdd_unit": 3.0
+    },
+    "is": {
+      "n": 72,
+      "wr": 75.0,
+      "pf": 3.09,
+      "net_unit": 37.5843,
+      "maxdd_unit": 2.2086
+    },
+    "oos": {
+      "n": 49,
+      "wr": 77.6,
+      "pf": 4.36,
+      "net_unit": 32.9692,
+      "maxdd_unit": 3.0
+    },
+    "long": {
+      "n": 57,
+      "wr": 71.9,
+      "pf": 3.21,
+      "net_unit": 32.8266,
+      "maxdd_unit": 4.0
+    },
+    "short_side": {
+      "n": 64,
+      "wr": 79.7,
+      "pf": 3.9,
+      "net_unit": 37.7269,
+      "maxdd_unit": 2.0323
+    }
+  }
+}

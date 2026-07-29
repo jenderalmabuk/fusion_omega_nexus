@@ -41,7 +41,7 @@
   },
   "telegram": {
     "enabled": true,
-    "token": "8905893834:AAEuWI5HBZakkafJBxtmtF84v0W-UfWKM2Q",
+    "token": "",
     "chat_id": "578305627"
   },
   "db_url": "sqlite:////freqtrade/user_data/local/tradesv3.revo_adaptive.paper.sqlite",

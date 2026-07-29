@@ -16,7 +16,7 @@ class ConvictionSizer:
 
     # Base risk is the floor — even the weakest signal gets this.
     BASE_RISK_PCT = 0.005  # 0.5%
-    MAX_RISK_PCT = 0.020   # 2.0%
+    MAX_RISK_PCT = 0.010   # hard maximum 1.0%
 
     def __init__(self):
         self.ch_perf = get_tracker()

@@ -1,0 +1,129 @@
+{
+  "generated_at": "2026-07-27 14:54:00+00:00",
+  "range": {
+    "start": "2026-07-27 01:48:35+00:00",
+    "cutoff": "2026-07-27 09:39:50+00:00",
+    "end": "2026-07-27 14:54:00+00:00"
+  },
+  "funnel": {
+    "zones_found": 2234,
+    "zones_touched": 2168,
+    "mss_confirmed": 385,
+    "pending_orders": 385,
+    "fills": 151,
+    "expired_orders": 234
+  },
+  "symbols": 465,
+  "fetch_errors": [],
+  "sim_errors": [],
+  "theoretical": {
+    "all": {
+      "n": 8,
+      "wr": 75.0,
+      "pf": 10.16,
+      "net_unit": 9.7875,
+      "maxdd_unit": 1.0683
+    },
+    "is": {
+      "n": 7,
+      "wr": 71.4,
+      "pf": 8.29,
+      "net_unit": 7.7875,
+      "maxdd_unit": 1.0683
+    },
+    "oos": {
+      "n": 1,
+      "wr": 100.0,
+      "pf": 999,
+      "net_unit": 2.0,
+      "maxdd_unit": 0.0
+    },
+    "long": {
+      "n": 2,
+      "wr": 50.0,
+      "pf": 29.27,
+      "net_unit": 1.9317,
+      "maxdd_unit": 0.0683
+    },
+    "short": {
+      "n": 6,
+      "wr": 83.3,
+      "pf": 8.86,
+      "net_unit": 7.8559,
+      "maxdd_unit": 1.0
+    }
+  },
+  "live_journal": {
+    "n": 23,
+    "wins": 6,
+    "net_usd": -11.732741479272043
+  },
+  "state_setups_in_window": 160,
+  "trades": [
+    {
+      "symbol": "BOMEUSDT",
+      "side": "BEAR",
+      "entry_time": "2026-07-27 05:00:00+00:00",
+      "pnl_unit": 0.8558530044882743,
+      "reason": "END",
+      "mode": "baseline_2r"
+    },
+    {
+      "symbol": "1INCHUSDT",
+      "side": "BULL",
+      "entry_time": "2026-07-27 06:30:00+00:00",
+      "pnl_unit": 2.0,
+      "reason": "TP2",
+      "mode": "baseline_2r"
+    },
+    {
+      "symbol": "BILLUSDT",
+      "side": "BEAR",
+      "entry_time": "2026-07-27 06:30:00+00:00",
+      "pnl_unit": 2.0,
+      "reason": "TP2",
+      "mode": "baseline_2r"
+    },
+    {
+      "symbol": "CUSDT",
+      "side": "BEAR",
+      "entry_time": "2026-07-27 07:00:00+00:00",
+      "pnl_unit": 2.0,
+      "reason": "TP2",
+      "mode": "baseline_2r"
+    },
+    {
+      "symbol": "LABUSDT",
+      "side": "BEAR",
+      "entry_time": "2026-07-27 07:15:00+00:00",
+      "pnl_unit": 2.0,
+      "reason": "TP2",
+      "mode": "baseline_2r"
+    },
+    {
+      "symbol": "PEOPLEUSDT",
+      "side": "BEAR",
+      "entry_time": "2026-07-27 08:45:00+00:00",
+      "pnl_unit": -1.0,
+      "reason": "HARD_SL",
+      "mode": "baseline_2r"
+    },
+    {
+      "symbol": "JELLYJELLYUSDT",
+      "side": "BULL",
+      "entry_time": "2026-07-27 09:00:00+00:00",
+      "pnl_unit": -0.0683396836615068,
+      "reason": "END",
+      "mode": "baseline_2r"
+    },
+    {
+      "symbol": "XVSUSDT",
+      "side": "BEAR",
+      "entry_time": "2026-07-27 09:45:00+00:00",
+      "pnl_unit": 2.0,
+      "reason": "TP2",
+      "mode": "baseline_2r"
+    }
+  ],
+  "elapsed_sec": 43.3
+}

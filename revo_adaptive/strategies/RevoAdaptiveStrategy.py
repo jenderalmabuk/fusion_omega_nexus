@@ -294,6 +294,8 @@ class RevoAdaptiveStrategy(IStrategy):
         #   scoring      -> flow direction becomes +/-2 score term, min_score+1,
         #                   veto only heavy distribution (cvd_z < -1.5)
         #   block_danger -> Opsi A: veto only heavy distribution, no score change
+        #   pure         -> no flow gate at all (IS+OOS validated reversion config;
+        #                   ablation showed every flow variant had OOS PF < 1)
         mode = c["flow_gate_mode"]
         min_score = c["min_score"]
         eff_score = dataframe["entry_score"]
@@ -306,7 +308,10 @@ class RevoAdaptiveStrategy(IStrategy):
                 - dataframe["real_flow_hostile"] * 2
             )
             min_score = c["min_score"] + 1
-        if mode in ("scoring", "block_danger"):
+        if mode == "pure":
+            # No flow gate whatsoever: entry decided by reversion quality alone.
+            flow_guard = pd.Series(True, index=dataframe.index)
+        elif mode in ("scoring", "block_danger"):
             # No momentum-continuation requirement. Veto ONLY heavy distribution
             # (very negative CVD = aggressive selling into the dip).
             flow_guard = (

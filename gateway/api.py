@@ -56,6 +56,7 @@ class PositionActionBody(BaseModel):
     symbol: str
     action: str
     price: Optional[float] = None
+    reason: Optional[str] = None
 
 
 def _auth_dependency():
@@ -98,7 +99,15 @@ def build_router(gateway: ExecutionGateway) -> APIRouter:
         if body.action == "MOVE_SL" and body.price is not None:
             return await gateway.trader.update_stop(symbol, body.price)
         if body.action == "CLOSE":
-            return await gateway.trader.provider_close(symbol)
+            close_reason = str(body.reason or "PROVIDER_CLOSE").upper()
+            allowed_reasons = {
+                "PROVIDER_CLOSE",
+                "DYNAMIC_EXIT_INVALIDATED",
+                "TIME_EXIT_NO_PROGRESS",
+            }
+            if close_reason not in allowed_reasons:
+                return {"ok": False, "code": "INVALID_CLOSE_REASON"}
+            return await gateway.trader.close_position(symbol, close_reason)
         return {"ok": False, "code": "INVALID_POSITION_ACTION"}
 
     return router

@@ -80,6 +80,15 @@ def _build_gateway() -> ExecutionGateway:
     if hasattr(trader, "risk_mgr"):
         trader.risk_mgr = risk_mgr
 
+    # Restore realized paper equity so restarts don't reset the book to
+    # STARTING_BALANCE while open positions persist.
+    if use_paper:
+        from execution.paper_mainnet_trader import load_equity
+        saved_equity = load_equity()
+        if saved_equity is not None and saved_equity > 0:
+            risk_mgr.sync_balance(saved_equity)
+            logger.info("[GATEWAY] restored paper equity = %.2f", saved_equity)
+
     return ExecutionGateway(trader=trader, risk_mgr=risk_mgr)
 
 

@@ -19,6 +19,7 @@ simply makes that path the ONLY path, shared by all engines.
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -86,11 +87,25 @@ class ExecutionGateway:
         entry = float(intent.entry_price)
         sl = float(intent.sl_price)
 
-        # 2) unified portfolio gate — the whole point of the gateway.
-        #    Every engine's trade passes the SAME limits: daily loss, exposure,
-        #    cluster, cooldown, max positions.
+        # 2) Hard cap counts running positions only. Pending setup limits stay unlimited.
+        max_running = self.risk_mgr.get_max_running_positions()
+        if self.risk_mgr._position_count() >= max_running:
+            res.reason = f"max running positions reached ({max_running})"
+            return self._record(intent, res)
+
+        # A previously validated pending limit may fill later. Do not apply
+        # entry-arrival cooldowns again; running-position cap still applies.
+        pending_fill = str(intent.tag).startswith("fusion_quantum_pending_")
+
+        # 3) unified portfolio gate — the whole point of the gateway.
         try:
-            gate = self.risk_mgr.check_risk_limits(symbol=symbol, is_vip=intent.is_vip, side=side)
+            gate = self.risk_mgr.check_risk_limits(
+                symbol=symbol,
+                is_vip=intent.is_vip,
+                side=side,
+                skip_entry_cooldown=pending_fill,
+                skip_cluster_limit=intent.source == "SIGNAL_COPY",
+            )
         except Exception as exc:  # never let a risk-engine bug open an unchecked trade
             res.reason = f"risk check error: {exc}"
             return self._record(intent, res)
@@ -103,6 +118,12 @@ class ExecutionGateway:
         if size_err:
             res.reason = size_err
             return self._record(intent, res)
+        # Paper HARD_SL economic risk = adverse entry + adverse exit@SL + round-trip fees.
+        # Size/reserve on that, not raw signal distance — LAUSDT blew 1% on fees/exit-slip.
+        if os.getenv("GATEWAY_PAPER_MAINNET", "true").lower() in ("1", "true", "yes"):
+            notional, risk_amount = await self._paper_econ_size(
+                symbol, side, entry, sl, notional, intent.source,
+            )
         res.notional = notional
         res.risk_amount = risk_amount
 
@@ -126,8 +147,8 @@ class ExecutionGateway:
         if not reserved:
             if symbol.upper() in self.risk_mgr._position_symbols():
                 res.reason = f"position already open for {symbol}"
-            elif self.risk_mgr.get_reserved_risk_total() + risk_amount > self.risk_mgr.get_parallel_open_risk_budget():
-                res.reason = "parallel open-risk budget exhausted"
+            elif self.risk_mgr.get_total_open_risk() + risk_amount > self.risk_mgr.get_parallel_open_risk_budget():
+                res.reason = "global open-risk budget exhausted"
             else:
                 res.reason = "open-risk reservation blocked"
             return self._record(intent, res)
@@ -172,6 +193,9 @@ class ExecutionGateway:
             ("daily_pnl_pct", "get_daily_pnl_pct"),
             ("total_exposure_pct", "get_total_exposure_pct"),
             ("reserved_risk_total", "get_reserved_risk_total"),
+            ("active_open_risk_total", "get_active_open_risk_total"),
+            ("total_open_risk", "get_total_open_risk"),
+            ("global_open_risk_budget", "get_parallel_open_risk_budget"),
         ):
             try:
                 out[name] = float(getattr(rm, fn)())
@@ -202,6 +226,50 @@ class ExecutionGateway:
 
     # ── internals ────────────────────────────────────────────
 
+    async def _paper_fill_entry(self, symbol: str, side: str, signal_entry: float) -> float:
+        """Actual paper open fill: mainnet mark when available, else signal, then adverse slip."""
+        slip = max(0.0, float(os.getenv("PAPER_SLIPPAGE_PCT", "0.0005")))
+        mark = 0.0
+        getter = getattr(self.trader, "_get_mark_price", None)
+        if callable(getter):
+            try:
+                mark = float(await getter(symbol) or 0.0)
+            except Exception:
+                mark = 0.0
+        base = mark if mark > 0 else float(signal_entry)
+        buy = side == "LONG"
+        return base * (1.0 + slip if buy else 1.0 - slip)
+
+    @staticmethod
+    def _paper_hard_sl_econ(side: str, slipped_entry: float, sl: float, notional: float) -> float:
+        """USD loss if HARD_SL hits: entry slip already in price, exit adverse@SL + both fees."""
+        fee = max(0.0, float(os.getenv("PAPER_TAKER_FEE_PCT", "0.0005")))
+        slip = max(0.0, float(os.getenv("PAPER_SLIPPAGE_PCT", "0.0005")))
+        qty = float(notional) / max(float(slipped_entry), 1e-9)
+        if side == "LONG":
+            adverse_exit = float(sl) * (1.0 - slip)
+            gross = (adverse_exit - float(slipped_entry)) * qty
+        else:
+            adverse_exit = float(sl) * (1.0 + slip)
+            gross = (float(slipped_entry) - adverse_exit) * qty
+        entry_fee = abs(float(notional)) * fee
+        exit_fee = abs(adverse_exit * qty) * fee
+        return max(0.0, -gross + entry_fee + exit_fee)
+
+    async def _paper_econ_size(
+        self, symbol: str, side: str, entry: float, sl: float, notional: float, source: str,
+    ):
+        slipped_entry = await self._paper_fill_entry(symbol, side, entry)
+        risk_amount = self._paper_hard_sl_econ(side, slipped_entry, sl, notional)
+        if source == "SIGNAL_COPY":
+            current_equity = float(self.risk_mgr.get_current_equity())
+            max_trade_risk = current_equity * 0.01
+            if risk_amount > max_trade_risk and risk_amount > 0:
+                scale = max_trade_risk / risk_amount
+                notional = float(notional) * scale
+                risk_amount = self._paper_hard_sl_econ(side, slipped_entry, sl, notional)
+        return float(notional), float(risk_amount)
+
     def _size(self, intent: OrderIntent, entry: float, sl: float, side: str):
         """Return (notional, risk_amount, error)."""
         sl_frac = abs(entry - sl) / entry
@@ -226,6 +294,8 @@ class ExecutionGateway:
 
         if intent.notional is not None:
             notional = float(intent.notional)
+            if intent.source == "SIGNAL_COPY":
+                notional = min(notional, equity * 0.01 / sl_frac)
             if cap is not None:
                 notional = min(notional, cap)
             return notional, notional * sl_frac, None

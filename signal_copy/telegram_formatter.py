@@ -473,6 +473,7 @@ def build_execution_message(
         f"🎯 TP1: {format_price(tp1)} | Full: {format_price(tp_full)}",
         f"🛑 SL: {format_price(sl_price)}",
         f"📊 Notional: ${notional:.0f} | Risk: ${risk_amount:.2f}",
+        (f"📐 Drift: {getattr(outcome, 'entry_drift_r', 0.0):.2f}R | RR1: {getattr(outcome, 'rr_tp1', 0.0):.2f}R | RR Full: {getattr(outcome, 'rr_full', 0.0):.2f}R" if ok else ""),
         f"📌 Status: {reason}",
     ]
 

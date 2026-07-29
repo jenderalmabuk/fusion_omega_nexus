@@ -79,8 +79,8 @@ services:
     container_name: nexus_bybit_collector
     environment:
       DATABASE_URL: postgresql://nexus:${NEXUS_DB_PASSWORD:?NEXUS_DB_PASSWORD is required (no default)}@timescaledb:5432/nexus
-      BYBIT_API_KEY: ${BYBIT_API_KEY}
-      BYBIT_SECRET: ${BYBIT_SECRET}
+      BYBIT_API_KEY: ${BYBIT_API_KEY:-}
+      BYBIT_SECRET: ${BYBIT_SECRET:-}
       COLLECTOR_MODE: bybit
       UNIVERSE_FILE: /app/runtime/revo/canonical_universe.txt
     volumes:
@@ -156,6 +156,45 @@ services:
     container_name: nexus_h1_imbalance
     environment:
       BOT_NAME: h1_imbalance
+      PYTHONUNBUFFERED: "1"
+      NEXUS_API_URL: http://fastapi:8000
+      STATE_DIR: /state
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      HEARTBEAT_DIR: /state
+      NINE_ROUTER_API_KEY: ${NINE_ROUTER_API_KEY}
+      NINE_ROUTER_BASE: ${NINE_ROUTER_BASE:-http://host.docker.internal:20128/v1}
+      ADVERSARIAL_MODEL: ${ADVERSARIAL_MODEL:-Free-Tiers}
+      ADVERSARIAL_MODEL_FALLBACK: ${ADVERSARIAL_MODEL_FALLBACK:-cerebras/gpt-oss-120b}
+      ADVERSARIAL_VERSION: ${ADVERSARIAL_VERSION:-v2}
+      ADVERSARIAL_JUDGE_MODEL: ${ADVERSARIAL_JUDGE_MODEL:-Free-Tiers}
+      ADVERSARIAL_MODEL_POOL: ${ADVERSARIAL_MODEL_POOL:-}
+      ADVERSARIAL_TIER1_POOL: ${ADVERSARIAL_TIER1_POOL:-}
+      WHALE_RUNTIME_DIR: /app/runtime/whales
+      LOG_DIR: /tmp
+    volumes:
+      - ../runtime/state:/state
+      - ../runtime/logs:/logs
+      - ../runtime/whales:/app/runtime/whales
+      - ../runtime/revo:/app/runtime/revo:ro
+      - ../bots/config.yaml:/app/bots/config.yaml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      fastapi:
+        condition: service_started
+    restart: unless-stopped
+    profiles: ["bots"]
+    networks:
+      - nexus_net
+      - docker_default
+
+  # H1 short-only candidate — isolated treatment arm for direction A/B test.
+  h1_short_candidate:
+    image: nexus-bot:latest
+    container_name: nexus_h1_short_candidate
+    environment:
+      BOT_NAME: h1_short_candidate
       PYTHONUNBUFFERED: "1"
       NEXUS_API_URL: http://fastapi:8000
       STATE_DIR: /state
@@ -311,13 +350,16 @@ services:
       - REVO_ENTRY_RSI_MAX=40
       # Falling-knife floor tightened 9->6 (see adaptive bot for backtest rationale).
       - REVO_ENTRY_DISCOUNT_MAX_PCT=6
-      # Same-pair LOSS cooldown 12h (replaces removed blacklist cron). 0 disables.
-      - REVO_LOSS_COOLDOWN_HOURS=12
+      # Validated Revo stack: no same-pair loss cooldown; cooldown is not part of edge.
+      - REVO_LOSS_COOLDOWN_HOURS=0
       - REVO_MIN_QVOL_5M=50000
       - REVO_LIQ_MODE=med48
       - REVO_PAIR_BLACKLIST_PATH=/freqtrade/user_data/local/revo_pair_blacklist.json
       - REVO_ER_CHOP_MAX=0.15
       - REVO_ATR_PCT_MAX=4.0
+      - REVO_EXIT_MODE=time_max
+      - REVO_MAX_HOLD_HOURS=4
+      - REVO_SL_MODE=atr3
       - REVO_FLOW_MAX_AGE_SEC=660
       - REVO_FLOW_CONTEXT_PATH=/freqtrade/user_data/local/revo_alpha/runtime/bybit/revo_flow_context.json
       - REVO_ENTRY_AUDIT_PATH=/freqtrade/user_data/local/revo_auditable_entry_audit.jsonl
@@ -330,6 +372,7 @@ services:
       - ../revo_adaptive/configs:/freqtrade/user_data/configs
       - ../revo_adaptive/scripts:/freqtrade/user_data/scripts
       - ../revo_adaptive/revo_core:/freqtrade/user_data/revo_core
+      - ../revo_adaptive/auditable_core:/freqtrade/auditable_core:ro
       - ../revo_adaptive/user_data:/freqtrade/user_data
       - ../runtime/revo:/freqtrade/user_data/local/revo_alpha/runtime/bybit
       - ../runtime/revo:/freqtrade/user_data/revo_alpha/runtime/bybit
@@ -337,6 +380,67 @@ services:
       - "127.0.0.1:8082:8080"
     restart: unless-stopped
     command: ["trade", "--config", "/freqtrade/user_data/configs/config.bybit.auditable.paper.json", "--strategy", "RevoAuditableCoreStrategy"]
+    depends_on:
+      fastapi:
+        condition: service_started
+    profiles: ["bots"]
+    networks:
+      - nexus_net
+      - docker_default
+
+  # ============================================================
+  # Revo Winner — 3rd paper bot, ISOLATED (does NOT touch revo_adaptive /
+  # revo_auditable_core). Runs the IS+OOS validated reversion config:
+  #   entry  score>=9, discount 3.5-6%, RSI<=40, atr_pct<=4, er_chop 0.15,
+  #          falling-knife veto, flow gate PURE (no flow filter)
+  #   exit   SL 3.0x ATR14, hard time stop 4h, ROI ladder disabled
+  # OOS Jun25-Jul10: 95 trades, WR 37.9%, PF 1.41, net +$22.88, DD 1.02%.
+  # Separate DB (tradesv3.winner.paper.sqlite), port 8083, own Telegram bot.
+  # Deployed 2026-07-28 for live paper evidence before any promotion.
+  # ============================================================
+  revo_winner:
+    image: freqtradeorg/freqtrade:stable
+    container_name: revo_winner_bybit_paper
+    user: ftuser
+    environment:
+      - FREQTRADE__CONFIG=/freqtrade/user_data/configs/config.bybit.winner.paper.json
+      - FREQTRADE__STRATEGY=RevoAdaptiveWinner
+      - FREQTRADE__TELEGRAM__ENABLED=true
+      - FREQTRADE__TELEGRAM__TOKEN=${REVO_WINNER_TELEGRAM_BOT_TOKEN}
+      - FREQTRADE__TELEGRAM__CHAT_ID=${TELEGRAM_CHAT_ID}
+      # Entry gates: identical to the validated grid (STAGE-2 @ MS=9).
+      - REVO_ENTRY_MIN_SCORE=9
+      - REVO_ENTRY_DISCOUNT_MIN_PCT=3.5
+      - REVO_ENTRY_RSI_MAX=40
+      - REVO_ENTRY_DISCOUNT_MAX_PCT=6
+      - REVO_ER_CHOP_MAX=0.15
+      - REVO_ATR_PCT_MAX=4.0
+      - REVO_MIN_QVOL_5M=50000
+      - REVO_LIQ_MODE=med48
+      # Flow gate PURE: ablation showed every flow variant had OOS PF < 1, and
+      # the edge is reversion-based, so no flow filter is applied here.
+      - REVO_FLOW_GATE_MODE=pure
+      # Exit thesis from the ablation winner.
+      - REVO_SL_ATR_MULT=3.0
+      - REVO_MAX_HOLD_HOURS=4
+      # No loss cooldown / pair blacklist so the paper run measures the raw config.
+      - REVO_LOSS_COOLDOWN_HOURS=0
+      - REVO_PAIR_BLACKLIST_PATH=/freqtrade/user_data/local/revo_winner_blacklist_absent.json
+      - REVO_FLOW_MAX_AGE_SEC=660
+      - REVO_FLOW_CONTEXT_PATH=/freqtrade/user_data/local/revo_alpha/runtime/bybit/revo_flow_context.json
+      - REVO_ENTRY_AUDIT_PATH=/freqtrade/user_data/local/revo_winner_entry_audit.jsonl
+    volumes:
+      - ../revo_adaptive/strategies:/freqtrade/user_data/strategies
+      - ../revo_adaptive/configs:/freqtrade/user_data/configs
+      - ../revo_adaptive/scripts:/freqtrade/user_data/scripts
+      - ../revo_adaptive/revo_core:/freqtrade/user_data/revo_core
+      - ../revo_adaptive/user_data:/freqtrade/user_data
+      - ../runtime/revo:/freqtrade/user_data/local/revo_alpha/runtime/bybit
+      - ../runtime/revo:/freqtrade/user_data/revo_alpha/runtime/bybit
+    ports:
+      - "127.0.0.1:8083:8080"
+    restart: unless-stopped
+    command: ["trade", "--config", "/freqtrade/user_data/configs/config.bybit.winner.paper.json", "--strategy", "RevoAdaptiveWinner"]
     depends_on:
       fastapi:
         condition: service_started
@@ -431,8 +535,8 @@ services:
       SIGNAL_COPY_LEGACY_VALIDATION: ${SIGNAL_COPY_LEGACY_VALIDATION:-false}
       # Discord (optional)
       SIGNAL_COPY_DISCORD_ENABLED: ${SIGNAL_COPY_DISCORD_ENABLED:-false}
-      SIGNAL_COPY_DISCORD_BOT_TOKEN: ${SIGNAL_COPY_DISCORD_BOT_TOKEN}
-      SIGNAL_COPY_DISCORD_CHANNELS: ${SIGNAL_COPY_DISCORD_CHANNELS}
+      SIGNAL_COPY_DISCORD_BOT_TOKEN: ${SIGNAL_COPY_DISCORD_BOT_TOKEN:-}
+      SIGNAL_COPY_DISCORD_CHANNELS: ${SIGNAL_COPY_DISCORD_CHANNELS:-}
       # Vision (optional) — OpenAI-compatible backend (local proxy / OpenRouter / Gemini)
       SIGNAL_COPY_VISION_ENABLED: ${SIGNAL_COPY_VISION_ENABLED:-false}
       SIGNAL_COPY_VISION_BACKEND: ${SIGNAL_COPY_VISION_BACKEND:-openai}
@@ -444,6 +548,8 @@ services:
       # legacy ollama vars (kept for backward compat; unused by openai backend)
       SIGNAL_COPY_OLLAMA_URL: ${SIGNAL_COPY_OLLAMA_URL:-http://host.docker.internal:11434}
       SIGNAL_COPY_VISION_MODEL: ${SIGNAL_COPY_VISION_MODEL:-qwen2.5vl:3b}
+      # Pending-limit lifecycle journal (PENDING/FILLED/EXPIRED/DRIFT/REJECTED)
+      SIGNAL_COPY_PENDING_JOURNAL: /state/pending_lifecycle.jsonl
     volumes:
       - ../runtime/state:/state
       - ../runtime/logs:/logs
@@ -483,8 +589,21 @@ services:
       GATEWAY_PAPER_MAINNET: ${GATEWAY_PAPER_MAINNET:-true}
       STARTING_BALANCE: ${STARTING_BALANCE:-1000}
       MAX_OPEN_POS_GLOBAL: ${MAX_OPEN_POS_GLOBAL:-20}
+      PAPER_MAX_RUNNING_POSITIONS: ${PAPER_MAX_RUNNING_POSITIONS:-30}
+      REAL_MAX_RUNNING_POSITIONS: ${REAL_MAX_RUNNING_POSITIONS:-20}
+      MAX_SAME_DIRECTION_POS: ${MAX_SAME_DIRECTION_POS:-0}
+      MAX_TOTAL_EXPOSURE_PCT: ${MAX_TOTAL_EXPOSURE_PCT:-100000}
+      MAX_GLOBAL_OPEN_RISK_PCT: ${MAX_GLOBAL_OPEN_RISK_PCT:-0.20}
+      PAPER_TAKER_FEE_PCT: ${PAPER_TAKER_FEE_PCT:-0.0005}
+      PAPER_SLIPPAGE_PCT: ${PAPER_SLIPPAGE_PCT:-0.0005}
+      SHADOW_TRAILING_ENABLED: ${SHADOW_TRAILING_ENABLED:-true}
+      SHADOW_TRAIL_MIN_PCT: ${SHADOW_TRAIL_MIN_PCT:-0.01}
+      SHADOW_TRAIL_ATR_MULTIPLIER: ${SHADOW_TRAIL_ATR_MULTIPLIER:-1.0}
+      SHADOW_TRAILING_JOURNAL: /app/journal/shadow_trailing.jsonl
       PAPER_NEXUS_API: http://fastapi:8000
       BOT_JOURNAL_DIR: /app/journal
+      FQ_PAPER_POSITION_STATE: /app/journal/open_positions.json
+      FQ_PAPER_EQUITY_STATE: /app/journal/paper_equity.json
       SIGNAL_COPY_PARSER_NOTIFY_BOT_TOKEN: ${SIGNAL_COPY_PARSER_NOTIFY_BOT_TOKEN:-}
       SIGNAL_COPY_PARSER_NOTIFY_CHAT_ID: ${SIGNAL_COPY_PARSER_NOTIFY_CHAT_ID:-0}
       SIGNAL_COPY_TRADES_NOTIFY_BOT_TOKEN: ${SIGNAL_COPY_TRADES_NOTIFY_BOT_TOKEN:-}
@@ -514,6 +633,13 @@ services:
     container_name: nexus_fusionnew_h1
     environment:
       BOT_NAME: h1_fusionnew
+      # Live audit 2026-07-26: sub-1.5% stops were net-negative live (SL buckets
+      # <1.5% all lost; >=1.5% was the only profitable one). Ablation H1 90d:
+      # floor 1.0 = best IS PF 9.80 / OOS PF 5.86. Set "0" to restore old behavior.
+      SL_FLOOR_PCT: "1.0"
+      # Cap setup age (LTF bars). Was unlimited: 3-day-old zones surfaced and then
+      # died at the liquidity gate (only 6/28 live setups survived). 288 = ~1 day @5m.
+      NEAREST_MAX_AGE: "288"
       # #4: relax btc_regime — block counter-trend only when BTC regime is STRONG
       # (|EMA50-EMA200|/EMA200 >= 0.75%). Was 0-trade for days under binary filter.
       # Validated backtest OOS PF 3.68->4.10 (H1). Set "0" to restore old behavior.
@@ -548,6 +674,12 @@ services:
     container_name: nexus_fusionnew_m30
     environment:
       BOT_NAME: m30_fusionnew
+      # Live audit 2026-07-26 + ablation M30 90d: floor 2.5 is the ONLY variant
+      # passing IS PF>1 AND OOS PF>1 (OOS PF 1.12, n=20). Tighter floors were
+      # OOS-negative on this tier. Set "0" to restore old behavior.
+      SL_FLOOR_PCT: "2.5"
+      # Cap setup age (LTF bars). M30 uses 3m LTF => 480 bars ~= 1 day.
+      NEAREST_MAX_AGE: "480"
       # #4: relax btc_regime (see fusionnew_h1). Validated OOS PF 3.58->3.66 (M30).
       BTC_REGIME_STRONG_PCT: "0.75"
       # #3: M30 uses 3m LTF to differentiate from H1 (both were 5m => identical
@@ -593,6 +725,12 @@ services:
       STARTING_BALANCE: ${FQ_STARTING_BALANCE:-1000}
       MAX_OPEN_POS_GLOBAL: ${FQ_MAX_OPEN_POS_GLOBAL:-20}
       MAX_SAME_DIRECTION_POS: ${FQ_MAX_SAME_DIRECTION_POS:-20}
+      MAX_TOTAL_EXPOSURE_PCT: ${FQ_MAX_TOTAL_EXPOSURE_PCT:-100000}
+      MAX_GLOBAL_OPEN_RISK_PCT: ${FQ_MAX_GLOBAL_OPEN_RISK_PCT:-0.20}
+      PAPER_TAKER_FEE_PCT: ${FQ_PAPER_TAKER_FEE_PCT:-0.0005}
+      PAPER_SLIPPAGE_PCT: ${FQ_PAPER_SLIPPAGE_PCT:-0.0005}
+      FQ_MAX_RUNNING_POSITIONS: ${FQ_MAX_RUNNING_POSITIONS:-20}
+      FQ_PAPER_POSITION_STATE: /app/fq_journal/open_positions.json
       FQ_TELEGRAM_BOT_TOKEN: ${FQ_TELEGRAM_BOT_TOKEN:-}
       FQ_TELEGRAM_CHAT_ID: ${FQ_TELEGRAM_CHAT_ID:-}
       PAPER_NEXUS_API: http://fastapi:8000
@@ -627,7 +765,6 @@ services:
       FQ_UNIVERSE_FILE: /app/runtime/revo/canonical_universe.txt
       FQ_POLL_SEC: ${FQ_POLL_SEC:-300}
       FQ_FIB_EXPIRY: ${FQ_FIB_EXPIRY:-6}
-      FQ_MAX_PENDING_LIMITS: ${FQ_MAX_PENDING_LIMITS:-20}
       FQ_TELEGRAM_BOT_TOKEN: ${FQ_TELEGRAM_BOT_TOKEN:-}
       FQ_TELEGRAM_CHAT_ID: ${FQ_TELEGRAM_CHAT_ID:-}
       LOG_DIR: /tmp

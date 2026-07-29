@@ -28,6 +28,20 @@ LOOP_SEC = int(os.getenv("COLLECTOR_LOOP_SEC", "60"))
 OI_LOOP_SEC = int(os.getenv("OI_LOOP_SEC", "300"))
 FUNDING_LOOP_SEC = int(os.getenv("FUNDING_LOOP_SEC", "900"))
 CONCURRENCY = int(os.getenv("COLLECTOR_CONCURRENCY", "4"))
+UNSUPPORTED_RETRY_SEC = int(os.getenv("UNSUPPORTED_RETRY_SEC", "21600"))
+_unsupported_until: dict[str, float] = {}
+
+
+def _quarantine(symbol: str) -> None:
+    _unsupported_until[symbol] = time.time() + UNSUPPORTED_RETRY_SEC
+
+
+def _is_quarantined(symbol: str) -> bool:
+    until = _unsupported_until.get(symbol, 0.0)
+    if until <= time.time():
+        _unsupported_until.pop(symbol, None)
+        return False
+    return True
 
 
 def _ts(ms: int) -> datetime:
@@ -52,10 +66,18 @@ def _kline_rows(symbol: str, tf: str, data: list[list]) -> list[tuple]:
 
 async def _collect_klines(client: httpx.AsyncClient, sem: asyncio.Semaphore,
                           symbol: str, tf: str) -> None:
+    if _is_quarantined(symbol):
+        return
     async with sem:
         try:
             r = await client.get(f"{BASE}/fapi/v1/klines",
                                  params={"symbol": symbol, "interval": tf, "limit": KLINE_LIMIT})
+            if r.status_code == 400 and r.json().get("code") == -1121:
+                first = not _is_quarantined(symbol)
+                _quarantine(symbol)
+                if first:
+                    print(f"[binance] unsupported {symbol}; retry in {UNSUPPORTED_RETRY_SEC}s", flush=True)
+                return
             r.raise_for_status()
             await upsert_klines(_kline_rows(symbol, tf, r.json()))
         except Exception as exc:
@@ -63,6 +85,8 @@ async def _collect_klines(client: httpx.AsyncClient, sem: asyncio.Semaphore,
 
 
 async def _collect_oi(client: httpx.AsyncClient, sem: asyncio.Semaphore, symbol: str) -> None:
+    if _is_quarantined(symbol):
+        return
     async with sem:
         try:
             r = await client.get(f"{BASE}/futures/data/openInterestHist",
@@ -83,6 +107,8 @@ async def _collect_oi(client: httpx.AsyncClient, sem: asyncio.Semaphore, symbol:
 
 
 async def _collect_funding(client: httpx.AsyncClient, sem: asyncio.Semaphore, symbol: str) -> None:
+    if _is_quarantined(symbol):
+        return
     async with sem:
         try:
             r = await client.get(f"{BASE}/fapi/v1/fundingRate",
